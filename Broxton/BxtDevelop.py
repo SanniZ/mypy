@@ -9,7 +9,7 @@ import commands
 import subprocess
 import sys
 import re
-
+import os
 
 class AndroidBase(object):
     def help(self, cmd=''):
@@ -40,14 +40,10 @@ class AndroidBase(object):
         print(cmd)
         subprocess.call(cmd, shell=True)
 
-    def buildImage(self, image):
-        cmd = r'makeImage.sh %s' % image
-        print(cmd)
-        subprocess.call(cmd, shell=True)
-        
     def makeImages(self, images):
+        bd = BxtDevelop()
         for image in images.values():
-            self.buildImage(image)
+            bd.buildImage(image)
 
 
         
@@ -148,14 +144,9 @@ class BIOS(object):
                 self.flashIOC(ioc)
 
 class Code(object):
-    def __init__(self,
-        url='ssh://android.intel.com/manifests -b android/master -m r0'):
+    def __init__(self, url=''):
         #print('create Code')
         self._url = url
-
-    URL=''
-
-
 
     def help(self, cmd=''):
         #print('Class Code help.')
@@ -167,17 +158,39 @@ class Code(object):
 
     def initURL(self):
         cmd = r'repo init -u %s' % self._url
+        print(cmd)
         subprocess.call(cmd, shell=True)
 
     def syncURL(self):
-        if self._cpus > 5:
+        linux = LinuxBase()
+        cpus = linux.getCPUs
+        if cpus > 5:
             cpus = 5
-        else:
-            cpus = self._cpus
         
-        cmd = r'repo sync -j%s' % cpus
+        cmd = r'repo sync -j{num}'.format(num=cpus)
+        print(cmd)
         subprocess.call(cmd, shell=True)
-
+        
+    def urlHandler(self, cmds):
+        t = type(cmds)
+        if t == dict:
+            for cmd in cmds.values():
+                if cmd == 'init':
+                    self.initURL()
+                elif cmd == 'sync':
+                    self.syncURL()
+        elif t == list:
+            for i in range(cmds):
+                if cmds[i] == 'init':
+                    self.initURL()
+                elif cmds[i] == 'sync':
+                    self.syncURL()
+        elif t == str:
+            if cmds == 'init':
+                self.initURL()
+            elif cmds == 'sync':
+                self.syncURL()
+            
 class LinuxBase(object):
     def help(self, cmd=''):
         #print('Class linuxBase help.')
@@ -188,8 +201,8 @@ class LinuxBase(object):
         cmd = r'cat /proc/cpuinfo | grep "processor"| wc -l'
         return commands.getoutput(cmd)
    
-    def delete(self, dir):
-        cmd = r'rm -rf %s' % dir
+    def delete(self, f):
+        cmd = r'rm -rf %s' % f
         subprocess.call(cmd, shell=True)
 
 
@@ -198,20 +211,20 @@ class Parser(object):
         #print('Class Parser help.')
         pass
         
-    def parserCMD(self, cmds):
+    def parserCMDArgs(self, cmds):
         reCmd = re.compile(r'^([a-z]{1,8}):([a-z,_]{0,32})$')
         output = {}
         for cmd in cmds:
             try:
                 k, v = reCmd.match(cmd).groups()
                 #print k,v
-                output[k]= self.parserArgv(k, v)
+                output[k]= self.parserArgs(k, v)
             except AttributeError as e:
                 print('Invalid input: %s' % e)
                 
         return output
         
-    def parserArgv(self, cmd, argv):
+    def parserArgs(self, cmd, argv):
         reArgv = re.compile(r'^([a-z]{1,8}),([a-z,_]{0,32})$')
         index = 0
         output = {}
@@ -249,11 +262,27 @@ class BxtDevelop(AndroidBase,
         super(AvbImage,self).help(cmd)
         #super(LinuxBase,self).help(cmd)
 
+    def buildImage(self, image):
+        # create buildImage.sh to make image.
+        builds = r'''#!/bin/bash
+device/intel/mixins/mixin-update
+. build/envsetup.sh
+lunch {pdt}-{opt}
+make {image} -j{cpu}'''.format(pdt=self._pdt, opt=self._opt, image=image, cpu=self.getCPUs())
+        buildsh = r'.buildImage.sh'
+        with open(buildsh, 'w') as f:
+            f.write(builds)
+        # run buildImage.sh
+        os.system(r'chmod a+x {sh}'.format(sh=buildsh))
+        cmd = r'./{sh}'.format(sh=buildsh)
+        print(cmd)
+        subprocess.call(cmd, shell=True)
+
+class CmdHandler(Parser, BxtDevelop):
     # list of support cmd, value: function.
     supportCmds = {
         'help'  : None,
         'url'   : None,
-        'sync'  : None,
         'flash' : None,
         'make'  : None,
         'rm'    : None,
@@ -261,10 +290,14 @@ class BxtDevelop(AndroidBase,
         'ioc'   : None,
     }
 
+    def __init__(self):
+        super(Parser, self).__init__()
+        super(BxtDevelop, self).__init__()
+
     def getCMD(self):
         #print('parse all of cmds.')
         parser = Parser()
-        return parser.parserCMD(sys.argv[1:])   
+        return parser.parserCMDArgs(sys.argv[1:])   
 
     def checkCMD(self, cmds):
         for key in cmds.keys():
@@ -277,26 +310,18 @@ class BxtDevelop(AndroidBase,
             if key == 'help':
                 self.supportCmds['help'] = self.help
             elif key == 'make':
-                android = AndroidBase()
-                self.supportCmds['make'] = android.makeImages
+                #android = AndroidBase()
+                self.supportCmds['make'] = self.makeImages
             elif key == 'flash':
-                avb = AvbImage()
-                self.supportCmds['flash'] = avb.updateImages
+                self.supportCmds['flash'] = self.updateImages
             elif key == 'fw':
-                bios = BIOS()
-                self.supportCmds['fw'] = bios.flashFW
+                self.supportCmds['fw'] = self.flashFW
             elif key == 'ioc':
-                bios = BIOS()
-                self.supportCmds['ioc'] = bios.flashIOC
+                self.supportCmds['ioc'] = self.flashIOC
             elif key == 'url':
-                code = Code()
-                self.supportCmds['url'] = code.initURL
-            elif key == 'sync':
-                code = Code()
-                self.supportCmds['sync'] = code.syncURL
+                self.supportCmds['url'] = self.urlHandler
             elif key == 'rm':
-                linux = LinuxBase()
-                self.supportCmds['rm'] = linux.delete
+                self.supportCmds['rm'] = self.delete
                 
     def runCMD(self, cmds):
         for key in cmds.iterkeys():
@@ -304,7 +329,6 @@ class BxtDevelop(AndroidBase,
                 #print cmds[key]
                 f = self.supportCmds[key]
                 f(cmds[key])
-
 
     def main(self, cmds):
         cmdResult = self.getCMD()
@@ -316,7 +340,6 @@ class BxtDevelop(AndroidBase,
         self.runCMD(cmdResult)
 
 
-
 if __name__ == '__main__':
-    bxt = BxtDevelop()
-    bxt.main(sys.argv[1:])
+    hdr = CmdHandler()
+    hdr.main(sys.argv[1:])
