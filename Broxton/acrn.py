@@ -7,8 +7,8 @@ Created on Thu Jul  5 14:33:36 2018
 @author: Byng.Zeng
 """
 
-from Broxton import Broxton
-#from Debug import Debug
+from broxton import Broxton
+#from debug import Debug as d
 
 class Acrn(Broxton):
     url = r'ssh://android.intel.com/manifests -b android/o/mr1/master -m r0'
@@ -18,8 +18,8 @@ class Acrn(Broxton):
 
     def __init__(self,url, pdt, opt, user):
         super(Acrn, self).__init__(url=url, pdt=pdt, opt=opt, user=user)
-        #self.set_debug_level('dbg,info,err')
-        
+        #d.set_debug_level('dbg,info,err')
+
 if __name__ == '__main__':
     acrn = Acrn(Acrn.url, Acrn.pdt, Acrn.opt, Acrn.user)
-    acrn.main()
+    acrn.run()

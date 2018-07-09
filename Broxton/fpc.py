@@ -7,7 +7,7 @@ Created on Thu Jul  5 14:33:36 2018
 @author: Byng.Zeng
 """
 
-from Broxton import Broxton
+from broxton import Broxton
 #from Debug import Debug
 
 class Fpc(Broxton):
@@ -19,7 +19,7 @@ class Fpc(Broxton):
     def __init__(self,url, pdt, opt, user):
         super(Fpc, self).__init__(url=url, pdt=pdt, opt=opt, user=user)
         #self.set_debug_level('dbg,info,err')
-        
+
 if __name__ == '__main__':
     fpc = Fpc(Fpc.url, Fpc.pdt, Fpc.opt, Fpc.user)
-    fpc.main()
+    fpc.run()

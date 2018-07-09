@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jul  5 12:39:24 2018
@@ -6,24 +8,22 @@ Created on Thu Jul  5 12:39:24 2018
 """
 import subprocess, os
 
-#from Android import Android
-#from Code import Code
-#from Linux import Linux
-from CmdHandler import CmdHandler
-from Debug import Debug
+from debug import Debug as d
+from input import Input
+from cmdprocessing import CmdProcessing
+from code import Code
 
-class AvbImage(Debug):
+class AvbImage(object):
     def __init__(self):
-        super(AvbImage, self).__init__()
-        self.dbg('AvbImage init done!')
-    
+        d.dbg('AvbImage init done!')
+
     def avb_make_image(self, image):
         # copy image to flashfiles folder
         cmd = r'cp {pdt}/{src}.img {flashfiles}/{tar}.img'.format(\
             pdt=self._pdt, src=image, flashfiles=self._flashfiles, tar=image)
-        self.dbg(cmd)
+        d.dbg(cmd)
         subprocess.call(cmd, shell=True)
-        
+
         # uses avbtool to build image
         cmd = r'''
             out/host/linux-x86/bin/avbtool make_vbmeta_image --output %s/vbmeta.img \
@@ -37,10 +37,10 @@ class AvbImage(Debug):
                    self._flashfiles,
                    self._flashfiles,
                    self._flashfiles)
-        self.dbg(cmd)
+        d.dbg(cmd)
         subprocess.call(cmd, shell=True)        
 
-class Broxton(CmdHandler, AvbImage):
+class Broxton(AvbImage, Code):
     images_map = {
         'boot' : 'bootimage',
         'system' : 'bootimage',
@@ -51,7 +51,7 @@ class Broxton(CmdHandler, AvbImage):
         'flashfiles' : 'flashfiles',
         'all' : 'flashfiles',       
     }
-    
+
     def __init__(self,
                  url=None, pdt=None, opt=None, user=None):
         super(Broxton, self).__init__()
@@ -69,58 +69,46 @@ class Broxton(CmdHandler, AvbImage):
             self._out = None
             self._flashfiles = None
         
-        self.support_cmd_list['url'] = None   
-        self.support_cmd_list['make'] = None 
-        self.support_cmd_list['flash'] = None
-        #self.support_cmd_list['fw'] = None
-        #self.support_cmd_list['ioc'] = None
+        self._cmd_handlers = {
+            'help': self.help,
+            'make': self.make_image,
+            'flash' : self.flash_image,
+            'url' : self.url_handler,
+        }
 
-        self.dbg('Broxton init done!')
-        
+        d.info(self._cmd_handlers)
+        d.dbg('Broxton init done!')
+
     def help(self, cmds=''):
         #super(Code, self).help(cmds)
         super(Broxton, self).help(cmds)
         for cmd in cmds.values():
             if cmd == 'help':
-                self.info('make:[all/flashfiles][,boot][,system][,tos][,vendor]')
-                self.info('  all/flashfiles: make all of images')
-                self.info('  boot  : make bootimage')
-                self.info('  system: make systemimage')
-                self.info('  tos   : make tosimage')
-                self.info('  vendor: make vendorimage')
-                self.info('flash:[boot][,system][,tos][,vendor]')
-                self.info('  boot  : flash bootimage')
-                self.info('  system: flash systemimage')
-                self.info('  tos   : flash tosimage')
-                self.info('  vendor: flash vendorimage')
-                self.info('  fw    : flash firmware')
-                self.info('  ioc   : flash ioc')
+                d.info('make:[option][,option]')
+                d.info('option:')
+                d.info('  all/flashfiles: make all of images')
+                d.info('  boot  : make bootimage')
+                d.info('  system: make systemimage')
+                d.info('  tos   : make tosimage')
+                d.info('  vendor: make vendorimage')
+                d.info('flash:[option][,option]')
+                d.info('option:')
+                d.info('  boot  : flash bootimage')
+                d.info('  system: flash systemimage')
+                d.info('  tos   : flash tosimage')
+                d.info('  vendor: flash vendorimage')
+                d.info('  fw    : flash firmware')
+                d.info('  ioc   : flash ioc')
             elif cmd == 'cfg':
-                self.info('url: {}'.format(self._url))
-                self.info('pdt: {}'.format(self._pdt))
-                self.info('opt: {}'.format(self._opt))
-                self.info('user: {}'.format(self._user))
-                self.info('out: {}'.format(self._out))
-                self.info('flashfiles: {}'.format(self._flashfiles))
-                self.info('fw: {}'.format(self._fw))
-                self.info('ioc: {}'.format(self._ioc))
+                d.info('url: {}'.format(self._url))
+                d.info('pdt: {}'.format(self._pdt))
+                d.info('opt: {}'.format(self._opt))
+                d.info('user: {}'.format(self._user))
+                d.info('out: {}'.format(self._out))
+                d.info('flashfiles: {}'.format(self._flashfiles))
+                d.info('fw: {}'.format(self._fw))
+                d.info('ioc: {}'.format(self._ioc))
 
-    def config_handler(self, cmds):
-        super(Broxton, self).config_handler(cmds)
-        for key in cmds.iterkeys():
-            if key == 'help':
-                self.support_cmd_list['help'] = self.help
-            elif key == 'url':
-                self.support_cmd_list['url'] = self.code_handler
-            elif key == 'make':
-                self.support_cmd_list['make'] = self.make_image
-            elif key == 'flash':
-                self.support_cmd_list['flash'] = self.flash_image
-            #elif key == 'fw':
-            #    self.support_cmd_list['fw'] = self.flash_firmware
-            #elif key == 'ioc':
-            #    self.support_cmd_list['ioc'] = self.flash_ioc
-    
     def create_build_script(self, image):
         builds = r'''#!/bin/bash
 rm -rf out/.lock
@@ -137,19 +125,18 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
         return build_sh
 
     def make_image(self, images):
-        self.dbg('Broxton.make_image: images {}'.format(images))
-        pass
+        d.dbg('Broxton.make_image: images {}'.format(images))
         for image in images.values():
-            self.info('create makesh for {}'.format(image))
+            d.info('create makesh for {}'.format(image))
             build_sh = self.create_build_script(image)
             cmd = r'./{}'.format(build_sh)
-            self.info(cmd)
+            d.info(cmd)
             subprocess.call(cmd, shell=True)
             # rm build shell file
             cmd = r'rm -rf {}'.format(build_sh)
-            self.info(cmd)
+            d.info(cmd)
             subprocess.call(cmd, shell=True)   
-            
+
     def flash_image(self, images):
         for image in images.values():
             if image == 'fw':
@@ -159,7 +146,7 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
             else:
                 # avb make images.
                 for image in images.values():
-                    self.info('update image %s' % image)
+                    d.info('update image %s' % image)
                     self.avb_make_image(image)
                 # setup flash env
                 self.wait_adb()
@@ -176,14 +163,38 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
 
     def flash_firmware(self, fw):
         cmd = r'sudo /opt/intel/platformflashtool/bin/ias-spi-programmer --write {}'.format(fw)
-        self.info(cmd)
+        d.info(cmd)
         subprocess.call(cmd, shell=True)
     
     def flash_ioc(self, ioc):
         cmd = r'sudo /opt/intel/platformflashtool/bin/ioc_flash_server_app -s /dev/ttyUSB2 -grfabc -t {}'.format(ioc)
-        self.info(cmd)
+        d.info(cmd)
         subprocess.call(cmd, shell=True)
 
+    def get_handler(self, cmd):
+        if self._cmd_handlers.has_key(cmd) == True:
+            return self._cmd_handlers[cmd]
+        else:
+            return None
+
+    def run(self):
+        cmds_list = {} 
+
+        cmds_list['help'] = self.get_handler('help')
+        cmds_list['url'] = self.get_handler('url')
+        cmds_list['make'] = self.get_handler('make')
+        cmds_list['flash'] = self.get_handler('flash')
+
+        cmdHdr = CmdProcessing()
+        for key in cmds_list.iterkeys():
+            cmdHdr.register_cmd_handler(key, cmds_list[key])
+
+        inp = Input()
+        input_dict = inp.get_input()
+        cmdHdr.run(input_dict)
+
 if __name__ == '__main__':
-    bxt = Broxton()
-    bxt.main()
+    #d.set_debug_level('dbg,info,err')
+    bxt = Broxton(r'ssh://android.intel.com/manifests -b android/master -m r0',
+                  'gordon_peak', 'userdebug', 'yingbin')
+    bxt.run()
