@@ -127,10 +127,10 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
     def make_image(self, images):
         d.dbg('Broxton.make_image: images {}'.format(images))
         for image in images.values():
-            d.info('create makesh for {}'.format(image))
+            d.dbg('create makesh for {}'.format(image))
             build_sh = self.create_build_script(image)
             cmd = r'./{}'.format(build_sh)
-            d.info(cmd)
+            d.dbg(cmd)
             subprocess.call(cmd, shell=True)
             # rm build shell file
             cmd = r'rm -rf {}'.format(build_sh)
