@@ -60,7 +60,7 @@ class FileOps(object):
 
     def delete(self, f):
         cmd = r'rm -rf %s' % f
-        d.info(cmd)
+        d.dbg(cmd)
         return commands.getoutput(cmd)
 
     def del_handler(self, cmds=''):
@@ -69,7 +69,7 @@ class FileOps(object):
 
     def find_delete(self, path, name):
         cmd = r'find %s -name %s | xargs rm -rf {}\;' % (path, name)
-        d.info(cmd)
+        d.dbg(cmd)
         return commands.getoutput(cmd)
 
     def fdel_handler(self, cmds=''):

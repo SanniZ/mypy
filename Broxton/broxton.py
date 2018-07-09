@@ -12,6 +12,7 @@ from debug import Debug as d
 from input import Input
 from cmdprocessing import CmdProcessing
 from code import Code
+from linux import HwInfo
 
 class AvbImage(object):
     def __init__(self):
@@ -76,7 +77,6 @@ class Broxton(AvbImage, Code):
             'url' : self.url_handler,
         }
 
-        d.info(self._cmd_handlers)
         d.dbg('Broxton init done!')
 
     def help(self, cmds=''):
@@ -116,7 +116,7 @@ device/intel/mixins/mixin-update
 . build/envsetup.sh
 lunch {pdt}-{opt}
 make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
-                            tgt=self.images_map[image], n=self.get_cups())
+                            tgt=self.images_map[image], n=HwInfo().get_cups())
         build_sh = r'.build_image.sh'
         with open(build_sh, 'w') as f:
             f.write(builds)
@@ -134,7 +134,7 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
             subprocess.call(cmd, shell=True)
             # rm build shell file
             cmd = r'rm -rf {}'.format(build_sh)
-            d.info(cmd)
+            d.dbg(cmd)
             subprocess.call(cmd, shell=True)   
 
     def flash_image(self, images):

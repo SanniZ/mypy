@@ -37,17 +37,17 @@ class Android(object):
 
     def adb_wait(self):
         cmd = r'adb wait-for-device'
-        d.info(cmd)
+        d.dbg(cmd)
         subprocess.call(cmd, shell=True)
 
     def adb_device(self):
         cmd = r'adb devices'
-        d.info(cmd)
+        d.dbg(cmd)
         subprocess.call(cmd, shell=True)
         
     def reboot(self):
-        cmd = r'adb wait-for-device'
-        d.info(cmd)
+        cmd = r'adb reboot'
+        d.dbg(cmd)
         subprocess.call(cmd, shell=True)   
         
     def reboot_bootloader(self):
