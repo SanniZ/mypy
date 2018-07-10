@@ -29,12 +29,12 @@ class Code(object):
             elif cmd == 'cfg':
                 d.info('url: {}'.format(self._url))
 
-    def code_init(self):
+    def url_init(self):
         cmd = r'repo init -u %s' % self._url
         d.info(cmd)
         subprocess.call(cmd, shell=True)
 
-    def code_sync(self):
+    def url_sync(self):
         hw = HwInfo()
         cpus = hw.get_cups()
         if int(cpus) > 5:
@@ -50,20 +50,20 @@ class Code(object):
         if t == dict:
             for cmd in cmds.values():
                 if cmd == 'init':
-                    self.code_init()
+                    self.url_init()
                 elif cmd == 'sync':
-                    self.code_sync()
+                    self.url_sync()
         elif t == list:
             for i in range(cmds):
                 if cmds[i] == 'init':
-                    self.code_init()
+                    self.url_init()
                 elif cmds[i] == 'sync':
-                    self.code_sync()
+                    self.url_sync()
         elif t == str:
             if cmds == 'init':
-                self.code_init()
+                self.url_init()
             elif cmds == 'sync':
-                self.code_sync()
+                self.url_sync()
 
     def get_handler(self, cmd):
         if self._cmd_handlers.has_key(cmd) == True:

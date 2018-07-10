@@ -25,7 +25,7 @@ class HwInfo(object):
     def get_cups(self, cmds=None):
         cmd = r'cat /proc/cpuinfo | grep "processor"| wc -l'
         d.dbg(cmd)
-        return subprocess.call(cmd, shell=True)
+        return int(subprocess.check_output(cmd, shell=True))
 
     def hwinfo_handler(self, cmds):
         for cmd in cmds.values():
@@ -105,16 +105,16 @@ if __name__ == '__main__':
 
     #d.set_debug_level('dbg,info,err')
     cmds_list = {}
-    help_list = {}
+    helps = {}
 
 
     hw = HwInfo()
-    help_list['hwinfo'] = hw.get_handler('help')
+    helps['hwinfo'] = hw.get_handler('help')
     cmds_list['hwinfo'] = hw.get_handler('hwinfo')
 
     fops = FileOps()
-    help_list['fops'] = fops.get_handler('help')
-    cmds_list['help'] = help_list
+    helps['fops'] = fops.get_handler('help')
+    cmds_list['help'] = helps
     cmds_list['del'] = fops.get_handler('del')
     cmds_list['fdel'] = fops.get_handler('fdel')
     cmds_list['find'] = fops.get_handler('find')

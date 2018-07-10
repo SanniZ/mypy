@@ -23,13 +23,13 @@ class Android(object):
         for cmd in cmds.values():
             if cmd == 'help':
                 d.info('adb:[option][,option]')
-                d.info('option:')
+                d.info('  [option]:')
                 d.info('  wait: wait for adb device')
                 d.info('  device: show adb device')
                 d.info('  reboot: reboot device')
                 d.info('  rebloader: reboot bootloader')
                 d.info('fastboot:[option][,option]')
-                d.info('option:')
+                d.info('  [option]:')
                 d.info('  reboot: reboot device')
                 d.info('  lock: lock device')
                 d.info('  unlock: unlock device')

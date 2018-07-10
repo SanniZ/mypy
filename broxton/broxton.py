@@ -42,6 +42,7 @@ class AvbImage(object):
 
 class Broxton(AvbImage, Code):
     images_map = {
+        'clean' : 'clean',
         'boot' : 'bootimage',
         'system' : 'bootimage',
         'tos' : 'bootimage',
@@ -84,14 +85,14 @@ class Broxton(AvbImage, Code):
         for cmd in cmds.values():
             if cmd == 'help':
                 d.info('make:[option][,option]')
-                d.info('option:')
+                d.info('  [option]:')
                 d.info('  all/flashfiles: make all of images')
                 d.info('  boot  : make bootimage')
                 d.info('  system: make systemimage')
                 d.info('  tos   : make tosimage')
                 d.info('  vendor: make vendorimage')
                 d.info('flash:[option][,option]')
-                d.info('option:')
+                d.info('  [option]:')
                 d.info('  boot  : flash bootimage')
                 d.info('  system: flash systemimage')
                 d.info('  tos   : flash tosimage')
@@ -192,6 +193,10 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
 
 if __name__ == '__main__':
     #d.set_debug_level('dbg,info,err')
-    bxt = Broxton(r'ssh://android.intel.com/manifests -b android/master -m r0',
-                  'gordon_peak', 'userdebug', 'yingbin')
+    URL = r'ssh://android.intel.com/manifests -b android/master -m r0'
+    PDT = r'gordon_peak'
+    OPT = r'userdebug'
+    USR = r'yingbin'
+
+    bxt = Broxton(URL, PDT, OPT, USR)
     bxt.run()

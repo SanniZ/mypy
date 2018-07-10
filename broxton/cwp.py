@@ -11,11 +11,14 @@ import subprocess
 
 from code import Code
 from debug import Debug as d
+from cmdprocessing import CmdProcessing
+
+
 
 class Cwp(Code):
     URL = r'ssh://android.intel.com/h/hypervisor/manifests -b hypervisor/master'
 
-    def __init__(self,url):
+    def __init__(self,url=URL):
         super(Cwp, self).__init__(url)
         self._url = url
         self._cmd_handlers = {
@@ -32,7 +35,7 @@ class Cwp(Code):
         for cmd in cmds.values():
             if cmd == 'help':
                 d.info('make:[option][,option]')
-                d.info('option:')
+                d.info('  [option]:')
                 d.info('  all: make all of images')
                 d.info('  sos: make sos image')
                 d.info('  sos_dm: make sos_dm image')
@@ -58,24 +61,22 @@ class Cwp(Code):
             return self._cmd_handlers[cmd]
         else:
             return None
+            
+    def run(self):
+        cmds_list = {} 
+    
+        cmds_list['help'] = cwp.get_handler('help')    
+        cmds_list['url'] = cwp.get_handler('url')
+        cmds_list['make'] = cwp.get_handler('make')
+        cmds_list['flash'] = cwp.get_handler('flash')
+    
+        cmdHdr = CmdProcessing()
+        for key in cmds_list.iterkeys():
+            cmdHdr.register_cmd_handler(key, cmds_list[key])
+    
+        cmdHdr.run_sys_input()
 
 if __name__ == '__main__':
-    from input import Input
-    from cmdprocessing import CmdProcessing
-
     #d.set_debug_level('dbg,info,err')
-    cmds_list = {} 
-
-    cwp = Cwp(Cwp.URL)
-    cmds_list['help'] = cwp.get_handler('help')    
-    cmds_list['url'] = cwp.get_handler('url')
-    cmds_list['make'] = cwp.get_handler('make')
-    cmds_list['flash'] = cwp.get_handler('flash')
-
-    cmdHdr = CmdProcessing()
-    for key in cmds_list.iterkeys():
-        cmdHdr.register_cmd_handler(key, cmds_list[key])
-
-    inp = Input()
-    input_dict = inp.get_input()
-    cmdHdr.run(input_dict)
+    cwp = Cwp()
+    cwp.run()
