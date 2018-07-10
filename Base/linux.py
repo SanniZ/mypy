@@ -57,6 +57,9 @@ class FileOps(object):
                 d.info('fdel:path,file')
                 d.info('  path: which path to find.')
                 d.info('  file: which file be delete.')
+                d.info('find:path,file')
+                d.info('  path: which path to find.')
+                d.info('  file: which file be find.')
 
     def delete(self, f):
         cmd = r'rm -rf %s' % f
