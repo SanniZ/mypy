@@ -108,7 +108,6 @@ class Android(object):
 
 
 if __name__ == '__main__':
-    from input import Input
     from cmdprocessing import CmdProcessing
 
     #d.set_debug_level('dbg,info,err')
@@ -123,6 +122,4 @@ if __name__ == '__main__':
     for key in cmds_list.iterkeys():
         cmdHdr.register_cmd_handler(key, cmds_list[key])
     
-    inp = Input()
-    input_dict = inp.get_input()
-    cmdHdr.run(input_dict)
+    cmdHdr.run_sys_input()

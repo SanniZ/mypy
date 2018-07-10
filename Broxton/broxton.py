@@ -9,7 +9,6 @@ Created on Thu Jul  5 12:39:24 2018
 import subprocess, os
 
 from debug import Debug as d
-from input import Input
 from cmdprocessing import CmdProcessing
 from code import Code
 from linux import HwInfo
@@ -189,9 +188,7 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
         for key in cmds_list.iterkeys():
             cmdHdr.register_cmd_handler(key, cmds_list[key])
 
-        inp = Input()
-        input_dict = inp.get_input()
-        cmdHdr.run(input_dict)
+        cmdHdr.run_sys_input()
 
 if __name__ == '__main__':
     #d.set_debug_level('dbg,info,err')

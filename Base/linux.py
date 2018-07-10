@@ -6,8 +6,7 @@ Created on Thu Jul  5 11:21:29 2018
 
 @author: Byng.Zeng
 """
-
-import commands
+import subprocess
 from debug import Debug as d
 
 class HwInfo(object):
@@ -26,7 +25,7 @@ class HwInfo(object):
     def get_cups(self, cmds=None):
         cmd = r'cat /proc/cpuinfo | grep "processor"| wc -l'
         d.dbg(cmd)
-        return commands.getoutput(cmd)
+        return subprocess.call(cmd, shell=True)
 
     def hwinfo_handler(self, cmds):
         for cmd in cmds.values():
@@ -47,6 +46,7 @@ class FileOps(object):
             'help' : self.help,
             'del'  : self.del_handler,
             'fdel' : self.fdel_handler,
+            'find' : self.find_handler,
         }
 
     def help(self, cmds=''):
@@ -61,18 +61,30 @@ class FileOps(object):
     def delete(self, f):
         cmd = r'rm -rf %s' % f
         d.dbg(cmd)
-        return commands.getoutput(cmd)
+        return subprocess.call(cmd, shell=True)
 
-    def del_handler(self, cmds=''):
+    def del_handler(self, cmds):
         for cmd in cmds.values():
             self.delete(cmd)
+
+    def find(self, path, name):
+        cmd = r'find %s -name %s' % (path, name)
+        d.dbg(cmd)
+        return subprocess.call(cmd, shell=True)
+
+    def find_handler(self, cmds):
+        d.dbg('find_handler: {}'.format(cmds))
+        try:
+            self.find(cmds[0], cmds[1])
+        except KeyError as e:
+            d.err('Error: %s' % e)
 
     def find_delete(self, path, name):
         cmd = r'find %s -name %s | xargs rm -rf {}\;' % (path, name)
         d.dbg(cmd)
-        return commands.getoutput(cmd)
+        return subprocess.call(cmd, shell=True)
 
-    def fdel_handler(self, cmds=''):
+    def fdel_handler(self, cmds):
         d.dbg('fdel_handler: {}'.format(cmds))
         try:
             self.find_delete(cmds[0], cmds[1])
@@ -86,25 +98,26 @@ class FileOps(object):
             return None
 
 if __name__ == '__main__':
-    from input import Input
     from cmdprocessing import CmdProcessing
 
     #d.set_debug_level('dbg,info,err')
-    cmds_list = {} 
+    cmds_list = {}
+    help_list = {}
+
 
     hw = HwInfo()
-    cmds_list['help'] = hw.get_handler('help')
+    help_list['hwinfo'] = hw.get_handler('help')
     cmds_list['hwinfo'] = hw.get_handler('hwinfo')
 
     fops = FileOps()
-    cmds_list['help'] = fops.get_handler('help')
+    help_list['fops'] = fops.get_handler('help')
+    cmds_list['help'] = help_list
     cmds_list['del'] = fops.get_handler('del')
     cmds_list['fdel'] = fops.get_handler('fdel')
+    cmds_list['find'] = fops.get_handler('find')
 
     cmdHdr = CmdProcessing()
     for key in cmds_list.iterkeys():
         cmdHdr.register_cmd_handler(key, cmds_list[key])
 
-    inp = Input()
-    input_dict = inp.get_input()
-    cmdHdr.run(input_dict)
+    cmdHdr.run_sys_input()
