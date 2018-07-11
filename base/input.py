@@ -34,18 +34,17 @@ class Parser(object):
 
     def parser_args(self, argv):
         reArgv = re.compile(r'^([a-z,_0-9./*]{0,32}),([a-z,_0-9./*]{0,32})$')
-        index = 0
-        output = {}
+        output = []
         while argv:
             if re.search(',', argv) == None:
-                output[index] = argv
+                output.append(argv)
                 argv = 0
             else:
                 k, v = reArgv.match(argv).groups()
                 argv = v
-                output[index] = k
-            index += 1
+                output.append(k)
 
+        d.dbg(output)
         return output 
 
 class Input(Parser):
@@ -53,6 +52,8 @@ class Input(Parser):
         d.dbg('Input init done.')
         pass
 
+    # input: xxx:xxx,xxx
+    # output: xxx:[xxx, xxx, xxx]
     def get_input(self):
         parser = Parser()
         return parser.parser_cmd_args(sys.argv[1:])

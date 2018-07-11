@@ -21,13 +21,6 @@ class Cwp(Code):
     def __init__(self,url=URL):
         super(Cwp, self).__init__(url)
         self._url = url
-        self._cmd_handlers = {
-            'make': self.make_image,
-            'flash' : self.make_image,
-            'url' : self.url_handler,
-            'help' : self.help,
-        }
-        #self.set_debug_level('dbg,info,err')
         d.dbg('Cwp init done!')
 
     def help(self, cmds):
@@ -56,24 +49,24 @@ class Cwp(Code):
             cmd=r'make {}'.format(image)
             subprocess.call(cmd, shell=True)
 
-    def get_handler(self, cmd):
-        if self._cmd_handlers.has_key(cmd) == True:
-            return self._cmd_handlers[cmd]
+    def get_cmd_handlers(self, cmd=None):
+        hdrs = {
+            'make': self.make_image,
+            'flash' : self.make_image,
+            'url' : self.url_handler,
+            'help' : self.help,
+        }
+        if cmd == None:
+            return hdrs
         else:
-            return None
+            if hdrs.has_key(cmd) == True:
+                return hdrs[cmd]
+            else:
+                return None
             
     def run(self):
-        cmds_list = {} 
-    
-        cmds_list['help'] = cwp.get_handler('help')    
-        cmds_list['url'] = cwp.get_handler('url')
-        cmds_list['make'] = cwp.get_handler('make')
-        cmds_list['flash'] = cwp.get_handler('flash')
-    
         cmdHdr = CmdProcessing()
-        for key in cmds_list.iterkeys():
-            cmdHdr.register_cmd_handler(key, cmds_list[key])
-    
+        cmdHdr.register_cmd_handler(self.get_cmd_handlers())
         cmdHdr.run_sys_input()
 
 if __name__ == '__main__':

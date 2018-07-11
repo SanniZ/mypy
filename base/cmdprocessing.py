@@ -14,18 +14,28 @@ class CmdProcessing(object):
     def __init__(self):
         self._cmds_list = {}
 
-    def register_cmd_handler(self, cmd, handler):
-        d.dbg('register: {}'.format(cmd, handler))
-        self._cmds_list[cmd] = handler
+    def register_cmd_handler(self, handlers):
+        if handlers != None and type(handlers) == dict:
+            for key in handlers.keys():
+                if self._cmds_list.has_key(key):
+                    hdrs = []
+                    hdrs.append(self._cmds_list[key])
+                    hdrs.append(handlers[key])
+                    self._cmds_list[key] = hdrs
+                else:
+                    self._cmds_list[key] = handlers[key]                
 
     # run input commands
     def run(self, cmds):
         d.dbg('CmdProcessing.run(): %s' % cmds)
         for key in cmds.iterkeys():
+            # check help.
             if key == 'help':
-                d.info('help:[help][,cfg]')
-                d.info('  help: show help')
-                d.info('  cfg : show config info')
+                for sub_cmd in cmds[key]:
+                    if sub_cmd != 'cfg': # no show while cfg.
+                        d.info('help:[help][,cfg]')
+                        d.info('  help: show help')
+                        d.info('  cfg : show config info')
 
             if self._cmds_list.has_key(key) == True:
                 if type(self._cmds_list[key]) == dict:
@@ -42,19 +52,3 @@ class CmdProcessing(object):
     # run sys input commands
     def run_sys_input(self):
         self.run(Input().get_input())
-
-
-if __name__ == '__main__':
-    from linux import HwInfo
-
-    #d.set_debug_level('dbg,info,err')
-    cmds_list = {} 
-
-    hw = HwInfo()
-    cmds_list['hwinfo'] = hw.get_handler('hwinfo')
-
-    cmdHdr = CmdProcessing()
-    for key in cmds_list.iterkeys():
-        cmdHdr.register_cmd_handler(key, cmds_list[key])
-
-    cmdHdr.run_sys_input()

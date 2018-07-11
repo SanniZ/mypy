@@ -14,14 +14,10 @@ from debug import Debug as d
 class Code(object):
     def __init__(self, url):
         self._url = url
-
-        self._cmd_handlers = {
-            'url' : self.url_handler,
-        }
         d.dbg('Code init set url={}'.format(url))
 
-    def help(self, cmds=''):
-        for cmd in cmds.values():
+    def help(self, cmds):
+        for cmd in cmds:
             if cmd == 'help':
                 d.info('url:[init][,sync]')
                 d.info('  init: repo init source code')
@@ -40,48 +36,36 @@ class Code(object):
         if int(cpus) > 5:
             cpus = 5
 
-        cmd = r'repo sync -j{}'.format(cpus)
+        cmd = r'repo sync -j{n}'.format(n=cpus)
         d.info(cmd)
         subprocess.call(cmd, shell=True)
 
     def url_handler(self, cmds):
         d.dbg('url_handler: %s' % cmds)
-        t = type(cmds)
-        if t == dict:
-            for cmd in cmds.values():
-                if cmd == 'init':
-                    self.url_init()
-                elif cmd == 'sync':
-                    self.url_sync()
-        elif t == list:
-            for i in range(cmds):
-                if cmds[i] == 'init':
-                    self.url_init()
-                elif cmds[i] == 'sync':
-                    self.url_sync()
-        elif t == str:
-            if cmds == 'init':
+
+        for cmd in cmds:
+            if  cmd == 'init':
                 self.url_init()
-            elif cmds == 'sync':
+            elif  cmd == 'sync':
                 self.url_sync()
 
-    def get_handler(self, cmd):
-        if self._cmd_handlers.has_key(cmd) == True:
-            return self._cmd_handlers[cmd]
+    def get_cmd_handlers(self, cmd=None):
+        hdrs = {
+            'url' : self.url_handler,
+        }
+        if cmd == None:
+            return hdrs
         else:
-            return None
+            if hdrs.has_key(cmd) == True:
+                return hdrs[cmd]
+            else:
+                return None
 
 if __name__ == '__main__':
     from cmdprocessing import CmdProcessing
 
     #d.set_debug_level('dbg,info,err')
-    cmds_list = {} 
-
     code = Code(r'ssh://android.intel.com/h/hypervisor/manifests -b hypervisor/master')
-    cmds_list['url'] = code.get_handler('url')
-
     cmdHdr = CmdProcessing()
-    for key in cmds_list.iterkeys():
-        cmdHdr.register_cmd_handler(key, cmds_list[key])
-
+    cmdHdr.register_cmd_handler(code.get_cmd_handlers())
     cmdHdr.run_sys_input()

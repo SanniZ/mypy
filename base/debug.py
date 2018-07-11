@@ -9,25 +9,31 @@ Created on Fri Jul  6 12:24:15 2018
 import re
 
 class Debug(object):    
-    BIT_DBG  = (0x01 << 0)
-    BIT_INFO = (0x01 << 1)
-    BIT_ERR  = (0x01 << 2)
+    DBG  = (0x01 << 0)
+    INFO = (0x01 << 1)
+    WARN = (0x01 << 2)
+    ERR  = (0x01 << 4)
 
-    __PRINT_LEVEL = BIT_INFO | BIT_ERR
+    __PRINT_LEVEL = INFO | ERR
     
     @staticmethod
     def dbg(fmt):
-        if Debug.__PRINT_LEVEL & Debug.BIT_DBG:
+        if Debug.__PRINT_LEVEL & Debug.DBG:
             print(fmt)
 
     @staticmethod
     def info(fmt):
-        if Debug.__PRINT_LEVEL & Debug.BIT_INFO:
+        if Debug.__PRINT_LEVEL & Debug.INFO:
+            print(fmt)
+
+    @staticmethod
+    def warnning(fmt):
+        if Debug.__PRINT_LEVEL & Debug.WARN:
             print(fmt)
 
     @staticmethod
     def err(fmt):
-        if Debug.__PRINT_LEVEL & Debug.BIT_ERR:
+        if Debug.__PRINT_LEVEL & Debug.ERR:
             print(fmt)
 
     @staticmethod
@@ -37,19 +43,19 @@ class Debug(object):
             Debug.__PRINT_LEVEL = level
         elif t == str:
             if re.search('dbg', level) != None:
-                Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL | Debug.BIT_DBG
+                Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL | Debug.DBG
             else:
-                Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL & (~Debug.BIT_DBG)
+                Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL & (~Debug.DBG)
     
             if re.search('info', level) != None:
-                Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL | Debug.BIT_INFO
+                Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL | Debug.INFO
             else:
-                Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL & (~Debug.BIT_INFO)
+                Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL & (~Debug.INFO)
                 
             if re.search('err', level) != None:
-                Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL | Debug.BIT_ERR
+                Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL | Debug.ERR
             else:
-                Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL & (~Debug.BIT_ERR)
+                Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL & (~Debug.ERR)
         else:
             print('set_debug_level(): invalid input!')
 

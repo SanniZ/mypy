@@ -6,12 +6,14 @@ Created on Thu Jul  5 12:39:24 2018
 
 @author: Byng.Zeng
 """
-import subprocess, os
+import subprocess
 
 from debug import Debug as d
 from cmdprocessing import CmdProcessing
 from code import Code
 from linux import HwInfo
+from android import Android
+
 
 class AvbImage(object):
     def __init__(self):
@@ -19,11 +21,12 @@ class AvbImage(object):
 
     def avb_make_image(self, image):
         # copy image to flashfiles folder
-        cmd = r'cp {pdt}/{src}.img {flashfiles}/{tar}.img'.format(\
-            pdt=self._pdt, src=image, flashfiles=self._flashfiles, tar=image)
+        cmd = r'cp {out}/{src}.img {flashfiles}/{tar}.img'.format(\
+            out=self._out, src=image, flashfiles=self._flashfiles, tar=image)
         d.dbg(cmd)
         subprocess.call(cmd, shell=True)
 
+        d.dbg('avb make image now.')
         # uses avbtool to build image
         cmd = r'''
             out/host/linux-x86/bin/avbtool make_vbmeta_image --output %s/vbmeta.img \
@@ -40,15 +43,17 @@ class AvbImage(object):
         d.dbg(cmd)
         subprocess.call(cmd, shell=True)        
 
-class Broxton(AvbImage, Code):
-    images_map = {
+class Broxton(AvbImage, Code, Android):
+    make_map = {
         'clean' : 'clean',
         'boot' : 'bootimage',
-        'system' : 'bootimage',
-        'tos' : 'bootimage',
+        'system' : 'systemimage',
+        'tos' : 'tosimage',
+        'vendor' : 'vendorimage',
         'bootimage' : 'bootimage',
-        'systemimage' : 'bootimage',
-        'tosimage' : 'bootimage',
+        'systemimage' : 'systemimage',
+        'tosimage' : 'tosimage',
+        'vendorimage' : 'vendorimage',
         'flashfiles' : 'flashfiles',
         'all' : 'flashfiles',       
     }
@@ -61,7 +66,7 @@ class Broxton(AvbImage, Code):
         self._opt = opt
         self._user = user
         self._fw = r'ifwi_gr_mrb_b1.bin'
-        self._ioc = r'ioc_firmware_gp_mrb_fab_e_slcan.ias_ioc'
+        self._ioc = r'ioc_firmware_gp_mrb_fab_d_slcan.ias_ioc'
         if self._pdt != None and self._opt != None and self._user!= None:
             self._out = r'out/target/product/{pdt}'.format(pdt=self._pdt)
             self._flashfiles = r'{out}/{pdt}-flashfiles-eng.{user}'.format(\
@@ -69,20 +74,13 @@ class Broxton(AvbImage, Code):
         else:
             self._out = None
             self._flashfiles = None
-        
-        self._cmd_handlers = {
-            'help': self.help,
-            'make': self.make_image,
-            'flash' : self.flash_image,
-            'url' : self.url_handler,
-        }
 
         d.dbg('Broxton init done!')
 
-    def help(self, cmds=''):
+    def help(self, cmds):
         #super(Code, self).help(cmds)
         super(Broxton, self).help(cmds)
-        for cmd in cmds.values():
+        for cmd in cmds:
             if cmd == 'help':
                 d.info('make:[option][,option]')
                 d.info('  [option]:')
@@ -109,57 +107,60 @@ class Broxton(AvbImage, Code):
                 d.info('fw: {}'.format(self._fw))
                 d.info('ioc: {}'.format(self._ioc))
 
-    def create_build_script(self, image):
-        builds = r'''#!/bin/bash
+    def create_make_sh(self, image):
+        make_cmds = r'''#!/bin/bash
 rm -rf out/.lock
 device/intel/mixins/mixin-update
 . build/envsetup.sh
 lunch {pdt}-{opt}
 make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
-                            tgt=self.images_map[image], n=HwInfo().get_cups())
-        build_sh = r'.build_image.sh'
-        with open(build_sh, 'w') as f:
-            f.write(builds)
-        # run buildImage.sh
-        os.system(r'chmod a+x {}'.format(build_sh))
-        return build_sh
+                        tgt=self.make_map[image], n=HwInfo().get_cups())
+        make_sh = r'.make_image.sh'
+        with open(make_sh, 'w') as f:
+            f.write(make_cmds)
+        return make_sh
 
     def make_image(self, images):
-        d.dbg('Broxton.make_image: images {}'.format(images))
-        for image in images.values():
+        d.dbg('Broxton.make_image: {}'.format(images))
+        for image in images:
             d.dbg('create makesh for {}'.format(image))
-            build_sh = self.create_build_script(image)
-            cmd = r'./{}'.format(build_sh)
+            # create make sh
+            make_sh = self.create_make_sh(image)
+            # set run right
+            cmd = r'chmod a+x {}'.format(make_sh)
+            subprocess.call(cmd, shell=True)
+            # run make sh
+            cmd = r'./{}'.format(make_sh)
             d.dbg(cmd)
             subprocess.call(cmd, shell=True)
-            # rm build shell file
-            cmd = r'rm -rf {}'.format(build_sh)
+            # delete make sh
+            cmd = r'rm -rf {}'.format(make_sh)
             d.dbg(cmd)
-            subprocess.call(cmd, shell=True)   
+            subprocess.call(cmd, shell=True)
 
     def flash_image(self, images):
-        for image in images.values():
+        for image in images:
             if image == 'fw':
                 self.flash_firmware('{path}/{fw}'.format(path=self._flashfiles, fw=self._fw))
             elif image == 'ioc':
                 self.flash_ioc('{path}/{fw}'.format(path=self._flashfiles, fw=self._ioc))
             else:
                 # avb make images.
-                for image in images.values():
+                for image in images:
                     d.info('update image %s' % image)
                     self.avb_make_image(image)
                 # setup flash env
-                self.wait_adb()
-                self.reboot_bootloader()
+                #self.adb_wait()
+                #self.reboot_bootloader()
                 # unlock
-                self.lock(False)
+                #self.lock(False)
                 # flash image now
-                for image in images.values():
+                for image in images:
                     fimage = r'{}/{}.img' % (self._flashfiles, image)
-                    self.flash_image(image, fimage)
+                    #self.flash_image(image, fimage)
                 # lock device.
-                self.lock(True)
-                self.fastboot_reboot()
+                #self.lock(True)
+                #self.fastboot_reboot()
 
     def flash_firmware(self, fw):
         cmd = r'sudo /opt/intel/platformflashtool/bin/ias-spi-programmer --write {}'.format(fw)
@@ -171,24 +172,24 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
         d.info(cmd)
         subprocess.call(cmd, shell=True)
 
-    def get_handler(self, cmd):
-        if self._cmd_handlers.has_key(cmd) == True:
-            return self._cmd_handlers[cmd]
+    def get_cmd_handlers(self, cmd=None):
+        hdrs = {
+            'help': self.help,
+            'make': self.make_image,
+            'flash' : self.flash_image,
+            'url' : self.url_handler,
+        }
+        if cmd == None:
+            return hdrs
         else:
-            return None
+            if hdrs.has_key(cmd) == True:
+                return hdrs[cmd]
+            else:
+                return None
 
     def run(self):
-        cmds_list = {} 
-
-        cmds_list['help'] = self.get_handler('help')
-        cmds_list['url'] = self.get_handler('url')
-        cmds_list['make'] = self.get_handler('make')
-        cmds_list['flash'] = self.get_handler('flash')
-
         cmdHdr = CmdProcessing()
-        for key in cmds_list.iterkeys():
-            cmdHdr.register_cmd_handler(key, cmds_list[key])
-
+        cmdHdr.register_cmd_handler(self.get_cmd_handlers())
         cmdHdr.run_sys_input()
 
 if __name__ == '__main__':

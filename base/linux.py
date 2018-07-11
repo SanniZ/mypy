@@ -7,50 +7,55 @@ Created on Thu Jul  5 11:21:29 2018
 @author: Byng.Zeng
 """
 import subprocess
+import socket
+
 from debug import Debug as d
 
 class HwInfo(object):
     def __init__(self):
-        self._cmd_handlers = {
-            'help' : self.help,
-            'hwinfo' : self.get_cups,
-        }
+        d.dbg('HwInfo init done!')
 
-    def help(self, cmds=''):
-        for cmd in cmds.values():
+    def help(self, cmds):
+        for cmd in cmds:
             if cmd == 'help':
-                d.info('hwinfo:[ncpu]')
+                d.info('hwinfo:[ncpu][,ip]')
                 d.info('  ncpu: get number of CPU')
+                d.info('  ip: get host IP address')
 
     def get_cups(self, cmds=None):
         cmd = r'cat /proc/cpuinfo | grep "processor"| wc -l'
         d.dbg(cmd)
         return int(subprocess.check_output(cmd, shell=True))
 
+    def get_host_ip(self, cmds=None):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(('8.8.8.8', 80))
+            ip = s.getsockname()[0]
+        finally:
+            s.close()
+
+        return ip
+
     def hwinfo_handler(self, cmds):
-        for cmd in cmds.values():
+        for cmd in cmds:
             if cmd == 'ncpu':
                 d.info(self.get_cups())
+            elif cmd == 'ip':
+                d.info(self.get_host_ip())
 
-    def get_handler(self, cmd):
-        if cmd == 'all':
-            return self._cmd_handlers
-        elif self._cmd_handlers.has_key(cmd) == True:
-            return self._cmd_handlers[cmd]
-        else:
-            return None
+    def get_cmd_handlers(self, cmd=None):
+        return {
+            'help' : self.help,
+            'hwinfo' : self.hwinfo_handler,
+        }
 
 class FileOps(object):
     def __init__(self):
-        self._cmd_handlers = {
-            'help' : self.help,
-            'del'  : self.del_handler,
-            'fdel' : self.fdel_handler,
-            'find' : self.find_handler,
-        }
+        d.dbg('FileOps init done!') 
 
-    def help(self, cmds=''):
-        for cmd in cmds.values():
+    def help(self, cmds):
+        for cmd in cmds:
             if cmd == 'help':
                 d.info('del:[xxx][,xxx]')
                 d.info('  xxx: xxx file will be delete.')
@@ -67,7 +72,7 @@ class FileOps(object):
         return subprocess.call(cmd, shell=True)
 
     def del_handler(self, cmds):
-        for cmd in cmds.values():
+        for cmd in cmds:
             self.delete(cmd)
 
     def find(self, path, name):
@@ -83,7 +88,7 @@ class FileOps(object):
             d.err('Error: %s' % e)
 
     def find_delete(self, path, name):
-        cmd = r'find %s -name %s | xargs rm -rf {}\;' % (path, name)
+        cmd = r'find %s -name %s | xargs rm -rf {}' % (path, name)
         d.dbg(cmd)
         return subprocess.call(cmd, shell=True)
 
@@ -94,33 +99,28 @@ class FileOps(object):
         except KeyError as e:
             d.err('Error: %s' % e)
 
-    def get_handler(self, cmd):
-        if self._cmd_handlers.has_key(cmd) == True:
-            return self._cmd_handlers[cmd]
+    def get_cmd_handlers(self, cmd=None):
+        hdrs = {
+            'help' : self.help,
+            'del'  : self.del_handler,
+            'fdel' : self.fdel_handler,
+            'find' : self.find_handler,
+        }
+        if cmd == None:
+            return hdrs
         else:
-            return None
+            if hdrs.has_key(cmd) == True:
+                return hdrs[cmd]
+            else:
+                return None
 
 if __name__ == '__main__':
     from cmdprocessing import CmdProcessing
 
     #d.set_debug_level('dbg,info,err')
-    cmds_list = {}
-    helps = {}
-
-
     hw = HwInfo()
-    helps['hwinfo'] = hw.get_handler('help')
-    cmds_list['hwinfo'] = hw.get_handler('hwinfo')
-
     fops = FileOps()
-    helps['fops'] = fops.get_handler('help')
-    cmds_list['help'] = helps
-    cmds_list['del'] = fops.get_handler('del')
-    cmds_list['fdel'] = fops.get_handler('fdel')
-    cmds_list['find'] = fops.get_handler('find')
-
     cmdHdr = CmdProcessing()
-    for key in cmds_list.iterkeys():
-        cmdHdr.register_cmd_handler(key, cmds_list[key])
-
+    cmdHdr.register_cmd_handler(hw.get_cmd_handlers())
+    cmdHdr.register_cmd_handler(fops.get_cmd_handlers())
     cmdHdr.run_sys_input()

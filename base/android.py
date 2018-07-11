@@ -12,19 +12,15 @@ from debug import Debug as d
 
 class Android(object):
     def __init__(self):
-        self._cmd_handlers = {
-            'help' : self.help,
-            'adb' : self.adb_handler,
-            'fastboot' : self.fastboot_handler,
-        }
         d.dbg('Android init done.')    
     
     def help(self, cmds):
-        for cmd in cmds.values():
+        for cmd in cmds:
             if cmd == 'help':
                 d.info('adb:[option][,option]')
                 d.info('  [option]:')
                 d.info('  wait: wait for adb device')
+                d.info('  root: run adb root')
                 d.info('  device: show adb device')
                 d.info('  reboot: reboot device')
                 d.info('  rebloader: reboot bootloader')
@@ -37,6 +33,11 @@ class Android(object):
 
     def adb_wait(self):
         cmd = r'adb wait-for-device'
+        d.dbg(cmd)
+        subprocess.call(cmd, shell=True)
+
+    def adb_root(self):
+        cmd = r'adb root'
         d.dbg(cmd)
         subprocess.call(cmd, shell=True)
 
@@ -57,9 +58,11 @@ class Android(object):
 
     def adb_handler(self, cmds):
         d.dbg('adb_handlers: %s' % cmds)
-        for cmd in cmds.values():
+        for cmd in cmds:
             if cmd == 'wait':
                 self.adb_wait()
+            elif cmd == 'root':
+                self.adb_root()
             elif cmd == 'device':
                 self.adb_device()
             elif cmd == 'reboot':
@@ -87,7 +90,7 @@ class Android(object):
         subprocess.call(cmd, shell=True)
 
     def fastboot_handler(self, cmds):
-        for cmd in cmds.values():
+        for cmd in cmds:
             if cmd == 'reboot':
                 self.fastboot_reboot()
             elif cmd == 'lock':
@@ -98,28 +101,26 @@ class Android(object):
                 image=r''
                 self.flash_image(cmd, cmd, image)
 
-    def get_handler(self, cmd):
-        if cmd == 'all':
-            return self._cmd_handlers
-        elif self._cmd_handlers.has_key(cmd) == True:
-            return self._cmd_handlers[cmd]
+    def get_cmd_handlers(self, cmd=None):
+        hdrs = {
+            'help' : self.help,
+            'adb' : self.adb_handler,
+            'fastboot' : self.fastboot_handler,
+        }
+        if cmd == None:
+            return hdrs
         else:
-            return None
+            if hdrs.has_key(cmd) == True:
+                return hdrs[cmd]
+            else:
+                return None
 
 
 if __name__ == '__main__':
     from cmdprocessing import CmdProcessing
 
     #d.set_debug_level('dbg,info,err')
-    cmds_list = {} 
-    
     ad = Android()
-    cmds_list['help'] = ad.get_handler('help')
-    cmds_list['adb'] = ad.get_handler('adb')
-    cmds_list['fastboot'] = ad.get_handler('fastboot')
-   
     cmdHdr = CmdProcessing()
-    for key in cmds_list.iterkeys():
-        cmdHdr.register_cmd_handler(key, cmds_list[key])
-    
+    cmdHdr.register_cmd_handler(ad.get_cmd_handlers())
     cmdHdr.run_sys_input()
