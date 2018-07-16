@@ -13,8 +13,9 @@ class Parser(object):
         d.dbg('Parser init done.')   
 
     def parser_cmd_args(self, cmds):
-        re_dict = re.compile(r'^([a-z0-9]{1,8}):([a-z,_0-9./*]{0,32})$')
-        output = {}
+        re_dict = re.compile(r'^([\w]+):([\w,\.\/\*]+)$')
+        re_argv = re.compile(r'[\w\.\/\*]+')
+        output = dict()
 
         if len(cmds) == 0:
             cmds=['help:help']
@@ -23,29 +24,20 @@ class Parser(object):
             if re.search(':', cmd) != None: # dict type
                 k, v = re_dict.match(cmd).groups()
                 d.dbg((k,v))
-                output[k]= self.parser_args(v)
-            elif re.search(',', cmd) != None: # str type
-                output = self.parser_args(cmd)
+                if output.has_key(k):
+                    for x in re_argv.findall(v):
+                        output[k].append(x)
+                else:
+                    output[k]= re_argv.findall(v)
             else:
-                output = self.parser_args(cmd)
+                if output.has_key(None):
+                    for x in re_argv.findall(cmd):
+                        output[None].append(x)
+                else:
+                    output[None] = re_argv.findall(cmd)
 
         d.dbg(output)
         return output
-
-    def parser_args(self, argv):
-        reArgv = re.compile(r'^([a-z,_0-9./*]{0,32}),([a-z,_0-9./*]{0,32})$')
-        output = []
-        while argv:
-            if re.search(',', argv) == None:
-                output.append(argv)
-                argv = 0
-            else:
-                k, v = reArgv.match(argv).groups()
-                argv = v
-                output.append(k)
-
-        d.dbg(output)
-        return output 
 
 class Input(Parser):
     def __init__(self):

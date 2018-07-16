@@ -59,12 +59,12 @@ class FileOps(object):
             if cmd == 'help':
                 d.info('del:[xxx][,xxx]')
                 d.info('  xxx: xxx file will be delete.')
-                d.info('fdel:path,file')
-                d.info('  path: which path to find.')
-                d.info('  file: which file be delete.')
-                d.info('find:path,file')
-                d.info('  path: which path to find.')
-                d.info('  file: which file be find.')
+                d.info('fdel:[path,]file')
+                d.info('  path: path to be find, not set to ./')
+                d.info('  file: file to be delete.')
+                d.info('find:[path,]file')
+                d.info('  path: path to find, not set to ./')
+                d.info('  file: file to be find.')
 
     def delete(self, f):
         cmd = r'rm -rf %s' % f
@@ -83,7 +83,11 @@ class FileOps(object):
     def find_handler(self, cmds):
         d.dbg('find_handler: {}'.format(cmds))
         try:
-            self.find(cmds[0], cmds[1])
+            n = len(cmds)
+            if n == 1:
+                self.find('./', cmds[0])
+            elif n >= 2:
+                self.find(cmds[0], cmds[1])
         except KeyError as e:
             d.err('Error: %s' % e)
 
@@ -95,7 +99,11 @@ class FileOps(object):
     def fdel_handler(self, cmds):
         d.dbg('fdel_handler: {}'.format(cmds))
         try:
-            self.find_delete(cmds[0], cmds[1])
+            n = len(cmds)
+            if n == 1:
+                self.find_delete('./', cmds[0])
+            elif n >= 2:
+                self.find_delete(cmds[0], cmds[1])
         except KeyError as e:
             d.err('Error: %s' % e)
 

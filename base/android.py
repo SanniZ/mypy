@@ -33,7 +33,7 @@ class Android(object):
 
     def adb_wait(self):
         cmd = r'adb wait-for-device'
-        d.dbg(cmd)
+        d.info(cmd)
         subprocess.call(cmd, shell=True)
 
     def adb_root(self):

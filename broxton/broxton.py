@@ -17,7 +17,7 @@ from android import Android
 
 class AvbImage(object):
     def __init__(self):
-        d.dbg('AvbImage init done!')
+        d.dbg('avbImage init done.')
 
     def avb_make_image(self, image):
         # copy image to flashfiles folder
@@ -27,23 +27,23 @@ class AvbImage(object):
         subprocess.call(cmd, shell=True)
 
         d.dbg('avb make image now.')
-        # uses avbtool to build image
-        cmd = r'''
-            out/host/linux-x86/bin/avbtool make_vbmeta_image --output %s/vbmeta.img \
-            --include_descriptors_from_image %s/boot.img \
-            --include_descriptors_from_image %s/system.img \
-            --include_descriptors_from_image %s/vendor.img \
-            --include_descriptors_from_image %s/tos.img \
-            --key $TEST_KEY_PATH/testkey_rsa4096.pem --algorithm SHA256_RSA4096
-            ''' % (self._flashfiles,
-                   self._flashfiles,
-                   self._flashfiles,
-                   self._flashfiles,
-                   self._flashfiles)
+        cmd = r'''out/host/linux-x86/bin/avbtool make_vbmeta_image \
+                    --output {}/vbmeta.img \
+                    --include_descriptors_from_image {}/boot.img \
+                    --include_descriptors_from_image {}/system.img \
+                    --include_descriptors_from_image {}/vendor.img \
+                    --include_descriptors_from_image {}/tos.img \
+                    --key external/avb/test/data/testkey_rsa4096.pem \
+                    --algorithm SHA256_RSA4096'''.format(
+            self._flashfiles,
+            self._flashfiles,
+            self._flashfiles,
+            self._flashfiles,
+            self._flashfiles)
         d.dbg(cmd)
-        subprocess.call(cmd, shell=True)        
+        subprocess.call(cmd, shell=True)
 
-class Broxton(AvbImage, Code, Android):
+class Broxton(AvbImage, Code):
     make_map = {
         'clean' : 'clean',
         'boot' : 'bootimage',
@@ -98,7 +98,6 @@ class Broxton(AvbImage, Code, Android):
                 d.info('  fw    : flash firmware')
                 d.info('  ioc   : flash ioc')
             elif cmd == 'cfg':
-                d.info('url: {}'.format(self._url))
                 d.info('pdt: {}'.format(self._pdt))
                 d.info('opt: {}'.format(self._opt))
                 d.info('user: {}'.format(self._user))
@@ -138,7 +137,8 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
             d.dbg(cmd)
             subprocess.call(cmd, shell=True)
 
-    def flash_image(self, images):
+    def flash_images(self, images):
+        fimgs = list()
         for image in images:
             if image == 'fw':
                 self.flash_firmware('{path}/{fw}'.format(path=self._flashfiles, fw=self._fw))
@@ -146,37 +146,41 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
                 self.flash_ioc('{path}/{fw}'.format(path=self._flashfiles, fw=self._ioc))
             else:
                 # avb make images.
-                for image in images:
-                    d.info('update image %s' % image)
-                    self.avb_make_image(image)
-                # setup flash env
-                #self.adb_wait()
-                #self.reboot_bootloader()
-                # unlock
-                #self.lock(False)
-                # flash image now
-                for image in images:
-                    fimage = r'{}/{}.img' % (self._flashfiles, image)
-                    #self.flash_image(image, fimage)
-                # lock device.
-                #self.lock(True)
-                #self.fastboot_reboot()
+                d.info('update image %s' % image)
+                self.avb_make_image(image)
+                fimgs.append(image)
+        # flash images.
+        if len(fimgs) != 0:
+            # setup flash env
+            ad = Android()
+            #ad.adb_wait()
+            ad.reboot_bootloader()
+            # unlock
+            ad.lock(False)
+            # flash image now
+            for image in fimgs:
+                fimage = r'{}/{}.img'.format(self._flashfiles, image)
+                d.dbg('fastboot flash {} {}'.format(image, fimage))
+                ad.flash_image(image, fimage)
+            # lock device.
+            ad.lock(True)
+            ad.fastboot_reboot()
 
     def flash_firmware(self, fw):
         cmd = r'sudo /opt/intel/platformflashtool/bin/ias-spi-programmer --write {}'.format(fw)
         d.info(cmd)
-        subprocess.call(cmd, shell=True)
+        #subprocess.call(cmd, shell=True)
     
     def flash_ioc(self, ioc):
         cmd = r'sudo /opt/intel/platformflashtool/bin/ioc_flash_server_app -s /dev/ttyUSB2 -grfabc -t {}'.format(ioc)
         d.info(cmd)
-        subprocess.call(cmd, shell=True)
+        #subprocess.call(cmd, shell=True)
 
     def get_cmd_handlers(self, cmd=None):
         hdrs = {
             'help': self.help,
             'make': self.make_image,
-            'flash' : self.flash_image,
+            'flash' : self.flash_images,
             'url' : self.url_handler,
         }
         if cmd == None:
@@ -193,7 +197,7 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
         cmdHdr.run_sys_input()
 
 if __name__ == '__main__':
-    #d.set_debug_level('dbg,info,err')
+    #d.set_debug_level(7)
     URL = r'ssh://android.intel.com/manifests -b android/master -m r0'
     PDT = r'gordon_peak'
     OPT = r'userdebug'

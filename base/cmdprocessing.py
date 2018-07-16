@@ -38,14 +38,20 @@ class CmdProcessing(object):
                         d.info('  cfg : show config info')
 
             if self._cmds_list.has_key(key) == True:
+                d.dbg(self._cmds_list[key])
                 if type(self._cmds_list[key]) == dict:
                     sub_cmds = self._cmds_list[key]
                     for sub_key in sub_cmds.iterkeys():
                         f = sub_cmds[sub_key]
                         d.dbg(f(cmds[key]))
                 else:
-                    f = self._cmds_list[key]
-                    d.dbg(f(cmds[key]))
+                    t = type(self._cmds_list[key])
+                    if t == list:
+                        for f in self._cmds_list[key]:
+                            d.dbg(f(cmds[key]))
+                    else:
+                        f = self._cmds_list[key]
+                        d.dbg(f(cmds[key]))
             else:
                 d.err('No handler for: %s' % key)
 
