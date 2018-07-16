@@ -13,8 +13,8 @@ class Parser(object):
         d.dbg('Parser init done.')   
 
     def parser_cmd_args(self, cmds):
-        re_dict = re.compile(r'^([\w]+):([\w,\.\/\*]+)$')
-        re_argv = re.compile(r'[\w\.\/\*]+')
+        re_dict = re.compile(r'^([\w]+):([\w,\.\/\*\|]+)$')
+        re_argv = re.compile(r'[\w\.\/\*\|]+')
         output = dict()
 
         if len(cmds) == 0:

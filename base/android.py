@@ -30,6 +30,11 @@ class Android(object):
                 d.info('  lock: lock device')
                 d.info('  unlock: unlock device')
                 d.info('  xxx: fastboot flash xxx image')
+                d.info('log:logcat/dmesg/kmsg[,xxx]')
+                d.info('  logcat: get logcat debug info')
+                d.info('  dmesg : get dmesg debug info')
+                d.info('  kmsg  : get kmsg debug info')
+                d.info('  xxx   : grep xxx debug info')
 
     def adb_wait(self):
         cmd = r'adb wait-for-device'
@@ -101,11 +106,38 @@ class Android(object):
                 image=r''
                 self.flash_image(cmd, cmd, image)
 
+    def print_log(self, log_type, text=None):
+        if log_type == 'logcat':
+            cmd = 'adb logcat'
+        elif log_type == 'dmesg':
+            cmd = 'adb shell dmesg'
+        elif log_type == 'kmsg':
+            cmd = 'adb shell cat /proc/kmsg'
+        else:
+            d.err('unknown type!')
+            return
+
+        if text != None and len(text) != 0:
+            for i in range(len(text)):
+                if i == 0:
+                    txt = text[i]
+                else:
+                    txt=r'{}|{}'.format(txt, text[i])
+            cmd = r' {} | grep --color -iE "{}"'.format(cmd, txt)
+
+        d.info(cmd)
+        self.adb_root()
+        subprocess.call(cmd, shell=True)
+
+    def log_handlers(self,cmds):
+        self.print_log(cmds[0], cmds[1:])
+
     def get_cmd_handlers(self, cmd=None):
         hdrs = {
             'help' : self.help,
             'adb' : self.adb_handler,
             'fastboot' : self.fastboot_handler,
+            'log' : self.log_handlers,
         }
         if cmd == None:
             return hdrs
