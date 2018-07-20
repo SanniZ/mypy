@@ -66,7 +66,7 @@ class Broxton(AvbImage, Code):
         self._opt = opt
         self._user = user
         self._fw = r'ifwi_gr_mrb_b1.bin'
-        self._ioc = r'ioc_firmware_gp_mrb_fab_d_slcan.ias_ioc'
+        self._ioc = r'ioc_firmware_gp_mrb_fab_e_slcan.ias_ioc'
         if self._pdt != None and self._opt != None and self._user!= None:
             self._out = r'out/target/product/{pdt}'.format(pdt=self._pdt)
             self._flashfiles = r'{out}/{pdt}-flashfiles-eng.{user}'.format(\
@@ -151,6 +151,7 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
                 fimgs.append(image)
         # flash images.
         if len(fimgs) != 0:
+            fimgs.append('vbmeta')
             # setup flash env
             ad = Android()
             #ad.adb_wait()
@@ -160,7 +161,7 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
             # flash image now
             for image in fimgs:
                 fimage = r'{}/{}.img'.format(self._flashfiles, image)
-                d.dbg('fastboot flash {} {}'.format(image, fimage))
+                #d.info('fastboot flash {} {}'.format(image, fimage))
                 ad.flash_image(image, fimage)
             # lock device.
             ad.lock(True)
@@ -169,12 +170,12 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
     def flash_firmware(self, fw):
         cmd = r'sudo /opt/intel/platformflashtool/bin/ias-spi-programmer --write {}'.format(fw)
         d.info(cmd)
-        #subprocess.call(cmd, shell=True)
+        subprocess.call(cmd, shell=True)
     
     def flash_ioc(self, ioc):
         cmd = r'sudo /opt/intel/platformflashtool/bin/ioc_flash_server_app -s /dev/ttyUSB2 -grfabc -t {}'.format(ioc)
         d.info(cmd)
-        #subprocess.call(cmd, shell=True)
+        subprocess.call(cmd, shell=True)
 
     def get_cmd_handlers(self, cmd=None):
         hdrs = {
