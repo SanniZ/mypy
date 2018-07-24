@@ -75,10 +75,11 @@ class Broxton(AvbImage, Code):
             self._out = None
             self._flashfiles = None
 
+        self._cmdHdrs = CmdProcessing()
+        self._cmdHdrs.register_cmd_handler(self.__get_cmd_handlers())
         d.dbg('Broxton init done!')
 
     def help(self, cmds):
-        #super(Code, self).help(cmds)
         super(Broxton, self).help(cmds)
         for cmd in cmds:
             if cmd == 'help':
@@ -97,6 +98,8 @@ class Broxton(AvbImage, Code):
                 d.info('  vendor: flash vendorimage')
                 d.info('  fw    : flash firmware')
                 d.info('  ioc   : flash ioc')
+                d.info('mmm:xxx')
+                d.info('   xxx: mmm xxx dir')
             elif cmd == 'cfg':
                 d.info('pdt: {}'.format(self._pdt))
                 d.info('opt: {}'.format(self._opt))
@@ -114,7 +117,7 @@ device/intel/mixins/mixin-update
 lunch {pdt}-{opt}
 make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
                         tgt=self.make_map[image], n=HwInfo().get_cups())
-        make_sh = r'.make_image.sh'
+        make_sh = r'.make.sh'
         with open(make_sh, 'w') as f:
             f.write(make_cmds)
         return make_sh
@@ -177,12 +180,42 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
         d.info(cmd)
         subprocess.call(cmd, shell=True)
 
-    def get_cmd_handlers(self, cmd=None):
+    def create_mmm_sh(self, target):
+        make_cmds = r'''#!/bin/bash
+rm -rf out/.lock
+device/intel/mixins/mixin-update
+. build/envsetup.sh
+lunch {pdt}-{opt}
+mmm {tgt}'''.format(pdt=self._pdt, opt=self._opt,tgt=target)
+        make_sh = r'.mmm.sh'
+        with open(make_sh, 'w') as f:
+            f.write(make_cmds)
+        return make_sh
+
+    def mmm_handler(self, cmds):
+        for tgt in cmds:
+            d.dbg('create mmm sh for {}'.format(tgt))
+            # create make sh
+            mmm_sh = self.create_mmm_sh(tgt)
+            # set run right
+            cmd = r'chmod a+x {}'.format(mmm_sh)
+            subprocess.call(cmd, shell=True)
+            # run make sh
+            cmd = r'./{}'.format(mmm_sh)
+            d.dbg(cmd)
+            subprocess.call(cmd, shell=True)
+            # delete make sh
+            cmd = r'rm -rf {}'.format(mmm_sh)
+            d.dbg(cmd)
+            subprocess.call(cmd, shell=True)
+
+    def __get_cmd_handlers(self, cmd=None):
         hdrs = {
             'help': self.help,
             'make': self.make_image,
             'flash' : self.flash_images,
             'url' : self.url_handler,
+            'mmm' : self.mmm_handler,
         }
         if cmd == None:
             return hdrs
@@ -193,9 +226,7 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
                 return None
 
     def run(self):
-        cmdHdr = CmdProcessing()
-        cmdHdr.register_cmd_handler(self.get_cmd_handlers())
-        cmdHdr.run_sys_input()
+        self._cmdHdrs.run_sys_input()
 
 if __name__ == '__main__':
     #d.set_debug_level(7)
