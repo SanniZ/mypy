@@ -23,14 +23,15 @@ class Fpc(Broxton):
         super(Fpc, self).help(cmds)
         for cmd in cmds:
             if cmd == 'help':
-                d.info('mmm:ftest')
-                d.info('  ftest: build fingerprint test binary')
+                d.info('make:mmm,ftest')
+                d.info('  build fingerprint test binary')
 
-    def mmm_handler(self, cmds):
-        if len(cmds) == 1 and cmds[0] == 'ftest':
-            cmds[0] = r'vendor/intel/hardware/fingerprint/fingerprint_tac/normal'
+    def make_image(self, images):
+        for i in range(len(images)):
+            if images[i] == 'mmm' and images[i + 1] == 'ftest':
+                images[i + 1] = r'vendor/intel/hardware/fingerprint/fingerprint_tac/normal'
 
-        super(Fpc, self).mmm_handler(cmds)
+        super(Fpc, self).make_image(images)
 
 if __name__ == '__main__':
     fpc = Fpc()
