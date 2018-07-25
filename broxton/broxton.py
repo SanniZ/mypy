@@ -66,7 +66,7 @@ class Broxton(AvbImage, Code):
         self._opt = opt
         self._user = user
         self._fw = r'ifwi_gr_mrb_b1.bin'
-        self._ioc = r'ioc_firmware_gp_mrb_fab_e_slcan.ias_ioc'
+        self._ioc = r'ioc_firmware_gp_mrb_fab_d_slcan.ias_ioc'
         if self._pdt != None and self._opt != None and self._user!= None:
             self._out = r'out/target/product/{pdt}'.format(pdt=self._pdt)
             self._flashfiles = r'{out}/{pdt}-flashfiles-eng.{user}'.format(\
