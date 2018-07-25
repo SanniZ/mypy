@@ -90,6 +90,7 @@ class Broxton(AvbImage, Code):
                 d.info('  system: make systemimage')
                 d.info('  tos   : make tosimage')
                 d.info('  vendor: make vendorimage')
+                d.info('  mmm,xxx: make xxx dir')
                 d.info('flash:[option][,option]')
                 d.info('  [option]:')
                 d.info('  boot  : flash bootimage')
@@ -98,8 +99,6 @@ class Broxton(AvbImage, Code):
                 d.info('  vendor: flash vendorimage')
                 d.info('  fw    : flash firmware')
                 d.info('  ioc   : flash ioc')
-                d.info('mmm:xxx')
-                d.info('  xxx: mmm xxx dir')
             elif cmd == 'cfg':
                 d.info('pdt: {}'.format(self._pdt))
                 d.info('opt: {}'.format(self._opt))
