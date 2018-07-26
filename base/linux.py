@@ -37,17 +37,17 @@ class HwInfo(object):
 
         return ip
 
-    def hwinfo_handler(self, cmds):
+    def hwif_handler(self, cmds):
         for cmd in cmds:
             if cmd == 'ncpu':
                 d.info(self.get_cups())
             elif cmd == 'ip':
                 d.info(self.get_host_ip())
 
-    def get_cmd_handlers(self, cmd=None):
+    def hwif_get_cmd_handlers(self, cmd=None):
         return {
             'help' : self.help,
-            'hwinfo' : self.hwinfo_handler,
+            'hwinfo' : self.hwif_handler,
         }
 
 class FileOps(object):
@@ -107,7 +107,7 @@ class FileOps(object):
         except KeyError as e:
             d.err('Error: %s' % e)
 
-    def get_cmd_handlers(self, cmd=None):
+    def fops_get_cmd_handlers(self, cmd=None):
         hdrs = {
             'help' : self.help,
             'del'  : self.del_handler,
@@ -126,9 +126,9 @@ if __name__ == '__main__':
     from cmdprocessing import CmdProcessing
 
     #d.set_debug_level('dbg,info,err')
-    hw = HwInfo()
+    hwif = HwInfo()
     fops = FileOps()
     cmdHdr = CmdProcessing()
-    cmdHdr.register_cmd_handler(hw.get_cmd_handlers())
-    cmdHdr.register_cmd_handler(fops.get_cmd_handlers())
+    cmdHdr.register_cmd_handler(hwif.hwif_get_cmd_handlers())
+    cmdHdr.register_cmd_handler(fops.fops_get_cmd_handlers())
     cmdHdr.run_sys_input()

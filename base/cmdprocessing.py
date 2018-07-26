@@ -18,12 +18,12 @@ class CmdProcessing(object):
         if handlers != None and type(handlers) == dict:
             for key in handlers.keys():
                 if self._cmds_list.has_key(key):
-                    hdrs = []
+                    hdrs = list()
                     hdrs.append(self._cmds_list[key])
                     hdrs.append(handlers[key])
                     self._cmds_list[key] = hdrs
                 else:
-                    self._cmds_list[key] = handlers[key]                
+                    self._cmds_list[key] = handlers[key]
 
     # run input commands
     def run(self, cmds):

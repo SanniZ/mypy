@@ -76,7 +76,8 @@ class Broxton(AvbImage, Code):
             self._flashfiles = None
 
         self._cmdHdrs = CmdProcessing()
-        self._cmdHdrs.register_cmd_handler(self.__get_cmd_handlers())
+        self._cmdHdrs.register_cmd_handler(self.broxton_get_cmd_handlers())
+        self._cmdHdrs.register_cmd_handler(self.code_get_cmd_handlers())
         d.dbg('Broxton init done!')
 
     def help(self, cmds):
@@ -90,7 +91,7 @@ class Broxton(AvbImage, Code):
                 d.info('  system: make systemimage')
                 d.info('  tos   : make tosimage')
                 d.info('  vendor: make vendorimage')
-                d.info('  mmm,xxx: make xxx dir')
+                d.info('  mmm#xxx: make xxx dir')
                 d.info('flash:[option][,option]')
                 d.info('  [option]:')
                 d.info('  boot  : flash bootimage')
@@ -122,12 +123,19 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
         return make_sh
 
     def create_mmm_sh(self, target):
+        # convert to string
+        t = type(target)
+        if t == list:
+            tgt = str(target[0]) # only support first arg.
+        else:
+            tgt = target
+
         make_cmds = r'''#!/bin/bash
 rm -rf out/.lock
 device/intel/mixins/mixin-update
 . build/envsetup.sh
 lunch {pdt}-{opt}
-mmm {tgt}'''.format(pdt=self._pdt, opt=self._opt,tgt=target)
+mmm {tgt}'''.format(pdt=self._pdt, opt=self._opt,tgt=tgt)
         make_sh = r'.make.sh'
         with open(make_sh, 'w') as f:
             f.write(make_cmds)
@@ -138,11 +146,12 @@ mmm {tgt}'''.format(pdt=self._pdt, opt=self._opt,tgt=target)
         make_sh = None
         for image in images:
             d.dbg('create makesh for {}'.format(image))
-            if image == 'mmm':
-                make_sh = 'mmm'
-                continue
-            elif make_sh == 'mmm':
-                make_sh = self.create_mmm_sh(image)
+            if type(image) is dict:
+                if image.has_key('mmm') == True:
+                    make_sh = self.create_mmm_sh(image['mmm'])
+                else:
+                    d.err('Not support: %s' % str(image))
+                    exit()
             else:
                 make_sh = self.create_make_sh(image)
 
@@ -198,12 +207,11 @@ mmm {tgt}'''.format(pdt=self._pdt, opt=self._opt,tgt=target)
         d.info(cmd)
         subprocess.call(cmd, shell=True)
 
-    def __get_cmd_handlers(self, cmd=None):
+    def broxton_get_cmd_handlers(self, cmd=None):
         hdrs = {
             'help': self.help,
             'make': self.make_image,
             'flash' : self.flash_images,
-            'url' : self.url_handler,
         }
         if cmd == None:
             return hdrs

@@ -13,30 +13,43 @@ class Parser(object):
         d.dbg('Parser init done.')   
 
     def parser_cmd_args(self, cmds):
-        re_dict = re.compile(r'^([\w]+):([\w,\.\/\*\|]+)$')
-        re_argv = re.compile(r'[\w\.\/\*\|]+')
+        re_dict = re.compile(r'^([\w]+):([\w,\.\/\*\|#]+)$')
+        re_args = re.compile(r'[\w\.\/\*\|#]+')
+        re_argv = re.compile('^([\w]+)#([\w,\.\/\*\|]+)$')
         output = dict()
 
         if len(cmds) == 0:
             cmds=['help:help']
 
         for cmd in cmds:
-            if re.search(':', cmd) != None: # dict type
-                k, v = re_dict.match(cmd).groups()
+            dict_cmds = re_dict.match(cmd)
+            if dict_cmds != None: # dict type
+                k, v = dict_cmds.groups()
                 d.dbg((k,v))
                 if output.has_key(k):
-                    for x in re_argv.findall(v):
+                    for x in re_args.findall(v):
                         output[k].append(x)
                 else:
-                    output[k]= re_argv.findall(v)
+                    output[k] = re_args.findall(v)
             else:
-                if output.has_key(None):
-                    for x in re_argv.findall(cmd):
-                        output[None].append(x)
+                k = None
+                if output.has_key(k):
+                    for x in re_args.findall(cmd):
+                        output[k].append(x)
                 else:
-                    output[None] = re_argv.findall(cmd)
+                    output[k] = re_args.findall(cmd)
 
-        d.dbg(output)
+            # parse # argv
+            list_argv = output[k]
+            for index in range(len(list_argv)):
+                find_argv = re_argv.match(list_argv[index])
+                if find_argv != None:
+                    dict_argv = dict()
+                    argv = find_argv.groups()
+                    dict_argv[argv[0]] = list(argv[1:])
+                    list_argv[index] = dict_argv
+
+        d.dbg('parser_cmd_args(): %s' % output)
         return output
 
 class Input(Parser):

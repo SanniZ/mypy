@@ -49,7 +49,7 @@ class Code(object):
             elif  cmd == 'sync':
                 self.url_sync()
 
-    def get_cmd_handlers(self, cmd=None):
+    def code_get_cmd_handlers(self, cmd=None):
         hdrs = {
             'url' : self.url_handler,
         }
@@ -67,5 +67,5 @@ if __name__ == '__main__':
     #d.set_debug_level('dbg,info,err')
     code = Code(r'ssh://android.intel.com/h/hypervisor/manifests -b hypervisor/master')
     cmdHdr = CmdProcessing()
-    cmdHdr.register_cmd_handler(code.get_cmd_handlers())
+    cmdHdr.register_cmd_handler(code.code_get_cmd_handlers())
     cmdHdr.run_sys_input()
