@@ -22,4 +22,4 @@ class GordonPeak(Broxton):
 
 if __name__ == '__main__':
     gp = GordonPeak()
-    gp.run()
+    gp.run_sys_input()

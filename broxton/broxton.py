@@ -213,6 +213,7 @@ mmm {tgt}'''.format(pdt=self._pdt, opt=self._opt,tgt=tgt)
             'make': self.make_image,
             'flash' : self.flash_images,
         }
+
         if cmd == None:
             return hdrs
         else:
@@ -221,15 +222,13 @@ mmm {tgt}'''.format(pdt=self._pdt, opt=self._opt,tgt=tgt)
             else:
                 return None
 
-    def run(self):
+    def run_sys_input(self):
         self._cmdHdrs.run_sys_input()
 
 if __name__ == '__main__':
-    #d.set_debug_level(7)
-    URL = r'ssh://android.intel.com/manifests -b android/master -m r0'
-    PDT = r'gordon_peak'
-    OPT = r'userdebug'
-    USR = r'yingbin'
+    bxt = Broxton(r'ssh://android.intel.com/manifests -b android/master -m r0',
+                  r'gordon_peak',
+                  r'userdebug',
+                  r'yingbin')
 
-    bxt = Broxton(URL, PDT, OPT, USR)
-    bxt.run()
+    bxt.run_sys_input()

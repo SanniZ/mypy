@@ -13,14 +13,16 @@ from code import Code
 from debug import Debug as d
 from cmdprocessing import CmdProcessing
 
-
-
 class Cwp(Code):
     URL = r'ssh://android.intel.com/h/hypervisor/manifests -b hypervisor/master'
 
     def __init__(self,url=URL):
         super(Cwp, self).__init__(url)
         self._url = url
+
+        # create cmd process
+        self._cmdHdrs = CmdProcessing()
+        self._cmdHdrs.register_cmd_handler(self.get_cmd_handlers())
         d.dbg('Cwp init done!')
 
     def help(self, cmds):
@@ -64,12 +66,8 @@ class Cwp(Code):
             else:
                 return None
             
-    def run(self):
-        cmdHdr = CmdProcessing()
-        cmdHdr.register_cmd_handler(self.get_cmd_handlers())
-        cmdHdr.run_sys_input()
 
 if __name__ == '__main__':
     #d.set_debug_level('dbg,info,err')
     cwp = Cwp()
-    cwp.run()
+    cwp._cmdHdrs.run_sys_input()

@@ -22,4 +22,4 @@ class Acrn(Broxton):
 
 if __name__ == '__main__':
     acrn = Acrn()
-    acrn.run()
+    acrn.run_sys_input()

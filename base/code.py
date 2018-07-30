@@ -19,18 +19,18 @@ class Code(object):
     def help(self, cmds):
         for cmd in cmds:
             if cmd == 'help':
-                d.info('url:[init][,sync]')
+                d.info('repo:[init][,sync]')
                 d.info('  init: repo init source code')
                 d.info('  sync: repo sync source code')
             elif cmd == 'cfg':
                 d.info('url: {}'.format(self._url))
 
-    def url_init(self):
+    def repo_init(self):
         cmd = r'repo init -u %s' % self._url
         d.info(cmd)
         subprocess.call(cmd, shell=True)
 
-    def url_sync(self):
+    def repo_sync(self):
         hw = HwInfo()
         cpus = hw.get_cups()
         if int(cpus) > 5:
@@ -40,18 +40,18 @@ class Code(object):
         d.info(cmd)
         subprocess.call(cmd, shell=True)
 
-    def url_handler(self, cmds):
-        d.dbg('url_handler: %s' % cmds)
+    def repo_handler(self, cmds):
+        d.dbg('repo_handler: %s' % cmds)
 
         for cmd in cmds:
             if  cmd == 'init':
-                self.url_init()
+                self.repo_init()
             elif  cmd == 'sync':
-                self.url_sync()
+                self.repo_sync()
 
     def code_get_cmd_handlers(self, cmd=None):
         hdrs = {
-            'url' : self.url_handler,
+            'repo' : self.repo_handler,
         }
         if cmd == None:
             return hdrs
@@ -62,10 +62,10 @@ class Code(object):
                 return None
 
 if __name__ == '__main__':
-    from cmdprocessing import CmdProcessing
-
     #d.set_debug_level('dbg,info,err')
     code = Code(r'ssh://android.intel.com/h/hypervisor/manifests -b hypervisor/master')
+
+    from cmdprocessing import CmdProcessing
     cmdHdr = CmdProcessing()
     cmdHdr.register_cmd_handler(code.code_get_cmd_handlers())
     cmdHdr.run_sys_input()
