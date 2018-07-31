@@ -132,7 +132,7 @@ class Android(object):
     def log_handlers(self,cmds):
         self.print_log(cmds[0], cmds[1:])
 
-    def android_get_cmd_handlers(self, cmd=None):
+    def get_cmd_handlers(self, cmd=None):
         hdrs = {
             'help' : self.help,
             'adb' : self.adb_handler,
@@ -154,5 +154,5 @@ if __name__ == '__main__':
     #d.set_debug_level('dbg,info,err')
     ad = Android()
     cmdHdr = CmdProcessing()
-    cmdHdr.register_cmd_handler(ad.android_get_cmd_handlers())
+    cmdHdr.register_cmd_handler(ad.get_cmd_handlers())
     cmdHdr.run_sys_input()

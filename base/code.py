@@ -49,8 +49,9 @@ class Code(object):
             elif  cmd == 'sync':
                 self.repo_sync()
 
-    def code_get_cmd_handlers(self, cmd=None):
+    def get_cmd_handlers(self, cmd=None):
         hdrs = {
+            'help' : self.help,
             'repo' : self.repo_handler,
         }
         if cmd == None:
@@ -67,5 +68,5 @@ if __name__ == '__main__':
 
     from cmdprocessing import CmdProcessing
     cmdHdr = CmdProcessing()
-    cmdHdr.register_cmd_handler(code.code_get_cmd_handlers())
+    cmdHdr.register_cmd_handler(code.get_cmd_handlers())
     cmdHdr.run_sys_input()

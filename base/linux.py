@@ -44,7 +44,7 @@ class HwInfo(object):
             elif cmd == 'ip':
                 d.info(self.get_host_ip())
 
-    def hwif_get_cmd_handlers(self, cmd=None):
+    def get_cmd_handlers(self, cmd=None):
         return {
             'help' : self.help,
             'hwinfo' : self.hwif_handler,
@@ -107,7 +107,7 @@ class FileOps(object):
         except KeyError as e:
             d.err('Error: %s' % e)
 
-    def fops_get_cmd_handlers(self, cmd=None):
+    def get_cmd_handlers(self, cmd=None):
         hdrs = {
             'help' : self.help,
             'del'  : self.del_handler,
@@ -129,6 +129,6 @@ if __name__ == '__main__':
     hwif = HwInfo()
     fops = FileOps()
     cmdHdr = CmdProcessing()
-    cmdHdr.register_cmd_handler(hwif.hwif_get_cmd_handlers())
-    cmdHdr.register_cmd_handler(fops.fops_get_cmd_handlers())
+    cmdHdr.register_cmd_handler(hwif.get_cmd_handlers())
+    cmdHdr.register_cmd_handler(fops.get_cmd_handlers())
     cmdHdr.run_sys_input()

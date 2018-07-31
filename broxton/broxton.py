@@ -16,9 +16,6 @@ from android import Android
 
 
 class AvbImage(object):
-    def __init__(self):
-        d.dbg('avbImage init done.')
-
     def avb_make_image(self, image):
         # copy image to flashfiles folder
         cmd = r'cp {out}/{src}.img {flashfiles}/{tar}.img'.format(\
@@ -43,7 +40,7 @@ class AvbImage(object):
         d.dbg(cmd)
         subprocess.call(cmd, shell=True)
 
-class Broxton(AvbImage, Code):
+class Broxton(object):
     make_map = {
         'clean' : 'clean',
         'boot' : 'bootimage',
@@ -75,13 +72,10 @@ class Broxton(AvbImage, Code):
             self._out = None
             self._flashfiles = None
 
-        self._cmdHdrs = CmdProcessing()
-        self._cmdHdrs.register_cmd_handler(self.broxton_get_cmd_handlers())
-        self._cmdHdrs.register_cmd_handler(self.code_get_cmd_handlers())
+        self.__register_cmd_handlers()
         d.dbg('Broxton init done!')
 
     def help(self, cmds):
-        super(Broxton, self).help(cmds)
         for cmd in cmds:
             if cmd == 'help':
                 d.info('make:[option][,option]')
@@ -169,6 +163,7 @@ mmm {tgt}'''.format(pdt=self._pdt, opt=self._opt,tgt=tgt)
 
     def flash_images(self, images):
         fimgs = list()
+        avb = None
         for image in images:
             if image == 'fw':
                 self.flash_firmware('{path}/{fw}'.format(path=self._flashfiles, fw=self._fw))
@@ -177,7 +172,9 @@ mmm {tgt}'''.format(pdt=self._pdt, opt=self._opt,tgt=tgt)
             else:
                 # avb make images.
                 d.info('update image %s' % image)
-                self.avb_make_image(image)
+                if avb == None:
+                    avb = AvbImage()
+                avb.avb_make_image(image)
                 fimgs.append(image)
         # flash images.
         if len(fimgs) != 0:
@@ -207,7 +204,7 @@ mmm {tgt}'''.format(pdt=self._pdt, opt=self._opt,tgt=tgt)
         d.info(cmd)
         subprocess.call(cmd, shell=True)
 
-    def broxton_get_cmd_handlers(self, cmd=None):
+    def get_cmd_handlers(self, cmd=None):
         hdrs = {
             'help': self.help,
             'make': self.make_image,
@@ -221,6 +218,12 @@ mmm {tgt}'''.format(pdt=self._pdt, opt=self._opt,tgt=tgt)
                 return hdrs[cmd]
             else:
                 return None
+
+    def __register_cmd_handlers(self):
+        self._cmdHdrs = CmdProcessing()
+        self._code = Code(self._url)
+        self._cmdHdrs.register_cmd_handler(self._code.get_cmd_handlers())
+        self._cmdHdrs.register_cmd_handler(self.get_cmd_handlers())
 
     def run_sys_input(self):
         self._cmdHdrs.run_sys_input()
