@@ -29,7 +29,7 @@ class Fpc(Broxton):
     def make_image(self, images):
         for image in images:
             if type(image) == dict:
-                if image.has_key('mmm') == True and image['mmm'] == 'ftest':
+                if image.has_key('mmm') == True and image['mmm'][0] == 'ftest':
                     image['mmm'] = r'vendor/intel/hardware/fingerprint/fingerprint_tac/normal'
 
         super(Fpc, self).make_image(images)
