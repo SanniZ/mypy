@@ -16,10 +16,10 @@ from android import Android
 
 
 class AvbImage(object):
-    def avb_make_image(self, image):
+    def avb_make_image(self, image, broxton):
         # copy image to flashfiles folder
         cmd = r'cp {out}/{src}.img {flashfiles}/{tar}.img'.format(\
-            out=self._out, src=image, flashfiles=self._flashfiles, tar=image)
+            out=broxton._out, src=image, flashfiles=broxton._flashfiles, tar=image)
         d.dbg(cmd)
         subprocess.call(cmd, shell=True)
 
@@ -32,11 +32,11 @@ class AvbImage(object):
                     --include_descriptors_from_image {}/tos.img \
                     --key external/avb/test/data/testkey_rsa4096.pem \
                     --algorithm SHA256_RSA4096'''.format(
-            self._flashfiles,
-            self._flashfiles,
-            self._flashfiles,
-            self._flashfiles,
-            self._flashfiles)
+            broxton._flashfiles,
+            broxton._flashfiles,
+            broxton._flashfiles,
+            broxton._flashfiles,
+            broxton._flashfiles)
         d.dbg(cmd)
         subprocess.call(cmd, shell=True)
 
@@ -174,7 +174,7 @@ mmm {tgt}'''.format(pdt=self._pdt, opt=self._opt,tgt=tgt)
                 d.info('update image %s' % image)
                 if avb == None:
                     avb = AvbImage()
-                avb.avb_make_image(image)
+                avb.avb_make_image(image, self)
                 fimgs.append(image)
         # flash images.
         if len(fimgs) != 0:
