@@ -171,7 +171,7 @@ mmm {tgt}'''.format(pdt=self._pdt, opt=self._opt,tgt=tgt)
                 self.flash_ioc('{path}/{fw}'.format(path=self._flashfiles, fw=self._ioc))
             else:
                 # avb make images.
-                d.info('update image %s' % image)
+                d.info('update %s image' % image)
                 if avb == None:
                     avb = AvbImage()
                 avb.avb_make_image(image, self)
