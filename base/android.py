@@ -118,26 +118,49 @@ class Android(object):
             return
 
         if text != None and len(text) != 0:
+            filter_cnt=0
             for i in range(len(text)):
-                if i == 0:
-                    txt = text[i]
+                if text[i] == 'all':
+                    cmd = r' {}'.format(cmd)
+                    break;
+                elif text[i] == 'root':
+                    subprocess.call(r'adb root', shell=True)
+                    continue
+                elif text[i] == 'reset':
+                    subprocess.call(r'reset', shell=True)
+                    continue
+                elif text[i] == 'clear' or text[i] == 'clr':
+                    subprocess.call(r'clear', shell=True)
+                    continue
                 else:
-                    txt=r'{}|{}'.format(txt, text[i])
-            cmd = r' {} | grep --color -iE "{}"'.format(cmd, txt)
+                    if filter_cnt == 0:
+                        txt = text[i]
+                    else:
+                        txt=r'{}|{}'.format(txt, text[i])
+                    filter_cnt+=1
 
-        d.info(cmd)
-        self.adb_root()
-        subprocess.call(cmd, shell=True)
+            cmd = r'{} | grep --color -iE "{}"'.format(cmd, txt)
+            d.info(cmd)
+            #self.adb_root()
+            subprocess.call(cmd, shell=True)
 
-    def log_handlers(self,cmds):
-        self.print_log(cmds[0], cmds[1:])
+    def logcat_handlers(self,cmds):
+        self.print_log('logcat', cmds)
+
+    def dmesg_handlers(self,cmds):
+        self.print_log('dmesg', cmds)
+
+    def kmsg_handlers(self,cmds):
+        self.print_log('kmsg', cmds)
 
     def get_cmd_handlers(self, cmd=None):
         hdrs = {
             'help' : self.help,
             'adb' : self.adb_handler,
             'fastboot' : self.fastboot_handler,
-            'log' : self.log_handlers,
+            'logcat' : self.logcat_handlers,
+            'dmesg'  : self.dmesg_handlers,
+            'kmsg'   : self.kmsg_handlers,
         }
         if cmd == None:
             return hdrs
