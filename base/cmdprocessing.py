@@ -19,7 +19,9 @@ class CmdProcessing(object):
             for key in handlers.keys():
                 if self._cmds_list.has_key(key):
                     hdrs = list()
-                    hdrs.append(self._cmds_list[key])
+                    if type(self._cmds_list[key]) == list:
+                        for hdr in self._cmds_list[key]:
+                            hdrs.append(hdr)
                     hdrs.append(handlers[key])
                     self._cmds_list[key] = hdrs
                 else:
