@@ -30,11 +30,21 @@ class Android(object):
                 d.info('  lock: lock device')
                 d.info('  unlock: unlock device')
                 d.info('  xxx: fastboot flash xxx image')
-                d.info('log:logcat/dmesg/kmsg[,xxx]')
-                d.info('  logcat: get logcat debug info')
-                d.info('  dmesg : get dmesg debug info')
-                d.info('  kmsg  : get kmsg debug info')
-                d.info('  xxx   : grep xxx debug info')
+                d.info('logcat: [wait][,root][,clr][,xxx]')
+                d.info('  wait: wait for adb device')
+                d.info('  root: run adb root')
+                d.info('  clr : clear screen display')
+                d.info('  xxx : grep xxx')
+                d.info('dmesg : [wait][,root][,clr][,xxx]')
+                d.info('  wait: wait for adb device')
+                d.info('  root: run adb root')
+                d.info('  clr : clear screen display')
+                d.info('  xxx : grep xxx')
+                d.info('kmsg  : [wait][,root][,clr][,xxx]')
+                d.info('  wait: wait for adb device')
+                d.info('  root: run adb root')
+                d.info('  clr : clear screen display')
+                d.info('  xxx : grep xxx')
 
     def adb_wait(self):
         cmd = r'adb wait-for-device'
@@ -123,11 +133,11 @@ class Android(object):
                 if text[i] == 'all':
                     cmd = r' {}'.format(cmd)
                     break;
+                elif text[i] == 'wait':
+                    subprocess.call(r'adb wait-for-device', shell=True)
+                    continue
                 elif text[i] == 'root':
                     subprocess.call(r'adb root', shell=True)
-                    continue
-                elif text[i] == 'reset':
-                    subprocess.call(r'reset', shell=True)
                     continue
                 elif text[i] == 'clear' or text[i] == 'clr':
                     subprocess.call(r'clear', shell=True)
