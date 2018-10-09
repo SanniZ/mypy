@@ -104,16 +104,15 @@ class Broxton(object):
                 d.info('ioc: {}'.format(self._ioc))
 
     def create_make_sh(self, image):
-        make_cmds = r'''#!/bin/bash
-rm -rf out/.lock
-device/intel/mixins/mixin-update
-. build/envsetup.sh
-lunch {pdt}-{opt}
-make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
-                        tgt=self.make_map[image], n=HwInfo().get_cups())
         make_sh = r'.make.sh'
         with open(make_sh, 'w') as f:
-            f.write(make_cmds)
+            f.write("#!/bin/bash\n")
+            f.write("rm -rf out/.lock\n")
+            f.write("device/intel/mixins/mixin-update\n")
+            f.write(". build/envsetup.sh\n")
+            f.write("lunch {pdt}-{opt}\n".format(pdt=self._pdt, opt=self._opt))
+            f.write("make {tgt} -j{n}\n".format(tgt=self.make_map[image], n=HwInfo().get_cups()))
+
         return make_sh
 
     def create_mmm_sh(self, target):
@@ -124,15 +123,15 @@ make {tgt} -j{n}'''.format(pdt=self._pdt, opt=self._opt,\
         else:
             tgt = target
 
-        make_cmds = r'''#!/bin/bash
-rm -rf out/.lock
-device/intel/mixins/mixin-update
-. build/envsetup.sh
-lunch {pdt}-{opt}
-mmm {tgt}'''.format(pdt=self._pdt, opt=self._opt,tgt=tgt)
         make_sh = r'.make.sh'
         with open(make_sh, 'w') as f:
-            f.write(make_cmds)
+            f.write("#!/bin/bash\n")
+            f.write("rm -rf out/.lock\n")
+            f.write("device/intel/mixins/mixin-update\n")
+            f.write(". build/envsetup.sh\n")
+            f.write("lunch {pdt}-{opt}\n".format(pdt=self._pdt, opt=self._opt))
+            f.write("mmm {tgt}\n".format(tgt=tgt))
+
         return make_sh
 
     def make_image(self, images):
