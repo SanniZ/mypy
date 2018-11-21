@@ -93,6 +93,8 @@ class Calendar(object):
                 self._combineFiles=True
             elif name == r'-f':
                 self._fmt=value.upper()
+                if self._fmt != Calendar.TYPE_TXT or self._fmt != Calendar.TYPE_CSV:
+                    self.stopAndExit("Error, unsupport format!")
             elif name == r'-r':
                 if value == r'True':
                     self._sortReverse=True
