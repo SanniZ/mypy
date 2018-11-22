@@ -58,7 +58,7 @@ class fingerprintPatch(object):
                 self._patch=self.getAbsPath(value)
             elif name == r'-o':
                 self._opt=value
-        
+
 
     # get abs path.
     def getAbsPath(self, path):
@@ -156,9 +156,9 @@ class fingerprintPatch(object):
 
     # enterance of app
     def main(self):
-        # get user input  
+        # get user input
         self.getUserInput()
- 
+
         if self._source == None or self._patch == None or self._opt == None:
             self.errorExit('Error, invalid input, run -h to get help!')
 

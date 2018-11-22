@@ -19,9 +19,10 @@ class Code(object):
     def help(self, cmds):
         for cmd in cmds:
             if cmd == 'help':
-                d.info('repo:[init][,sync]')
-                d.info('  init: repo init source code')
-                d.info('  sync: repo sync source code')
+                d.info('repo:[init][,sync|fsync]')
+                d.info('  init : repo init source code')
+                d.info('  sync : repo sync source code')
+                d.info('  fsync: repo sync source code with -f')
             elif cmd == 'cfg':
                 d.info('url: {}'.format(self._url))
 
@@ -30,13 +31,16 @@ class Code(object):
         d.info(cmd)
         subprocess.call(cmd, shell=True)
 
-    def repo_sync(self):
+    def repo_sync(self, force=False):
         hw = HwInfo()
         cpus = hw.get_cups()
         if int(cpus) > 5:
             cpus = 5
 
-        cmd = r'repo sync -j{n}'.format(n=cpus)
+        if force == True:
+            cmd = r'repo sync -j{n} -f'.format(n=cpus)
+        else:
+            cmd = r'repo sync -j{n}'.format(n=cpus)
         d.info(cmd)
         subprocess.call(cmd, shell=True)
 
@@ -44,10 +48,12 @@ class Code(object):
         d.dbg('repo_handler: %s' % cmds)
 
         for cmd in cmds:
-            if  cmd == 'init':
+            if cmd == 'init':
                 self.repo_init()
-            elif  cmd == 'sync':
+            elif cmd == 'sync':
                 self.repo_sync()
+            elif cmd == 'fsync':
+                self.repo_sync(True)
 
     def get_cmd_handlers(self, cmd=None):
         hdrs = {
