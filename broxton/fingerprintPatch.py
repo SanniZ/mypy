@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 # -*- coding: utf-8 -*-
 """
 Created on 2018-11-22
@@ -78,7 +77,7 @@ class fingerprintPatch(object):
                         dirs.append(rt)
                         break
         if len(dirs) != 0:
-            return dirs
+            return sorted(dirs)
         else:
             return None
 
