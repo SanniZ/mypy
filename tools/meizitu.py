@@ -150,7 +150,9 @@ class Meizitu(object):
                 for i in range(len(pic_list)):
                     pic_url = pic_list[i][0]
                     self.save_pic_urllib(subpath, pic_url)
-
+                # write web info.
+                with open(os.path.join(subpath, 'web.txt'), 'w') as f:
+                    f.write( '%s\n%s' % (title, url))
 
 if __name__ == "__main__":
     mz = Meizitu()
