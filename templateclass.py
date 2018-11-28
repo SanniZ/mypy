@@ -16,5 +16,5 @@ class Template(object):
         pass
 
 if __name__ == '__main__':
-    temp=Template()
+    temp = Template()
     temp.main()

@@ -19,9 +19,9 @@ RE_SUMMARY = r'SUMMARY:.+'
 RE_DESCRIPTION = r'DESCRIPTION:.+'
 RE_CALNAME = r'X-WR-CALNAME:.+'
 
-TYPE_ICS = r'ICS'
-TYPE_CSV = r'CSV'
-TYPE_TXT = r'TXT'
+TYPE_ICS = r'ics'
+TYPE_CSV = r'csv'
+TYPE_TXT = r'txt'
 
 # print msg and exit
 def stop_and_exit(msg=None):
@@ -40,7 +40,7 @@ def get_abs_path(path):
 
 # get external name of file.
 def get_ext_name(f):
-    return os.path.splitext(f)[1][1:].upper()
+    return os.path.splitext(f)[1][1:].lower()
 
 
 class _ICSCalendarEvent(object):
@@ -200,7 +200,7 @@ class ICSCalendar(object):
                 elif name == r'-c':
                     self._combine_files = True
                 elif name == r'-f':
-                    fmt = value.upper()
+                    fmt = value.lower()
                     if fmt == TYPE_TXT or fmt == TYPE_CSV:
                         self._fmt = fmt
                     else:

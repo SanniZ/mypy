@@ -6,17 +6,37 @@ Created on 2018-11-22
 @author: Byng Zeng
 """
 
-import re, os, sys, getopt
+import sys
+import os
+import getopt
 import subprocess
 import shutil
 
-class fingerprintPatch(object):
-    def __init__(self):
-        self._source=None
-        self._patch=None
-        self._opt=None
+# print msg and exit
+def stop_and_exit(msg=None):
+    if msg != None:
+        print msg
+    # stop runing and exit.
+    exit()
 
-    def printHelp(self):
+# get abs path.
+def get_abs_path(path):
+    if path[0:1] == r'.':
+         path = path.replace(r'.', os.getcwd(), 1)
+    return path
+
+# get external name of file.
+def get_ext_name(f):
+    return os.path.splitext(f)[1].lower()
+
+
+class FingerprintPatch(object):
+    def __init__(self):
+        self._source = None
+        self._patch = None
+        self._opt = None
+
+    def print_help(self):
         print '======================================'
         print '     For fingerprint Patch'
         print '======================================'
@@ -31,49 +51,32 @@ class fingerprintPatch(object):
         print '    ghal: get prebuild files of fingerprint HAL'
         print '    gta : get prebuild files of fingerprint TA'
 
-
-    # print msg and exit
-    def errorExit(self, msg=None):
-        if msg != None:
-            print msg
-        # stop runing and exit.
-        exit()
-
-
     # get user input.
-    def getUserInput(self):
+    def get_user_input(self):
         try:
             opts, args = getopt.getopt(sys.argv[1:], "hs:p:o:")
         except getopt.GetoptError:
-            self.printHelp()
+            self.print_help()
         # process input value
         for name, value in opts:
             if name == r'-h':
-                self.printHelp()
-                self.errorExit()
+                self.print_help()
+                stop_and_exit()
             elif name == r'-s':
-                self._source=self.getAbsPath(value)
+                self._source = self.get_abs_path(value)
             elif name == r'-p':
-                self._patch=self.getAbsPath(value)
+                self._patch = self.get_abs_path(value)
             elif name == r'-o':
-                self._opt=value
-
-
-    # get abs path.
-    def getAbsPath(self, path):
-        if path[0:1] == r'.':
-             path=path.replace(r'.', os.getcwd(), 1)
-        return path
-
+                self._opt = value
 
     # get dirs of patch path.
-    def getDirsOfPatch(self):
-        dirs=[]
+    def get_dirs_of_patch(self):
+        dirs = list()
         for rt, ds, fs in os.walk(self._patch):
             if len(fs) != 0 :
                 for f in fs:
-                    if os.path.splitext(f)[1] == r'.patch':
-                        rt=rt.replace(self._patch, '')
+                    if get_ext_name(f) == r'.patch':
+                        rt = rt.replace(self._patch, '')
                         dirs.append(rt)
                         break
         if len(dirs) != 0:
@@ -83,20 +86,20 @@ class fingerprintPatch(object):
 
 
     # run git am to apply all of .patch
-    def applyDirsPatch(self, dirs):
+    def apply_patch_of_dirs(self, dirs):
         if dirs == None:
             print 'Error, no dir!'
         else:
             for d in dirs:
                 print '--------------------------------------------------'
                 print 'apply patch: %s\n' % os.path.join(self._source, d)
-                cmd='cd %s && git am %s/*.patch' % (os.path.join(self._source, d), os.path.join(self._patch, d))
+                cmd = 'cd %s && git am %s/*.patch' % (os.path.join(self._source, d), os.path.join(self._patch, d))
                 subprocess.call(cmd, shell=True)
 
 
     # get all of fingerprint HAL prebuild files.
-    def getHalPrebuildFiles(self):
-        files_of_prebuild=[
+    def get_hal_prebuild_files(self):
+        files_of_prebuild = [
             'system/etc/permissions/android.hardware.fingerprint.xml',
             'system/framework/android.hardware.biometrics.fingerprint-V2.1-java.jar',
             'system/framework/com.fingerprints.extension-V1.0-java.jar',
@@ -126,10 +129,10 @@ class fingerprintPatch(object):
         ]
         # copy files.
         for f in files_of_prebuild:
-            src=os.path.join(self._source, f)
-            tgt=os.path.join(self._patch, f)
+            src = os.path.join(self._source, f)
+            tgt = os.path.join(self._patch, f)
             # create dir
-            dt=os.path.split(tgt)[0]
+            dt = os.path.split(tgt)[0]
             if os.path.exists(dt) != True:
                 os.makedirs(dt)
             # copy file here
@@ -137,16 +140,16 @@ class fingerprintPatch(object):
 
 
     # get all of TA prebuild files.
-    def getTaPrebuildFiles(self):
-        files_of_prebuild=[
+    def get_ta_prebuild_files(self):
+        files_of_prebuild = [
             'obj/trusty/build-sand-x86-64/user_tasks/sand/fpcfingerprint/build/build.elf',
         ]
         # copy files.
         for f in files_of_prebuild:
-            src=os.path.join(self._source, f)
-            tgt=os.path.join(self._patch, 'fingerprint/fingerprint.elf')
+            src = os.path.join(self._source, f)
+            tgt = os.path.join(self._patch, 'fingerprint/fingerprint.elf')
             # create dir
-            dt=os.path.split(tgt)[0]
+            dt = os.path.split(tgt)[0]
             if os.path.exists(dt) != True:
                 os.makedirs(dt)
             # copy file here
@@ -156,25 +159,25 @@ class fingerprintPatch(object):
     # enterance of app
     def main(self):
         # get user input
-        self.getUserInput()
+        self.get_user_input()
 
         if self._source == None or self._patch == None or self._opt == None:
-            self.errorExit('Error, invalid input, run -h to get help!')
+            stop_and_exit('Error, invalid input, run -h to get help!')
 
         if self._opt == r'am':
             # get dirs of patch.
-            dirs=self.getDirsOfPatch()
+            dirs = self.get_dirs_of_patch()
             if dirs != None:
-                self.applyDirsPatch(dirs)
+                self.apply_patch_of_dirs(dirs)
             else:
                 print 'No found .patch file!'
         elif self._opt == r'ghal':
-            self.getHalPrebuildFiles()
+            self.get_hal_prebuild_files()
         elif self._opt == r'gta':
-            self.getTaPrebuildFiles()
+            self.get_ta_prebuild_files()
         else:
-            self.errorExit('Error, unsupport %s' % self._opt)
+            stop_and_exit('Error, unsupport %s' % self._opt)
 
 if __name__ == '__main__':
-    patch=fingerprintPatch()
+    patch = FingerprintPatch()
     patch.main()

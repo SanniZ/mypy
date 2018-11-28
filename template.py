@@ -6,4 +6,7 @@ Created on 2018-11-15
 @author: Byng Zeng
 """
 
-import re, os, sys, getopt
+import re
+import os
+import sys
+import getopt
