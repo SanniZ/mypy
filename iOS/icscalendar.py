@@ -191,45 +191,45 @@ class ICSCalendar(object):
         except getopt.GetoptError:
             stop_and_exit('Invalid input, -h for help.')
         # process input value
-	if len(opts) == 0 and len(args) != 0:
-            stop_and_exit('Invalid input, -h for help.')
-	else:
-            for name, value in opts:
-                if name == r'-h':
-                    ICSCalendar.print_help()
-                elif name == r'-c':
-                    self._combine_files = True
-                elif name == r'-f':
-                    fmt = value.lower()
-                    if fmt == TYPE_TXT or fmt == TYPE_CSV:
-                        self._fmt = fmt
-                    else:
-                        stop_and_exit("Error, unsupport format!")
-                elif name == r'-r':
-                    if value == r'True':
-                        self._sort_reverse = True
-                    else:
-                        self._sort_reverse = False
-                elif name == r'-s':
-                    # set _src to list
-                    if self._src == None:
-                        self._src = list()
-                    # get src files
-                    fs = self.get_src_files(get_abs_path(value))
-                    if fs != None:
-                       # add fs to _src
-                       for f in fs:
-                           self._src.append(f)
-                elif name == r'-t':
-                    ext_name = get_ext_name(get_abs_path(value))
-                    if ext_name == TYPE_TXT or ext_name == TYPE_CSV:
-                        self._tgt = get_abs_path(value)
+        if len(opts) == 0 and len(args) != 0:
+                stop_and_exit('Invalid input, -h for help.')
+        else:
+                for name, value in opts:
+                    if name == r'-h':
+                        ICSCalendar.print_help()
+                    elif name == r'-c':
                         self._combine_files = True
-                        self._fmt = ext_name
+                    elif name == r'-f':
+                        fmt = value.lower()
+                        if fmt == TYPE_TXT or fmt == TYPE_CSV:
+                            self._fmt = fmt
+                        else:
+                            stop_and_exit("Error, unsupport format!")
+                    elif name == r'-r':
+                        if value == r'True':
+                            self._sort_reverse = True
+                        else:
+                            self._sort_reverse = False
+                    elif name == r'-s':
+                        # set _src to list
+                        if self._src == None:
+                            self._src = list()
+                        # get src files
+                        fs = self.get_src_files(get_abs_path(value))
+                        if fs != None:
+                           # add fs to _src
+                           for f in fs:
+                               self._src.append(f)
+                    elif name == r'-t':
+                        ext_name = get_ext_name(get_abs_path(value))
+                        if ext_name == TYPE_TXT or ext_name == TYPE_CSV:
+                            self._tgt = get_abs_path(value)
+                            self._combine_files = True
+                            self._fmt = ext_name
+                        else:
+                            self._tgt = get_abs_path(value)
                     else:
-                        self._tgt = get_abs_path(value)
-                else:
-                    stop_and_exit('Error, unknown %s %s' % (name, value))
+                        stop_and_exit('Error, unknown %s %s' % (name, value))
 
     # check input args
     def check_opt_args(self):
