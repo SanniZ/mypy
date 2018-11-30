@@ -9,6 +9,7 @@
 # --------------------------
 
 import os
+import re
 import subprocess
 import shutil
 import operator as op
@@ -39,8 +40,9 @@ class ConfigXubuntuDesktop(object):
              lines = f.readlines()
          # insert xfce4-session
          for i in range(len(lines)):
-             if lines[i].find('/etc/X11/Xsessioin') != -1:
+             if re.match('. /etc/X11/Xsessioin', lines[i]) != None:
                  lines.insert(i, 'xfce4-session\n')
+                 break
          # update startwm.
          with open(startwm, 'w') as f:
              for line in lines:
