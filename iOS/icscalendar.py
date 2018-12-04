@@ -31,7 +31,7 @@ def print_exit(msg=None):
     exit()
 
 # get external name of file.
-def get_ename(f):
+def get_exname(f):
     return os.path.splitext(f)[1][1:].lower()
 
 
@@ -119,7 +119,7 @@ class ICSCalendar(object):
         for root, dirs, files in os.walk(path):
             if len(files) != 0:
                 for f in files:
-                    if get_ename(f) == TYPE_ICS:
+                    if get_exname(f) == TYPE_ICS:
                         if fs == None:
                             fs = list()
                         fs.append(os.path.join(root, f))
@@ -143,7 +143,7 @@ class ICSCalendar(object):
     def get_src_files(cls, path):
         fs = None
         if os.path.exists(path) == True:
-            if os.path.isfile(path) == True and get_ename(path) == TYPE_ICS:
+            if os.path.isfile(path) == True and get_exname(path) == TYPE_ICS:
                 fs = list()
                 fs.append(path)
             elif os.path.isdir(path) == True:
@@ -213,7 +213,7 @@ class ICSCalendar(object):
                            for f in fs:
                                self._src.append(f)
                     elif name == r'-t':
-                        ext_name = get_ename(os.path.abspath(value))
+                        ext_name = get_exname(os.path.abspath(value))
                         if ext_name == TYPE_TXT or ext_name == TYPE_CSV:
                             self._tgt = os.path.abspath(value)
                             self._combine_files = True
@@ -243,7 +243,7 @@ class ICSCalendar(object):
 
     # get name of output
     def get_output_name(self, fmt):
-        if get_ename(self._tgt) == fmt:
+        if get_exname(self._tgt) == fmt:
             name = self._tgt
         elif self._combine_files == True:
 	        name = r'%s/%s.%s' % (self._tgt, u'日历', fmt.lower())

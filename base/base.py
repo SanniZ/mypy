@@ -1,30 +1,61 @@
 #!/usr/bin/python
-
 # -*- coding: utf-8 -*-
 """
-Created on Mon Aug 13 09:51:42 2018
+Created on 2018-12-04
 
-@author: Byng.Zeng
+@author: Byng Zeng
 """
 
+import os
 
-from cmdprocessing import CmdProcessing
-from android import Android
-from linux import HwInfo, FileOps
+class MyBase (object):
 
-class MyPY(object):
-    def __init__(self):
-        self._cmd_prc = CmdProcessing()
+	@classmethod
+	# print msg and exit
+	def print_exit(cls, msg=None):
+		if msg != None:
+		    print msg
+		# stop runing and exit.
+		exit()
 
-    def register_cmd_handlers(self):      
-        self._cmd_prc.register_cmd_handler(Android().get_cmd_handlers())        
-        self._cmd_prc.register_cmd_handler(HwInfo().get_cmd_handlers()) 
-        self._cmd_prc.register_cmd_handler(FileOps().get_cmd_handlers()) 
+	@classmethod
+	def get_exname(cls, f):
+		return os.path.splitext(f)[1].lower()
 
-    def main(self):
-        self.register_cmd_handlers();
-        self._cmd_prc.run_sys_input()
+	@classmethod
+	def get_fname(cls, f):
+		return os.path.basename(f)
 
-if __name__ == '__main__':
-    py = MyPY()
-    py.main()
+	@classmethod
+	def make_path(cls, path):
+		if not os.path.exists(path):
+			os.makedirs(path)
+
+	@classmethod
+	def get_home_path(cls):
+		return os.getenv('HOME')
+
+	@classmethod
+	def get_abs_path(cls, path):
+		return os.path.abspath(path)
+
+	@classmethod
+	def get_current_path(cls):
+		return os.getcwd()
+
+	@classmethod
+	def remove_small_file(cls, path, size):
+		for rt, dirs, fs in os.walk(path):
+			if len(fs) != 0:
+				for f in fs:
+					f = os.path.join(rt, f)
+					if os.path.getsize(f) < size:
+						os.remove(f)
+
+	@classmethod
+	def remove_blank_dir(cls, path, level=4):
+		for i in range(level):
+			for rt, dr, fs in os.walk(path):
+				if len(dr) == 0 and len(fs) == 0:
+					os.rmdir(rt)
+
