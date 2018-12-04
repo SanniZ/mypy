@@ -14,7 +14,7 @@ from base import MyBase as Base
 IMG_W_MIN = 480
 IMG_H_MIN = 480
 
-SMALL_IMG_SIZE = 1024 * 128 # 128K
+SMALL_IMG_SIZE = 1024 * 10 # 10K
 
 class Image (object):
 
