@@ -30,17 +30,19 @@ class Image (object):
 		else:
 			return False
 
+	# remove small size image.
 	@classmethod
-	def remove_small_size_image(cls, path):
+	def remove_small_size_image(cls, path, size=SMALL_IMG_SIZE):
 		for rt, dirs, fs in os.walk(path):
 			if len(fs) != 0:
 				for f in fs:
 					f = os.path.join(rt, f)
-					if Image.is_image(f) and os.path.getsize(f) < SMALL_IMG_SIZE:
+					if Image.is_image(f) and os.path.getsize(f) < size:
 						os.remove(f)
 
+	# remove small image base width and height of image.
 	@classmethod
-	def remove_small_size_image2(cls, path):
+	def remove_small_image(cls, path):
 		for rt, dirs, fs in os.walk(path):
 			for i in range(len(fs)):
 				f = os.path.join(rt, fs[i])

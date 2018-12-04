@@ -84,7 +84,7 @@ class WizImage(object):
 			Base.make_path(path)
 			self.unzip_file(f, path)
 			# remove small image.
-			Img.remove_small_size_image(path)
+			Img.remove_small_image(path)
 			# move image.
 			if os.path.exists('%s/index_files' % path):
 				for ff in os.listdir('%s/index_files' % path):
