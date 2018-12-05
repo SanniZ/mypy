@@ -12,6 +12,7 @@ import urllib
 import os
 import sys
 import getopt
+import ssl
 
 from PIL import Image as PILImg
 
@@ -62,36 +63,28 @@ class Mzitu(object):
 		return pages
 
     def get_user_input(self):
-        try:
-            opts, args = getopt.getopt(sys.argv[1:], "hs:e:t:")
-        except getopt.GetoptError:
-            Base.print_exit('Invalid input, -h for help.')
-        # get input
-        if len(opts) == 0:
-            Base.print_exit('Invalid input, -h for help.')
-        else:        
-            for name, value in opts:
-                if name == '-h':
-                    self.print_help()
-                elif name == '-s':
-                    self._start = int(value)
-                elif name == '-e':
-                    self._end = int(value)
-                elif name == '-t':
-                    self._dst = os.path.abspath(value)
-            # start to check args.
-            # start id is must be set, otherwise return..
-            if self._start == None:
-                return False
-            # next to start if _end is not set.
-            if self._end == None:
-                self._end = self._start
-            # path is not set, set default path now.
-            if self._dst == None:
-                self._dst = '%s/妹子图' % os.getcwd()
-            # check start < end.
-            if self._start > self._end:
-                Base.print_exit('error: %d > %d\n' % (self._start, self._end))
+        args = Base.get_user_input('hs:e:t:')
+        if '-h' in args:
+            self.print_help()
+        if '-s' in args:
+            self._start = int(args['-s'])
+        if '-e' in args:
+            self._end = int(args['-e'])
+        if '-t' in args:
+            self._dst = os.path.abspath(args['-t'])
+        # start to check args.
+        # start id is must be set, otherwise return..
+        if self._start == None:
+            return False
+        # next to start if _end is not set.
+        if self._end == None:
+            self._end = self._start
+        # path is not set, set default path now.
+        if self._dst == None:
+            self._dst = '%s/妹子图' % os.getcwd()
+        # check start < end.
+        if self._start > self._end:
+            Base.print_exit('error: %d > %d\n' % (self._start, self._end))
         return True
 
     def main(self):

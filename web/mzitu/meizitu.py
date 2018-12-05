@@ -12,6 +12,7 @@ import urllib
 import os
 import sys
 import getopt
+
 from PIL import Image
 
 from base import MyBase as Base
@@ -46,36 +47,28 @@ class Meizitu(object):
         self._path = None
 
     def get_user_input(self):
-        try:
-            opts, args = getopt.getopt(sys.argv[1:], "hs:e:p:")
-        except getopt.GetoptError:
-            Base.print_exit('Invalid input, -h for help.')
-        # get input
-        if len(opts) == 0:
-            Base.print_exit('Invalid input, -h for help.')
-        else:        
-            for name, value in opts:
-                if name == '-h':
-                    self.print_help()
-                elif name == '-s':
-                    self._start = int(value)
-                elif name == '-e':
-                    self._end = int(value)
-                elif name == '-p':
-                    self._path = os.path.abspath(value)
-            # start to check args.
-            # start id is must be set, otherwise return..
-            if self._start == None:
-                return False
-            # next to start if _end is not set.
-            if self._end == None:
-                self._end = self._start
-            # path is not set, set default path now.
-            if self._path == None:
-                self._path = '%s/妹子图' % os.getcwd()
-            # check start < end.
-            if self._start > self._end:
-                Base.print_exit('error: %d > %d\n' % (self._start, self._end))
+        args = Base.get_user_input('hs:e:p:')
+        if '-h' in args:
+            self.print_help()
+        if '-s' in args:
+            self._start = int(args['-s'])
+        if '-e' in args:
+            self._end = int(args['-e'])
+        if '-p' in args:
+            self._path = os.path.abspath(args['-p'])
+        # start to check args.
+        # start id is must be set, otherwise return..
+        if self._start == None:
+            return False
+        # next to start if _end is not set.
+        if self._end == None:
+            self._end = self._start
+        # path is not set, set default path now.
+        if self._path == None:
+            self._path = '%s/妹子图' % os.getcwd()
+        # check start < end.
+        if self._start > self._end:
+            Base.print_exit('error: %d > %d\n' % (self._start, self._end))
         return True
 
     def get_pic_title(self, title):
@@ -105,8 +98,8 @@ class Meizitu(object):
                 # write web info.
                 with open(os.path.join(subpath, WEB_URL), 'w') as f:
                     f.write( '%s\n%s' % (title, url))
-                # remove small image
-                Img.remove_small_size_image(subpath)
+        # remove small image
+        Img.remove_small_image(self._path)
 
 if __name__ == "__main__":
     mz = Meizitu()

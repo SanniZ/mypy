@@ -6,8 +6,12 @@ Created on 2018-11-13
 @author: Byng Zeng
 """
 
-import re, sys, os, getopt
+import re
+import sys
+import os
+import getopt
 
+from base import MyBase as Base
 
 RE_DTSTART = r'DTSTART;.+'
 RE_DTEND = r'DTEND;.+'
@@ -18,21 +22,11 @@ RE_LOCATION = r'LOCATION:.+'
 RE_SUMMARY = r'SUMMARY:.+'
 RE_DESCRIPTION = r'DESCRIPTION:.+'
 RE_CALNAME = r'X-WR-CALNAME:.+'
+RE_END_VEVENT = r'END:VEVENT'
 
 TYPE_ICS = r'ics'
 TYPE_CSV = r'csv'
 TYPE_TXT = r'txt'
-
-# print msg and exit
-def print_exit(msg=None):
-    if msg != None:
-        print msg
-    # stop runing and exit.
-    exit()
-
-# get external name of file.
-def get_exname(f):
-    return os.path.splitext(f)[1][1:].lower()
 
 
 class _ICSCalendarEvent(object):
@@ -59,6 +53,7 @@ class _ICSCalendarRe(object):
         self._location=re.compile(RE_LOCATION)
         self._summary = re.compile(RE_SUMMARY)
         self._description=re.compile(RE_DESCRIPTION)
+        self._end_event = re.compile(RE_END_VEVENT)
         self._cal_name = re.compile(RE_CALNAME)
 
     def get_cal_name(self, txt):
@@ -89,6 +84,9 @@ class _ICSCalendarRe(object):
     def get_summary(self, txt):
         return self._summary.match(txt)
 
+    def get_end_event(self, txt):
+        return self._end_event.match(txt)
+
 
 class ICSCalendar(object):
 
@@ -110,7 +108,7 @@ class ICSCalendar(object):
         print '  -t xxx/ or xxx.xxx:'
         print '    xxx/ is is a path, xxx.xxx is the name of target'
         # exit here
-        print_exit()
+        Base.print_exit()
 
     # get all of .ics file under path.
     @classmethod
@@ -119,7 +117,7 @@ class ICSCalendar(object):
         for root, dirs, files in os.walk(path):
             if len(files) != 0:
                 for f in files:
-                    if get_exname(f) == TYPE_ICS:
+                    if Base.get_filetype(f) == TYPE_ICS:
                         if fs == None:
                             fs = list()
                         fs.append(os.path.join(root, f))
@@ -143,7 +141,7 @@ class ICSCalendar(object):
     def get_src_files(cls, path):
         fs = None
         if os.path.exists(path) == True:
-            if os.path.isfile(path) == True and get_exname(path) == TYPE_ICS:
+            if os.path.isfile(path) == True and Base.get_filetype(path) == TYPE_ICS:
                 fs = list()
                 fs.append(path)
             elif os.path.isdir(path) == True:
@@ -178,50 +176,40 @@ class ICSCalendar(object):
         self._re = None
 
     def get_user_opt(self):
-        try:
-            opts, args = getopt.getopt(sys.argv[1:], "hcf:s:t:r:")
-        except getopt.GetoptError:
-            print_exit('Invalid input, -h for help.')
-        # process input value
-        if len(opts) == 0 and len(args) != 0:
-                print_exit('Invalid input, -h for help.')
-        else:
-                for name, value in opts:
-                    if name == r'-h':
-                        ICSCalendar.print_help()
-                    elif name == r'-c':
-                        self._combine_files = True
-                    elif name == r'-f':
-                        fmt = value.lower()
-                        if fmt == TYPE_TXT or fmt == TYPE_CSV:
-                            self._fmt = fmt
-                        else:
-                            print_exit("Error, unsupport format!")
-                    elif name == r'-r':
-                        if value == r'True':
-                            self._sort_reverse = True
-                        else:
-                            self._sort_reverse = False
-                    elif name == r'-s':
-                        # set _src to list
-                        if self._src == None:
-                            self._src = list()
-                        # get src files
-                        fs = self.get_src_files(os.path.abspath(value))
-                        if fs != None:
-                           # add fs to _src
-                           for f in fs:
-                               self._src.append(f)
-                    elif name == r'-t':
-                        ext_name = get_exname(os.path.abspath(value))
-                        if ext_name == TYPE_TXT or ext_name == TYPE_CSV:
-                            self._tgt = os.path.abspath(value)
-                            self._combine_files = True
-                            self._fmt = ext_name
-                        else:
-                            self._tgt = os.path.abspath(value)
-                    else:
-                        print_exit('Error, unknown %s %s' % (name, value))
+        args = Base.get_user_input('hcf:r:s:t:')
+        if r'-h' in args:
+            self.print_help()
+        if r'-c' in args:
+            self._combine_files = True
+        if r'-f' in args:
+            fmt = args['-f'].lower()
+            if fmt == TYPE_TXT or fmt == TYPE_CSV:
+                self._fmt = fmt
+            else:
+                Base.print_exit("Error, unsupport format!")
+        if r'-r' in args:
+            if args['-r'] == r'True':
+                self._sort_reverse = True
+            else:
+                self._sort_reverse = False
+        if r'-s' in args:
+            # set _src to list
+            if self._src == None:
+                self._src = list()
+            # get src files
+            fs = self.get_src_files(os.path.abspath(args['-s']))
+            if fs:
+               # add fs to _src
+               for f in fs:
+                   self._src.append(f)
+        if r'-t' in args:
+            ftype = Base.get_filetype(os.path.abspath(args['-t']))
+            if ftype in [TYPE_TXT, TYPE_CSV]:
+                self._tgt = os.path.abspath(args['-t'])
+                self._combine_files = True
+                self._fmt = ftype
+            else:
+                self._tgt = os.path.abspath(args['-t'])
 
     # check input args
     def check_opt_args(self):
@@ -229,7 +217,7 @@ class ICSCalendar(object):
         if self._src == None:
             # check current path.
             fs = ICSCalendar.get_ics_files(os.getcwd())
-            if fs != None:
+            if fs:
                 # set _src to list
                 if self._src == None:
                     self._src = list()
@@ -243,7 +231,7 @@ class ICSCalendar(object):
 
     # get name of output
     def get_output_name(self, fmt):
-        if get_exname(self._tgt) == fmt:
+        if Base.get_filetype(self._tgt) == fmt:
             name = self._tgt
         elif self._combine_files == True:
 	        name = r'%s/%s.%s' % (self._tgt, u'日历', fmt.lower())
@@ -408,45 +396,48 @@ class ICSCalendar(object):
                     self._re = _ICSCalendarRe()
                 # get ICSCalendar Name
                 calName = self._re.get_cal_name(buf)
-                if calName != None:
+                if calName:
                     self._cal_name = calName.group()[len('X-WR-CALNAME:'):len(calName.group())-1]
                 # get location
                 location = self._re.get_location(buf)
-                if location != None:
+                if location:
                     self._event._location = location.group()
                 # get description
                 description = self._re.get_description(buf)
-                if description != None:
+                if description:
                     self._event._description = description.group()
                 # get end of date and time
                 dt_end = self._re.get_dt_end(buf)
-                if dt_end != None:
+                if dt_end:
                     # search date.
                     date_e = self._re.get_date(dt_end.group())
-                    if date_e != None:
+                    if date_e:
                         # get date of end
                         self._event._date_e = date_e.group()
                         # get time of end
                         time_e = self._re.get_time(dt_end.group())
-                        if time_e != None:
+                        if time_e:
                             self._event._time_e = time_e.group()
                 # get start of date and time
                 dt_start = self._re.get_dt_start(buf)
-                if dt_start != None:
+                if dt_start:
                     date_s = self._re.get_date(dt_start.group())
-                    if date_s != None:
+                    if date_s:
                         # get date of start
                         self._event._date_s = date_s.group()
                         # get time of start
                         time_s = self._re.get_time(dt_start.group())
-                        if time_s != None:
+                        if time_s:
                             self._event._time_s = time_s.group()
                 # get summary
                 summary = self._re.get_summary(buf)
-                if summary != None:
+                if summary:
                     self._event._summary = summary.group()
                     self._event._type = self._cal_name
-                    # event is ready, insert to list now.
+
+                # event is ready, insert to list now.
+                end_event = self._re.get_end_event(buf)
+                if end_event:
                     self.insert_event()
 
     # handler for dir files.
@@ -473,7 +464,7 @@ class ICSCalendar(object):
         self.check_opt_args()
         # start to process data.
         if self._src == None or len(self._src) == 0:
-            print_exit('No found .ics, do nothing.')
+            Base.print_exit('No found .ics, do nothing.')
         elif self._combine_files == True:
             self.combine_fs_handler()
         else:
