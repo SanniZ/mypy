@@ -89,8 +89,8 @@ class Meizitu(object):
                 # write web info.
                 with open(os.path.join(subpath, WEB_URL), 'w') as f:
                     f.write( '%s\n%s' % (title, url))
-        # remove small image
-        Image.remove_small_image(self._path)
+                # remove small image
+                Image.remove_small_image(subpath)
 
 if __name__ == "__main__":
     mz = Meizitu()

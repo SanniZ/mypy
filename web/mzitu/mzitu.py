@@ -86,9 +86,8 @@ class Mzitu(object):
         for index in range(self._start, self._end + 1):
             # get the first page.
             url = '%s/%s' % (self.__url, index)
-            url_content = WebImage.get_url_content(url, WebImage.CONTEXT_TLSv1)
+            url_content = WebImage.get_url_content(url)
             if url_content:
-                print url_content
                 # get url title.
                 title = self.get_title(url_content)
                 if title == None:
@@ -115,8 +114,8 @@ class Mzitu(object):
 		        # write web info.
                 with open(os.path.join(subpath, WEB_URL), 'w') as f:
 		            f.write( '%s\n%s' % (title, url))
-        # remove small size of pic
-        Image.remove_small_size_image(self._dst)
+                # remove small image
+                Image.remove_small_image(subpath)
 
 if __name__ == "__main__":
     mz = Mzitu()

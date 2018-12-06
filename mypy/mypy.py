@@ -98,27 +98,3 @@ class MyFile(object):
                     if os.path.getsize(f) < size:
                         os.remove(f)
 
-
-class MyPrint(object):
-
-    ERR = 0x04
-    INFO = 0x02
-    DBG = 0x01
-
-    pr_level = ERR | INFO
-
-    @classmethod
-    def pr_err(cls, fmt):
-        if fmt and pr_levle >= MyPrint.ERR:
-            print(fmt)
-
-    @classmethod
-    def pr_info(cls, fmt):
-        if fmt and pr_levle >= MyPrint.INFO:
-            print(fmt)
-
-    @classmethod
-    def pr_dbg(cls, fmt):
-        if fmt and pr_levle >= MyPrint.DBG:
-            print(fmt)
-
