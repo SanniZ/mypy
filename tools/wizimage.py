@@ -7,61 +7,63 @@ Created on 2018-12-04
 """
 
 import os
-import sys
-import getopt
 import zipfile
 import shutil
 
-from base import MyBase as Base
-from image import Image as Img
+from mypy import MyBase, MyPath, MyFile
+from image import Image
 
 
 class WizImage(object):
 
-    # print(help menu.
-    @classmethod
-    def print_help(cls):
-        print('======================================')
-        print('     Unzip Wiz')
-        print('======================================')
-        print('option: -s path -p path')
-        print('  -s:')
-        print('    root path of files')
-        print('  -t:')
-        print('    root path to output.')
-        # exit here
-        Base.print_exit()
+    help_menu = (
+        '======================================',
+        '     Unzip Wiz',
+        '======================================',
+        'option: -s path -p path -v True/False',
+        '  -s: root path of files',
+        '  -t: root path to output.',
+        '  -v: show infomation of unzip.',
+    )
 
     def __init__(self):
         self._src = None
         self._dst = None
         self._fs = list()
+        self._show = False
 
     def get_user_input(self):
-        args = Base.get_user_input('hs:t:')
+        args = MyBase.get_user_input('hs:t:v:')
         # help
         if '-h' in args:
-            self.print_help()
+            MyBase.print_help(self.help_menu)
         # src path
         if '-s' in args:
-            self._src = Base.get_abs_path(args['-s'])
+            self._src = MyPath.get_abs_path(args['-s'])
         # dst path
         if '-t' in args:
-            self._dst = Base.get_abs_path(args['-t'])
+            self._dst = MyPath.get_abs_path(args['-t'])
+        # show
+        if '-v' in args:
+            if args['-v'] == 'True':
+                self._show = True
+            else:
+                self._show = False
         # start to check args.
         # start id is must be set, otherwise return..
         if self._src == None:
             return False
         # next to start if _end is not set.
         if self._dst == None:
-            self._dst = Base.get_current_path()
+            self._dst = MyPath.get_current_path()
+            print('warnning: no found -t, output to: %s' % self._dst)
         return True
 
     def get_all_of_wiz(self):
         for root, dirs, fs in os.walk(self._src):
             if len(fs) != 0:
                 for f in fs:
-                    if Base.get_exname(f) == '.ziw':
+                    if MyFile.get_exname(f) == '.ziw':
                         self._fs.append(os.path.join(root, f))
 
     def unzip_file(self, f, dst):
@@ -73,33 +75,32 @@ class WizImage(object):
 
     def unzip_wiz(self):
         for f in self._fs:
-            print('unzip: %s/%s' % (os.path.dirname(f).replace(self._src, ''), os.path.basename(f)))
-            path = os.path.join(os.path.dirname(f).replace(self._src, self._dst), Base.get_fname(f))
+            if self._show:
+                print('unzip: %s/%s' % (os.path.dirname(f).replace(self._src, ''), os.path.basename(f)))
+            path = os.path.join(os.path.dirname(f).replace(self._src, self._dst), MyFile.get_fname(f))
             path = os.path.splitext(path)[0]
-            Base.make_path(path)
+            MyPath.make_path(path)
             self.unzip_file(f, path)
             # remove small image.
-            Img.remove_small_image(path)
+            Image.remove_small_image(path)
             # move image.
             if os.path.exists('%s/index_files' % path):
                 for ff in os.listdir('%s/index_files' % path):
-                    if Img.is_image(ff):
+                    if Image.is_image(ff):
                         shutil.copyfile('%s/index_files/%s' % (path, ff), '%s/%s' % (path, ff))
-                    os.remove('%s/index_files/%s' % (path, ff))
                 # remove invalid files and dirs.
-                os.rmdir('%s/index_files' % path)
+                shutil.rmtree('%s/index_files' % path)
             if os.path.exists('%s/index.html' % path):
                 os.remove('%s/index.html' % path)
 
     def main(self):
-        if self.get_user_input() == False:
-            Base.print_exit('Invalid input, -h for help.')
+        self.get_user_input()
         # get all of .wiz
         self.get_all_of_wiz()
         # unzip all of wiz files.
         self.unzip_wiz()
         # remove blank dir.
-        Base.remove_blank_dir(self._dst)
+        MyPath.remove_blank_dir(self._dst)
 
 if __name__ == '__main__':
     wiz = WizImage()

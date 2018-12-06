@@ -5,35 +5,30 @@ Created on 2018-12-03
 
 @author: Byng.Zeng
 """
-
-import os
-import sys
-import getopt
 import re
 
-from base import MyBase as Base
+from mypy import MyBase, MyRe, MyPath
 
-BASHRC='%s/.bashrc' % Base.get_home_path()
+BASHRC='%s/.bashrc' % MyPath.get_home_path()
 
 class SetupMypy (object):
 
-    def print_help(self):
-        print '======================================'
-        print '     mypy setup'
-        print '======================================'
-        print 'option: -a path -s -v'
-        print '  -a:'
-        print '    add path to mypys env'
-        print '  -s:'
-        print '    setup mypys config'
-        print '  -v:'
-        print '    print all of mypys path.'
-        # exit here
-        Base.print_exit()
+    help_menu = (
+        '======================================',
+        '     mypy setup',
+        '======================================',
+        'option: -a path -s -v',
+        '  -a:',
+        '    add path to mypys env',
+        '  -s:',
+        '    setup mypys config',
+        '  -v:',
+        '    print all of mypys path.',
+    )
 
     def __init__(self):
-        self.__re_mypys = re.compile('MYPYS=.+')
-        self.__re_path_mypys = re.compile('PATH=\$PATH:\$MYPYS')
+        self.__re_mypys = MyRe.re_compile('MYPYS=.+')
+        self.__re_path_mypys = MyRe.re_compile('PATH=$PATH:$MYPYS')
         self._path = list()
 
     def add_to_mypy_path(self, path):
@@ -42,11 +37,11 @@ class SetupMypy (object):
         mypys =  self.__re_mypys.findall(txt)
         # delete $.
         if len(re.findall('\$', path)) != 0:
-            patten = path.replace('$', '\$')
+            pattern = path.replace('$', '\$')
         else:
-            patten = path
+            pattern = path
         # add new path.
-        if len(mypys) != 0 and len(re.findall(patten, mypys[0])) == 0:
+        if len(mypys) != 0 and len(re.findall(pattern, mypys[0])) == 0:
             print 'add path: %s' % path
             txt = txt.replace(mypys[0], '%s:%s' % (mypys[0], path))
         with open(BASHRC, 'w') as f:
@@ -61,7 +56,6 @@ class SetupMypy (object):
             result = self.__re_path_mypys.findall(txt)
             if len(result) == 0:
                 f.write('export PATH=$PATH:$MYPYS\n')
-        self.add_to_mypy_path('$MYPY/base')
         self.add_to_mypy_path('$MYPY/broxton')
         self.add_to_mypy_path('$MYPY/develop')
         self.add_to_mypy_path('$MYPY/image')
@@ -88,9 +82,9 @@ class SetupMypy (object):
                 print re.search('MYPY=.+', txt).group()
 
     def get_user_input(self):
-        args = Base.get_user_input('ha:sv')
+        args = MyBase.get_user_input('ha:sv')
         if '-h' in args:
-            self.print_help()
+            MyBase.print_help(self.help_menu)
         if '-a' in args:
             self._path.append(args['-a'])
         if '-s' in args:

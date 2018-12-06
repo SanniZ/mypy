@@ -7,11 +7,10 @@ Created on 2018-11-13
 """
 
 import re
-import sys
 import os
-import getopt
+import subprocess
 
-from base import MyBase as Base
+from mypy import MyBase, MyFile
 
 RE_DTSTART = r'DTSTART;.+'
 RE_DTEND = r'DTEND;.+'
@@ -90,25 +89,22 @@ class _ICSCalendarRe(object):
 
 class ICSCalendar(object):
 
-    # print help menu.
-    @classmethod
-    def print_help(cls):
-        print '======================================'
-        print '     iOS Calender Data Convert'
-        print '======================================'
-        print 'option: -s xxx -t xxx [-f xxx] [-r xxx] [-c]'
-        print '  -c:'
-        print '    True is combine all of .ics file together, False is not.'
-        print '  -f txt/csv:'
-        print '    format of output file'
-        print '  -r True/False:'
-        print '    True is ascending sort, False is descending, default to False.'
-        print '  -s xxx.ics or xxx/:'
-        print '    xxx/ is a path, xxx.ics is a ics file'
-        print '  -t xxx/ or xxx.xxx:'
-        print '    xxx/ is is a path, xxx.xxx is the name of target'
-        # exit here
-        Base.print_exit()
+    help_menu = (
+        '======================================',
+        '     iOS Calender Data Convert',
+        '======================================',
+        'option: -s xxx -t xxx [-f xxx] [-r xxx] [-c]',
+        '  -c:',
+        '    True is combine all of .ics file together, False is not.',
+        '  -f txt/csv:',
+        '    format of output file',
+        '  -r True/False:',
+        '    True is ascending sort, False is descending, default to False.',
+        '  -s xxx.ics or xxx/:',
+        '    xxx/ is a path, xxx.ics is a ics file',
+        '  -t xxx/ or xxx.xxx:',
+        '    xxx/ is is a path, xxx.xxx is the name of target',
+    )
 
     # get all of .ics file under path.
     @classmethod
@@ -117,7 +113,7 @@ class ICSCalendar(object):
         for root, dirs, files in os.walk(path):
             if len(files) != 0:
                 for f in files:
-                    if Base.get_filetype(f) == TYPE_ICS:
+                    if MyFile.get_filetype(f) == TYPE_ICS:
                         if fs == None:
                             fs = list()
                         fs.append(os.path.join(root, f))
@@ -131,7 +127,7 @@ class ICSCalendar(object):
         try:
     	    fs = subprocess.check_output(cmd, shell = True)
             fs = list(fs.split())
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             print 'No found .ics at %s' % path
             fs = None
         return fs
@@ -141,7 +137,7 @@ class ICSCalendar(object):
     def get_src_files(cls, path):
         fs = None
         if os.path.exists(path) == True:
-            if os.path.isfile(path) == True and Base.get_filetype(path) == TYPE_ICS:
+            if os.path.isfile(path) == True and MyFile.get_filetype(path) == TYPE_ICS:
                 fs = list()
                 fs.append(path)
             elif os.path.isdir(path) == True:
@@ -176,9 +172,9 @@ class ICSCalendar(object):
         self._re = None
 
     def get_user_opt(self):
-        args = Base.get_user_input('hcf:r:s:t:')
+        args = MyBase.get_user_input('hcf:r:s:t:')
         if r'-h' in args:
-            self.print_help()
+            MyBase.print_help(self.help_menu)
         if r'-c' in args:
             self._combine_files = True
         if r'-f' in args:
@@ -186,7 +182,7 @@ class ICSCalendar(object):
             if fmt == TYPE_TXT or fmt == TYPE_CSV:
                 self._fmt = fmt
             else:
-                Base.print_exit("Error, unsupport format!")
+                MyBase.print_exit("Error, unsupport format!")
         if r'-r' in args:
             if args['-r'] == r'True':
                 self._sort_reverse = True
@@ -203,7 +199,7 @@ class ICSCalendar(object):
                for f in fs:
                    self._src.append(f)
         if r'-t' in args:
-            ftype = Base.get_filetype(os.path.abspath(args['-t']))
+            ftype = MyFile.get_filetype(os.path.abspath(args['-t']))
             if ftype in [TYPE_TXT, TYPE_CSV]:
                 self._tgt = os.path.abspath(args['-t'])
                 self._combine_files = True
@@ -231,7 +227,7 @@ class ICSCalendar(object):
 
     # get name of output
     def get_output_name(self, fmt):
-        if Base.get_filetype(self._tgt) == fmt:
+        if MyFile.get_filetype(self._tgt) == fmt:
             name = self._tgt
         elif self._combine_files == True:
 	        name = r'%s/%s.%s' % (self._tgt, u'日历', fmt.lower())
@@ -307,7 +303,7 @@ class ICSCalendar(object):
                         f.write('%s/%s/%s-%s/%s/%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8],
                                                             event._date_e[0:4], event._date_e[4:6], event._date_e[6:8], event._type))
                     else: # day event: xxxx/xx/xx xx:xx-xx:xx
-                        f.write('%s/%s/%s %s:%s-%s/%s/%s %s:%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8], event._time_s[0:2], event._time_s[2:4], 
+                        f.write('%s/%s/%s %s:%s-%s/%s/%s %s:%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8], event._time_s[0:2], event._time_s[2:4],
                                                                         event._date_e[0:4], event._date_e[4:6], event._date_e[6:8], event._time_e[0:2], event._time_e[2:4], event._type))
                 # location
                 if event._location == None:
@@ -369,7 +365,7 @@ class ICSCalendar(object):
             self.print_ics_contents()
         else:
             print 'Error, use -f txt/csv to set format output\n'
-            print_help()
+            MyBase.print_help(self.help_menu)
 
         # clear all of events.
         self._events = list()
@@ -464,7 +460,7 @@ class ICSCalendar(object):
         self.check_opt_args()
         # start to process data.
         if self._src == None or len(self._src) == 0:
-            Base.print_exit('No found .ics, do nothing.')
+            MyBase.print_exit('No found .ics, do nothing.')
         elif self._combine_files == True:
             self.combine_fs_handler()
         else:

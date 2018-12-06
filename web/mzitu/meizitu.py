@@ -6,38 +6,29 @@ Created on 2018-11-28
 @author: Byng Zeng
 """
 
-from urllib2 import Request, URLError, urlopen
 import re
-import urllib
 import os
-import sys
-import getopt
 
-from PIL import Image
-
-from base import MyBase as Base
-from webcontent import WebImage as WebImg
-from image import Image as Img
+from mypy import MyBase
+from webcontent import WebImage
+from image import Image
 
 WEB_URL = r'WebUrl'
 
 class Meizitu(object):
 
-    @classmethod
-    # print help menu.
-    def print_help(cls):
-        print '======================================'
-        print '     Meizitu Pictures'
-        print '======================================'
-        print 'option: -s number -e number -p path'
-        print '  -s:'
-        print '    start of web number'
-        print '  -e:'
-        print '    end of web number'
-        print '  -p:'
-        print '    root path to store images.'
-        # exit here
-        Base.print_exit()
+    help_menu = (
+        '======================================',
+        '     Meizitu Pictures',
+        '======================================',
+        'option: -s number -e number -p path',
+        '  -s:',
+        '    start of web number',
+        '  -e:',
+        '    end of web number',
+        '  -p:',
+        '    root path to store images.',
+    )
 
     def __init__(self):
         self.__re_picurl = re.compile('src="(http://.*?(png|jpg|gif))"', re.IGNORECASE)
@@ -47,9 +38,9 @@ class Meizitu(object):
         self._path = None
 
     def get_user_input(self):
-        args = Base.get_user_input('hs:e:p:')
+        args = MyBase.get_user_input('hs:e:p:')
         if '-h' in args:
-            self.print_help()
+            MyBase.print_help(self.help_menu)
         if '-s' in args:
             self._start = int(args['-s'])
         if '-e' in args:
@@ -68,7 +59,7 @@ class Meizitu(object):
             self._path = '%s/妹子图' % os.getcwd()
         # check start < end.
         if self._start > self._end:
-            Base.print_exit('error: %d > %d\n' % (self._start, self._end))
+            MyBase.print_exit('error: %d > %d\n' % (self._start, self._end))
         return True
 
     def get_pic_title(self, title):
@@ -79,27 +70,27 @@ class Meizitu(object):
 
     def main(self):
         if self.get_user_input() != True:
-            Base.print_exit('Invalid input, -h for help.')
+            MyBase.print_exit('Invalid input, -h for help.')
         # get web now.
         for index in range(self._start, self._end + 1):
             url = '%s/%s.html' % (self.__url_base, index)
-            url_content = WebImg.get_url_content(url)
+            url_content = WebImage.get_url_content(url)
             if url_content:
-                title = WebImg.get_url_title(url_content)
+                title = WebImage.get_url_title(url_content)
                 if title == None:
                     title = index
                 else:
                     title = self.get_pic_title(title)
                 subpath = os.path.join(self._path, title)
-                pic_list = WebImg.get_pic_url(url_content, self.__re_picurl)
+                pic_list = WebImage.get_pic_url(url_content, self.__re_picurl)
                 for i in range(len(pic_list)):
                     pic_url = pic_list[i][0]
-                    WebImg.retrieve_url_pic(subpath, pic_url)
+                    WebImage.retrieve_url_pic(subpath, pic_url)
                 # write web info.
                 with open(os.path.join(subpath, WEB_URL), 'w') as f:
                     f.write( '%s\n%s' % (title, url))
         # remove small image
-        Img.remove_small_image(self._path)
+        Image.remove_small_image(self._path)
 
 if __name__ == "__main__":
     mz = Meizitu()

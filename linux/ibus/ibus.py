@@ -6,52 +6,41 @@ Created on 2018-12-05
 @author: Byng Zeng
 """
 
-import re
-import os
-import sys
-import getopt
 import subprocess
-import shutil
 
-from base import MyBase as Base
+from mypy import MyBase, MyPath
 
-WUBI_LOVE98_TXT = '%s/linux/ibus/ibus-love98.txt' % Base.get_mypy_path()
-WUBI_LOVE98_DB = '%s/linux/ibus/ibus-love98.db' % Base.get_mypy_path()
+WUBI_LOVE98_TXT = '%s/linux/ibus/ibus-love98.txt' % MyPath.get_mypy_path()
+WUBI_LOVE98_DB = '%s/linux/ibus/ibus-love98.db' % MyPath.get_mypy_path()
 IBUS_LOVE98_DB = '/usr/share/ibus-table/tables/wubi-love98.db'
 
 class IBus(object):
 
-    @classmethod
-    def print_help(cls):
-        help_menu = (
-            '==================================',
-            '    IBus command set',
-            '==================================',
-            '-r',
-            '  restart',
-            '-L',
-            '  list engine',
-            '-P',
-            '  setup sunpinyin',
-            '-p',
-            '  setup pinyin',
-            '-g',
-            '  setup googlepinyin',
-            '-S',
-            '  setup wubi98',
-            '-B',
-            '  setup wubi-haifeng86',
-            '-b',
-            '  setup wubi-jidian86',
-            '-a',
-            '  add to database of wubi-love98.db',
-            '-u',
-            '  update database of wubi-love98.db',
-        )
-        # print
-        for txt in help_menu:
-            print(txt)
-        Base.print_exit()
+    help_menu = (
+        '==================================',
+        '    IBus command set',
+        '==================================',
+        '-r',
+        '  restart',
+        '-L',
+        '  list engine',
+        '-P',
+        '  setup sunpinyin',
+        '-p',
+        '  setup pinyin',
+        '-g',
+        '  setup googlepinyin',
+        '-S',
+        '  setup wubi98',
+        '-B',
+        '  setup wubi-haifeng86',
+        '-b',
+        '  setup wubi-jidian86',
+        '-a',
+        '  add to dataMyBase of wubi-love98.db',
+        '-u',
+        '  update dataMyBase of wubi-love98.db',
+    )
 
     def ibus_restart(self):
         cmd = 'ibus_restart'
@@ -97,9 +86,9 @@ class IBus(object):
         subprocess.call(cmd, shell=True)
 
     def main(self):
-        args = Base.get_user_input('harLPpgSBbu')
+        args = MyBase.get_user_input('harLPpgSBbu')
         if '-h' in args:
-            self.print_help()
+            MyBase.print_help(self.help_menu)
         if '-a' in args:
             self.ibus_add_to_wubi_love98_db()
         if '-r' in args:

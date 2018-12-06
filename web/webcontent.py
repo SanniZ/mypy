@@ -12,7 +12,7 @@ import urllib
 import os
 import ssl
 
-from base import MyBase as Base
+from mypy import MyPath
 
 URL_HEADER = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:16.0) Gecko/20100101 Firefox/16.0',
@@ -20,17 +20,13 @@ URL_HEADER = {
     'Connection': 'keep-alive'
 }
 
-CONTEXT = ssl._create_unverified_context()
+CONTEXT_UNVERIFIED = ssl._create_unverified_context()
 CONTEXT_TLSv1 = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
 
 class WebContent (object):
 
-    def __init__(self):
-        #super(WebContent, self).__init__()
-        pass
-
     @classmethod
-    def get_url_content(cls, url, retry_times=3, context=CONTEXT_TLSv1):
+    def get_url_content(cls, url, retry_times=3, context=CONTEXT_UNVERIFIED):
         print('Downloading: %s' % url)
         try:
             req = Request(url, headers=URL_HEADER)
@@ -48,7 +44,7 @@ class WebContent (object):
     @classmethod
     def retrieve_url_file(cls, path, url):
         path = path.strip()
-        Base.make_path(path)
+        MyPath.make_path(path)
         fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])
         if not os.path.exists(fname):
             urllib.urlretrieve(url, fname)

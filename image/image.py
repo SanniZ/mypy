@@ -9,7 +9,7 @@ Created on 2018-12-03
 import os
 from PIL import Image as PilImg
 
-from base import MyBase as Base
+from mypy import MyFile
 
 IMG_W_MIN = 480
 IMG_H_MIN = 480
@@ -24,7 +24,7 @@ class Image (object):
 
     @classmethod
     def is_image(cls, f):
-        exname = Base.get_exname(f)
+        exname = MyFile.get_exname(f)
         if exname in ['.jpg', 'png', 'gif', '.jpeg', '.bmp']:
             return True
         else:

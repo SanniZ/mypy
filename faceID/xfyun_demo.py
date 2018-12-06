@@ -12,44 +12,35 @@ import json
 import hashlib
 import base64
 
-import sys
-import getopt
 
-from base import MyBase as Base
+from mypy import MyBase, MyPath
 
-def print_help():
-    print('======================================')
-    print('     XunFei FaceID')
-    print('======================================')
-    print('option: -f path -s path')
-    print('  -f:')
-    print('    path of the first image')
-    print('  -s:')
-    print('    path of the second image')
-    # exit here
-    Base.print_exit()
+help_menu = (
+    '======================================',
+    '    XunFei FaceID',
+    '======================================',
+    'option: -f path -s path',
+    '  -f: path of the first image',
+    '  -s: path of the second image',
+)
 
 def get_face_image():
     fid = None
     sid = None
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "hf:s:")
-    except getopt.GetoptError:
-        Base.print_exit('Invalid input, -h for help.')
-    # get input
-    if len(opts) == 0:
-        Base.print_exit('Invalid input, -h for help.')
-    else:        
-        for name, value in opts:
-            if name == '-h':
-                print_help()
-            elif name == '-f':
-                fid = Base.get_abs_path(value)
-            elif name == '-s':
-                sid = Base.get_abs_path(value)
+    args = MyBase.get_user_input('hf:s:')
+    if '-h' in args:
+        MyBase.print_help(help_menu)
+    if '-f' in args:
+        fid = MyPath.get_abs_path(args['-f'])
+    if '-s' in args:
+        sid = MyPath.get_abs_path(args['-s'])
     return fid, sid
 
 def main():
+    fid, sid = get_face_image()
+    if fid == None or sid == None:
+        MyBase.print_exit('Error, no found id image.')
+
     x_appid = 'wsr00030d4d@ch407c0f6177e2477400'
     api_key = ''
     url = 'http://api.xfyun.cn/v1/service/v1/image_identify/face_verification'
@@ -66,10 +57,6 @@ def main():
         'X-CheckSum': x_checksum,
         'X-Param': x_param,
     }
-    fid, sid = get_face_image()
-    if fid == None or sid == None:
-        print('Error, no found id image.')
-        return
     with open(fid, 'rb') as f:
         f1 = f.read()
     with open(sid, 'rb') as f:
