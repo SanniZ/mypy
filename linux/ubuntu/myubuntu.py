@@ -29,13 +29,17 @@ class MyUbuntu(object):
 
     def __init__(self):
         # re compile.
-        self.__re_path = MyRe.re_compile('export PATH=.*')
-        self.__re_mypath = MyRe.re_compile('export MYPATH=.*')
-        self.__re_mypys = MyRe.re_compile('export MYPYS=.*')
-        self.__re_myshs = MyRe.re_compile('export MYSHS=.*')
+        self.__re_path = re.compile('export PATH=.*')
+        self.__re_mypath = re.compile('export MYPATH=.*')
+        self.__re_mypys = re.compile('export MYPYS=.*')
+        self.__re_myshs = re.compile('export MYSHS=.*')
         # get .bashrc data.
         with open(BASHRC, 'r') as f:
             self.__bashrc = f.read()
+
+    # support to '$'
+    def re_compile(self, pattern):
+        return re.compile(pattern.replace('$', '\$'))
 
     def get_bashrc_data(self):
         return self.__bashrc
@@ -93,7 +97,7 @@ class MyUbuntu(object):
         # get mypath
         mypath = self.__re_mypath.search(self.__bashrc)
         # check path in mypath
-        new_path = MyRe.re_compile(path).search(mypath.group())
+        new_path = self.re_compile(path).search(mypath.group())
         if not new_path:
             data = self.get_bashrc_data()
             data = data.replace(mypath.group(), '%s:%s' % (mypath.group(), path))
@@ -124,7 +128,7 @@ class MyUbuntu(object):
             # search mypath and replace it.
             mypath = self.__re_mypath.search(self.__bashrc)
             if mypath:
-                self.__bashrc = re.sub(MyRe.re_compile(mypath.group()), '%s%s:$MYPYS' % (mys, mypath.group()), self.__bashrc)
+                self.__bashrc = re.sub(self.re_compile(mypath.group()), '%s%s:$MYPYS' % (mys, mypath.group()), self.__bashrc)
                 with open(BASHRC, 'w') as f:
                     f.write(self.__bashrc)
 
@@ -138,7 +142,7 @@ class MyUbuntu(object):
         # search mypys and replace it.
         mypys = self.__re_mypys.search(self.__bashrc)
         if mypys:
-            self.__bashrc = re.sub(MyRe.re_compile(mypys.group()), '%s:%s' % (mypys.group(), path), self.__bashrc)
+            self.__bashrc = re.sub(self.re_compile(mypys.group()), '%s:%s' % (mypys.group(), path), self.__bashrc)
             with open(BASHRC, 'w') as f:
                 f.write(self.__bashrc)
 

@@ -47,23 +47,29 @@ class Image (object):
             if len(fs) != 0:  # found files.
                 for f in fs:
                     f = os.path.join(rt, f)
-                    w, h = Image.get_image_size(f)
-                    if w or h:
-                        if w < width or h < height:
+                    if Image.is_image(f):
+                        w, h = Image.get_image_size(f)
+                        # check size
+                        if w and h:
+                            if w < width or h < height:
+                                os.remove(f)
+                        else:  # fail to get size, remove it.
                             os.remove(f)
-
 
     @classmethod
     def get_image_size(self, f):
+        w = None
+        h = None
         if Image.is_image(f):
             try:
                 img = PilImg.open(f)
-                return img.size[0], img.size[1]
+                w, h = img.size[0], img.size[1]
             except IOError: # it is bad if open failed.
-                return None, None
+                w, h = None, None
+        return w, h
 
 if __name__ == '__main__':
     Img = Image()
     w, h = Img.get_image_size('/home/yingbin/Downloads/10.jpg')
-    if w or h:
+    if w and h:
         print w, h

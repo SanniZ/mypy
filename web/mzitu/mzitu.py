@@ -9,7 +9,7 @@ Created on 2018-11-28
 import re
 import os
 
-from mypy import MyBase
+from mypy import MyBase, MyPath
 from webcontent import WebImage
 from image import Image
 
@@ -35,22 +35,24 @@ class Mzitu(object):
         self._end = None
         self._dst = None
         self.__url = 'https://m.mzitu.com'
-        self.__re_pic = re.compile('http(s)?://[a-zA-Z0-9/&_-]*?\.(jpg|gif|png)', re.IGNORECASE)
+        self.__re_pic = re.compile('http(s)?://[a-zA-Z0-9/&_-]*?\.(jpg|gif|png|jpeg)', re.IGNORECASE)
         self.__re_prepages = re.compile('[0-9]+页')
         self.__re_pages = re.compile('[0-9]+')
         self.__re_title = re.compile('<span class="s\d+">.+</span>')
 
-	def get_title(self, html_content):
-		title = self.__re_title.search(html_content)
-		return title.group()
+    def get_title(self, html_content):
+        title = self.__re_title.search(html_content)
+        if title:
+            title = title.group()
+        return title
 
-	def get_pages(self, html_content):
-		pages = self.__re_prepages.search(html_content)
-		if pages != None:
-		     pages = self.__re_pages.search(pages.group())
-		     if pages != None:
-		         pages = pages.group()
-		return pages
+    def get_pages(self, html_content):
+        pages = self.__re_prepages.search(html_content)
+        if pages:
+            pages = self.__re_pages.search(pages.group())
+            if pages:
+                pages = pages.group()
+        return pages
 
     def get_user_input(self):
         args = MyBase.get_user_input('hs:e:t:')
@@ -71,7 +73,7 @@ class Mzitu(object):
             self._end = self._start
         # path is not set, set default path now.
         if self._dst == None:
-            self._dst = '%s/妹子图' % os.getcwd()
+            self._dst = '%s/Mzitu' % os.getcwd()
         # check start < end.
         if self._start > self._end:
             MyBase.print_exit('error: %d > %d\n' % (self._start, self._end))
@@ -84,24 +86,28 @@ class Mzitu(object):
         for index in range(self._start, self._end + 1):
             # get the first page.
             url = '%s/%s' % (self.__url, index)
-            url_content = WebImage.get_url_content(url)
+            url_content = WebImage.get_url_content(url, WebImage.CONTEXT_TLSv1)
             if url_content:
+                print url_content
                 # get url title.
                 title = self.get_title(url_content)
                 if title == None:
-                    tilte = 'mzitu_%s' % index
+                    title = 'Mzitu_%s' % index
                 # create path to store data.
-	            subpath = os.path.join(self._dst, title)
+	        subpath = os.path.join(self._dst, title)
+                MyPath.make_path(subpath)
                 # get count of pages
                 pages = self.get_pages(url_content)
+                if not pages:
+                    pages = 1
                 # loop for all of pages
-                for page in range(1, pages + 1):
+                for page in range(1, int(pages) + 1):
                     # get sub pages.
                     if page != 1:
                         url = '%s/%s/%s' % (self.__url, index, page)
                         url_content = WebImage.get_url_content(url)
                     # get pic url.
-	                pic_list = WebImage.get_pic_url(url_content, self.__re_pic)
+	            pic_list = WebImage.get_pic_url(url_content, self.__re_pic)
                     # get all of pic.
                     for i in range(len(pic_list)):
                         pic_url = pic_list[i]

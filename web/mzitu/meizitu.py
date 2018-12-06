@@ -56,7 +56,7 @@ class Meizitu(object):
             self._end = self._start
         # path is not set, set default path now.
         if self._path == None:
-            self._path = '%s/妹子图' % os.getcwd()
+            self._path = '%s/Meizitu' % os.getcwd()
         # check start < end.
         if self._start > self._end:
             MyBase.print_exit('error: %d > %d\n' % (self._start, self._end))

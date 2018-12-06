@@ -20,10 +20,11 @@ URL_HEADER = {
     'Connection': 'keep-alive'
 }
 
-CONTEXT_UNVERIFIED = ssl._create_unverified_context()
-CONTEXT_TLSv1 = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
 
 class WebContent (object):
+
+    CONTEXT_UNVERIFIED = ssl._create_unverified_context()
+    CONTEXT_TLSv1 = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
 
     @classmethod
     def get_url_content(cls, url, retry_times=3, context=CONTEXT_UNVERIFIED):
