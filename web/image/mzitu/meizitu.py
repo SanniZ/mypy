@@ -13,7 +13,7 @@ from mypy import MyBase
 from webcontent import WebImage
 from image import Image
 
-WEB_URL = r'WebUrl'
+WEB_TXT = r'web.txt'
 
 class Meizitu(object):
 
@@ -21,24 +21,27 @@ class Meizitu(object):
         '======================================',
         '     Meizitu Pictures',
         '======================================',
-        'option: -s number -e number -p path',
+        'option: -s number -e number -p path -v',
         '  -s:',
         '    start of web number',
         '  -e:',
         '    end of web number',
         '  -p:',
         '    root path to store images.',
+        '  -v:',
+        '     show info while download.',
     )
 
     def __init__(self):
-        self.__re_picurl = re.compile('src="(http://.*?(png|jpg|gif))"', re.IGNORECASE)
+        self.__re_img_url = re.compile('src="(http://.*?(png|jpg|gif))"', re.IGNORECASE)
         self.__url_base = 'http://www.meizitu.com/a'
         self._start = None
         self._end = None
         self._path = None
+        self._show = False
 
     def get_user_input(self):
-        args = MyBase.get_user_input('hs:e:p:')
+        args = MyBase.get_user_input('hs:e:p:v')
         if '-h' in args:
             MyBase.print_help(self.help_menu)
         if '-s' in args:
@@ -47,26 +50,22 @@ class Meizitu(object):
             self._end = int(args['-e'])
         if '-p' in args:
             self._path = os.path.abspath(args['-p'])
-        # start to check args.
+        if '-v' in args:
+            self._show = True
+
         # start id is must be set, otherwise return..
-        if self._start == None:
+        if not self._start:
             return False
         # next to start if _end is not set.
-        if self._end == None:
+        if not self._end:
             self._end = self._start
         # path is not set, set default path now.
-        if self._path == None:
+        if not self._path:
             self._path = '%s/Meizitu' % os.getcwd()
         # check start < end.
         if self._start > self._end:
             MyBase.print_exit('error: %d > %d\n' % (self._start, self._end))
         return True
-
-    def get_pic_title(self, title):
-		if title != None:
-		    title = title.group()
-		    title = title[len('<title>') : len(title) - len(' | 妹子图</title>')]
-		return title
 
     def main(self):
         if self.get_user_input() != True:
@@ -77,20 +76,22 @@ class Meizitu(object):
             url_content = WebImage.get_url_content(url)
             if url_content:
                 title = WebImage.get_url_title(url_content)
-                if title == None:
-                    title = index
+                if title:
+                    title = title[ : len(title) - len(' | 妹子图')]
                 else:
-                    title = self.get_pic_title(title)
+                    title = url
                 subpath = os.path.join(self._path, title)
-                pic_list = WebImage.get_pic_url(url_content, self.__re_picurl)
-                for i in range(len(pic_list)):
-                    pic_url = pic_list[i][0]
-                    WebImage.retrieve_url_pic(subpath, pic_url)
-                # write web info.
-                with open(os.path.join(subpath, WEB_URL), 'w') as f:
-                    f.write( '%s\n%s' % (title, url))
-                # remove small image
-                Image.remove_small_image(subpath)
+                imgs = WebImage.get_image_url(url_content, self.__re_img_url)
+                for img in imgs:
+                    WebImage.retrieve_url_image(subpath, img[0])
+                if imgs:
+                    # write web info.
+                    with open(os.path.join(subpath, WEB_TXT), 'w') as f:
+                        f.write( '%s\n%s' % (title, url))
+                    # remove small image
+                    Image.remove_small_image(subpath)
+                    if self._show:
+                        print('output: %s/%s' % (subpath, title))
 
 if __name__ == "__main__":
     mz = Meizitu()

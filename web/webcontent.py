@@ -18,11 +18,13 @@ URL_HEADER = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:16.0) Gecko/20100101 Firefox/16.0',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Connection': 'keep-alive',
-    'Accept-Language': 'zh-CN,zh;q=0.8',
-    'Accept-Encoding': 'gzip, deflate, sdch, br',
-    'Cache-Control': 'max-age=0'
+    #'Accept-Language': 'zh-CN,zh;q=0.8',
+    #'Accept-Encoding': 'gzip, deflate, sdch, br',
+    #'Cache-Control': 'max-age=0'
 }
 
+
+DEFAULT_CHARSET=r'gb2312'
 
 class WebContent (object):
 
@@ -30,16 +32,24 @@ class WebContent (object):
     CONTEXT_TLSv1 = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
 
     @classmethod
+    def get_charset(cls, data):
+        charset = re.compile('charset=(gb2312|gbk|utf-8)', flags=re.I).search(data)
+        if charset:
+            charset = charset.group()
+            return charset[len('charset='):].lower()
+        else:
+            return None
+
+    @classmethod
     def get_html(cls, url, retry_times=3, context=None):
         print('Downloading: %s' % url)
         req = Request(url, headers=URL_HEADER)
         try:
-            if context:
-                data = urlopen(req, context=context).read()
-            else:
-
-                data = urlopen(req).read()
-            html_content = data.decode('gbk', 'ignore').encode('utf-8')
+            data = urlopen(req, context=context).read()
+            html_content = data.decode(DEFAULT_CHARSET, 'ignore').encode('utf-8')
+            charset = WebContent.get_charset(html_content)
+            if charset != DEFAULT_CHARSET:
+                html_content = data.decode(charset).encode('utf-8')
         except URLError, e:
             print(e.reason)
             html_content = None
@@ -65,8 +75,35 @@ class WebContent (object):
             urllib.urlretrieve(url, fname)
 
     @classmethod
-    def get_url_title(self, html_content, re_patten=re.compile('<title>.+</title>')):
-        return re_patten.search(html_content)
+    def get_url_title(cls, html_content, pattern=None):
+        if pattern:
+            return pattern.search(html_content)
+        else:
+            pattern=re.compile('<title>.+</title>')
+            data = pattern.search(html_content)
+            if data:
+                data = data.group()
+                return data[len('<title>') : len(data) - len('</title>')]
+            else:
+                return None
+
+    @classmethod
+    def get_url_pages(cls, html, pattern=None):
+        if pattern:
+            return pattern.search(html)
+        else:
+            pattern = re.compile('\d+/\d+')
+            data = pattern.search(html)
+            if data:
+                print data.group()
+                pattern = re.compile('/\d+')
+                data = pattern.search(data.group())
+                if data:
+                    return data.group()[len('/') : ]
+                else:
+                    return None
+            else:
+                return None
 
 class WebImage (WebContent):
 
@@ -74,9 +111,11 @@ class WebImage (WebContent):
         super(WebImage, self).__init__()
 
     @classmethod
-    def get_pic_url(cls, html, patten=re.compile('http(s)?://.+\.(jpg|png|gif)')):
-        return patten.findall(html)
+    def get_image_url(cls, html, pattern=None):
+        if not pattern:
+            pattern = re.compile('http(s)?://.+\.(jpg|png|gif|bmp|jpeg)')
+        return pattern.findall(html)
 
     @classmethod
-    def retrieve_url_pic(cls, path, url):
+    def retrieve_url_image(cls, path, url):
         return WebContent.retrieve_url_file(path, url)

@@ -6,11 +6,13 @@ Created on: 2018-12-06
 @author: Byng Zeng
 """
 
+import os
 import re
+import sys
+import getopt
+import subprocess
 
-from mypy import MyBase, MyRe, MyPath
-
-BASHRC = '%s/.bashrc' % MyPath.get_home_path()
+BASHRC = '%s/.bashrc' % os.getenv('HOME')
 
 class MyUbuntu(object):
 
@@ -18,14 +20,37 @@ class MyUbuntu(object):
         '==================================',
         '    MyUbuntu Help',
         '==================================',
-        'option: -c -P -a path -A path -V -v',
+        'option: -c -P -a path -A path -v',
         '  -c: create MYPATH to PATH',
         '  -P: add MYPYS to PATH',
         '  -a: add path to MYPATH',
         '  -A: add path to MYPYS',
-        '  -V: show all of PATH',
-        '  -v: show MYPATH',
+        '  -v: show all of PATH',
     )
+
+    def print_help(self, help_menu, _exit=True):
+        for help in help_menu:
+            print(help)
+        if _exit:
+            exit()
+
+    def print_exit(self, msg=None):
+        if msg:
+            print msg
+        exit()
+
+    def get_user_input(self, opts):
+        result=dict()
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], opts)
+        except getopt.GetoptError:
+            self.print_exit('Invalid input, -h for help.')
+        if len(opts) == 0:
+            self.print_exit('Invalid input, -h for help.')
+        else:
+            for name, value in opts:
+                result[name] = value
+        return result
 
     def __init__(self):
         # re compile.
@@ -33,6 +58,7 @@ class MyUbuntu(object):
         self.__re_mypath = re.compile('export MYPATH=.*')
         self.__re_mypys = re.compile('export MYPYS=.*')
         self.__re_myshs = re.compile('export MYSHS=.*')
+        self.__re_pypath = re.compile('export PYTHONPATH=.*')
         # get .bashrc data.
         with open(BASHRC, 'r') as f:
             self.__bashrc = f.read()
@@ -89,6 +115,21 @@ class MyUbuntu(object):
         myshs = self.__re_myshs.findall(self.__bashrc)
         for mysh in myshs:
             print(mysh[len('export '):])
+        pypath = self.__re_pypath.findall(self.__bashrc)
+        for pyth in pypath:
+            print(pyth[len('export '):])
+
+    def print_path2(self):
+        cmds = (
+            '$PATH',
+            '$MYPATH',
+            '$MYPYS',
+            '$MYSHS',
+            '$PYTHONPATH',
+        )
+        for cmd in cmds:
+            print('--------%s----------:' % cmd)
+            subprocess.call(cmd, shell=True)
 
     def add_to_mypath(self, path):
         print('add %s to PATH.' % path)
@@ -115,6 +156,7 @@ class MyUbuntu(object):
         mypys = (
             'export MYPY=$HOME/mypy\n',
             'export MYPYS=$MYPY:$MYPY/broxton:$MYPY/develop:$MYPY/linux:$MYPY/linux/ubuntu:$MYPY/linux/ibus:$MYPY/iOS:$MYPY/tools:$MYPY/image:$MYPY/web:$MYPY/web/mzitu:$MYPY/faceID\n',
+            'export PYTHONPATH=$PYTHONPATH:$MYPYS',
         )
         # merge mypys
         mys = ''
@@ -147,9 +189,9 @@ class MyUbuntu(object):
                 f.write(self.__bashrc)
 
     def main(self):
-        args = MyBase.get_user_input('hcPa:A:vV')
+        args = self.get_user_input('hcPa:A:vV')
         if '-h' in args:
-            MyBase.print_help(self.help_menu)
+            self.print_help(self.help_menu)
         if '-c' in args:
             self.create_mypath()
         if '-P' in args:
@@ -158,10 +200,8 @@ class MyUbuntu(object):
             self.add_to_mypath(args['-a'])
         if '-A' in args:
             self.add_to_mypys(args['-A'])
-        if '-V' in args:
-            self.print_path()
         if '-v' in args:
-            self.print_mypath()
+            self.print_path2()
 
 if __name__ == '__main__':
     ubuntu = MyUbuntu()
