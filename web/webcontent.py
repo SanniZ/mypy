@@ -70,12 +70,20 @@ class WebContent (object):
         else:
             return WebContent.get_html(url)
 
+    @staticmethod
+    def urlretrieve_callback(blocknum, blocksize, totalsize):
+        percent = 100.0 * blocknum * blocksize / totalsize
+        if percent > 100:
+            percent = 100
+        print "%.2f%%"% percent
+
     @classmethod
     def retrieve_url_file(cls, path, url):
         path = path.strip()
         MyPath.make_path(path)
         fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])
         if not os.path.exists(fname):
+            #urllib.urlretrieve(url, fname, WebContent.urlretrieve_callback)
             urllib.urlretrieve(url, fname)
 
     @classmethod
