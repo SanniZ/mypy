@@ -52,18 +52,22 @@ class PstatpImage(object):
             url_content = re.sub('\\\\', '', url_content)
         except TypeError as e:
             print(e.message)
-        if url_content:
-            title = WebImage.get_url_title(url_content)
-            path = '%s/%s' % (self._path, title)
-            imgs = WebImage.get_image_url(url_content, re.compile('\"url\":\"http://\w+\.pstatp\.com/[a-zA-Z0-9/-]+\"'))
-            for img in imgs:
-                img = img[len('\"url\":\"') : len(img) - len('\"')]
-                WebImage.retrieve_url_image(path, img)
-            if imgs:
-                with open('%s/%s' % (path, WEB_TXT), 'w') as f:
-                    f.write('%s\n%s' % (title, url))
-                if self._show:
-                    print('output: %s' % path)
+        if not url_content:
+            print('warning: no content from %s' % url)
+            return
+        title = WebImage.get_url_title(url_content)
+        if not title:
+            title = re.sub('(/|:|\.)', '_', url)
+        path = '%s/%s' % (self._path, title)
+        imgs = WebImage.get_image_url(url_content, re.compile('\"url\":\"http://\w+\.pstatp\.com/[a-zA-Z0-9/-]+\"'))
+        for img in imgs:
+            img = img[len('\"url\":\"') : len(img) - len('\"')]
+            WebImage.retrieve_url_image(path, img)
+        if imgs:
+            with open('%s/%s' % (path, WEB_TXT), 'w') as f:
+                f.write('%s\n%s' % (title, url))
+            if self._show:
+                print('output: %s' % path)
 
     def download_images(self):
         if self._max:
@@ -84,7 +88,7 @@ class PstatpImage(object):
         if not self._url:
             MyBase.print_exit('Error, no set url, -h for help!')
         if not self._path:
-            self._path = os.getcwd()
+            self._path = MyBase.PATH_DWN
         # download image of url.
         self.download_images()
 

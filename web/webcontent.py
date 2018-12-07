@@ -46,10 +46,14 @@ class WebContent (object):
         req = Request(url, headers=URL_HEADER)
         try:
             data = urlopen(req, context=context).read()
-            html_content = data.decode(DEFAULT_CHARSET, 'ignore').encode('utf-8')
-            charset = WebContent.get_charset(html_content)
-            if charset != DEFAULT_CHARSET:
-                html_content = data.decode(charset).encode('utf-8')
+            if data:
+                html_content = data.decode(DEFAULT_CHARSET, 'ignore').encode('utf-8')
+                if html_content:
+                    charset = WebContent.get_charset(html_content)
+                    if charset and charset != DEFAULT_CHARSET:
+                        html_content = data.decode(charset).encode('utf-8')
+            else:
+                html_content = None
         except URLError, e:
             print(e.reason)
             html_content = None

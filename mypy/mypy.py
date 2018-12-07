@@ -16,6 +16,8 @@ import StringIO
 
 class MyBase (object):
 
+    PATH_DWN=os.getenv('DWN')
+
     @classmethod
     def print_help(cls, help_menu, _exit=True):
         for help in help_menu:
@@ -110,7 +112,7 @@ class MyFile(object):
         gz.close()
         return data
 
-class MyPy(MyBase, MyPath):
+class MyPy(MyBase, MyPath, MyFile):
 
     help_menu = (
         '============================================',

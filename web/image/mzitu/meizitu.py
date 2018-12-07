@@ -61,7 +61,7 @@ class Meizitu(object):
             self._end = self._start
         # path is not set, set default path now.
         if not self._path:
-            self._path = '%s/Meizitu' % os.getcwd()
+            self._path = MyBase.PATH_DWN
         # check start < end.
         if self._start > self._end:
             MyBase.print_exit('error: %d > %d\n' % (self._start, self._end))
@@ -74,24 +74,26 @@ class Meizitu(object):
         for index in range(self._start, self._end + 1):
             url = '%s/%s.html' % (self.__url_base, index)
             url_content = WebImage.get_url_content(url)
-            if url_content:
-                title = WebImage.get_url_title(url_content)
-                if title:
-                    title = title[ : len(title) - len(' | 妹子图')]
-                else:
-                    title = url
-                subpath = os.path.join(self._path, title)
-                imgs = WebImage.get_image_url(url_content, self.__re_img_url)
-                for img in imgs:
-                    WebImage.retrieve_url_image(subpath, img[0])
-                if imgs:
-                    # write web info.
-                    with open(os.path.join(subpath, WEB_TXT), 'w') as f:
-                        f.write( '%s\n%s' % (title, url))
-                    # remove small image
-                    Image.remove_small_image(subpath)
-                    if self._show:
-                        print('output: %s/%s' % (subpath, title))
+            if not url_content:
+                print('warning: no content from %s' % url)
+                continue
+            title = WebImage.get_url_title(url_content)
+            if title:
+                title = title[ : len(title) - len(' | 妹子图')]
+            else:
+                title = re.sub('(/|:|\.)', '_', url)
+            subpath = os.path.join(self._path, title)
+            imgs = WebImage.get_image_url(url_content, self.__re_img_url)
+            for img in imgs:
+                WebImage.retrieve_url_image(subpath, img[0])
+            if imgs:
+                # write web info.
+                with open(os.path.join(subpath, WEB_TXT), 'w') as f:
+                    f.write( '%s\n%s' % (title, url))
+                # remove small image
+                Image.remove_small_image(subpath)
+                if self._show:
+                    print('output: %s/%s' % (subpath, title))
 
 if __name__ == "__main__":
     mz = Meizitu()

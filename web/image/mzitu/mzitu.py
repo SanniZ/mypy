@@ -78,7 +78,7 @@ class Mzitu(object):
             self._end = self._start
         # path is not set, set default path now.
         if not self._dst:
-            self._dst = '%s/Mzitu' % os.getcwd()
+            self._dst = MyBase.PATH_DWN
         # check start < end.
         if self._start > self._end:
             MyBase.print_exit('error: %d > %d\n' % (self._start, self._end))
@@ -92,35 +92,37 @@ class Mzitu(object):
             # get the first page.
             url = '%s/%s' % (self.__url, index)
             url_content = WebImage.get_url_content(url)
-            if url_content:
-                # get url title.
-                title = self.get_title(url_content)
-                if not title:
-                    title = 'Mzitu_%s' % index
-                # create path to store data.
-                subpath = os.path.join(self._dst, title)
-                MyPath.make_path(subpath)
-                # get count of pages
-                pages = self.get_pages(url_content)
-                if not pages:
-                    pages = 1
-                # loop for all of pages
-                for page in range(1, int(pages) + 1):
-                    # get sub pages.
-                    if page > 1:
-                        url = '%s/%s/%s' % (self.__url, index, page)
-                        url_content = WebImage.get_url_content(url)
-                    # get pic url.
-                    imgs = WebImage.get_image_url(url_content, self.__re_img_url)
-                    for img in imgs:
-                        WebImage.retrieve_url_image(subpath, img[0])
-                # write web info.
-                with open(os.path.join(subpath, WEB_TXT), 'w') as f:
+            if not url_content:
+                print('warning: no content from %s' % url)
+                continue
+            # get url title.
+            title = self.get_title(url_content)
+            if not title:
+                title = re.sub('(/|:|\.)', '_', url)
+            # create path to store data.
+            subpath = os.path.join(self._dst, title)
+            MyPath.make_path(subpath)
+            # get count of pages
+            pages = self.get_pages(url_content)
+            if not pages:
+                MyBase.print_exit('Error, not get number of pages.')
+            # loop for all of pages
+            for page in range(int(pages)):
+                # get sub pages.
+                if page > 0:
+                    url = '%s/%s/%d' % (self.__url, index, page + 1)
+                    url_content = WebImage.get_url_content(url)
+                # get pic url.
+                imgs = WebImage.get_image_url(url_content, self.__re_img_url)
+                for img in imgs:
+                    WebImage.retrieve_url_image(subpath, img[0])
+            # write web info.
+            with open(os.path.join(subpath, WEB_TXT), 'w') as f:
 		            f.write( '%s\n%s' % (title, url))
-                # remove small image
-                Image.remove_small_image(subpath)
-                if self._show:
-                    print('output: %s/%s' % (subpath, title))
+            # remove small image
+            Image.remove_small_image(subpath)
+            if self._show:
+                print('output: %s/%s' % (subpath, title))
 
 if __name__ == "__main__":
     mz = Mzitu()
