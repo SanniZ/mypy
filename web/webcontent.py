@@ -11,6 +11,8 @@ import re
 import urllib
 import os
 import ssl
+import gzip
+from StringIO import StringIO
 
 from mypy import MyPath
 
@@ -26,7 +28,7 @@ URL_HEADER = {
 
 DEFAULT_CHARSET = r'GB2312'
 
-CHARSETS = ('UTF-8', 'GB2312', 'GBK', 'UTF-16')
+CHARSETS = ('UTF-8', 'GB2312', 'GBK')
 
 class WebContent (object):
 
@@ -35,21 +37,26 @@ class WebContent (object):
 
     @classmethod
     def get_url_charset(cls, html):
-        charset = re.compile('charset=[a-z0-9-]*', flags=re.I).search(html)
+        charset = re.compile('charset=[a-z0-8-]*', flags=re.I).search(re.sub('charset=(\"|\')', 'charset=', html))
         if charset:
             charset = charset.group()
-            return charset[len('charset='):].upper()
-        else:
-            return None
+            charset = charset[len('charset='):].upper()
+        return charset
 
     @classmethod
-    def get_html(cls, url, retry_times=3, context=None):
-        print('Downloading: %s' % url)
+    def get_html(cls, url, context=None, retry_times=3, show=True):
+        url_charset = None
+        if show:
+            print('Downloading: %s' % url)
         req = Request(url, headers=URL_HEADER)
         try:
-            html = urlopen(req, context=context).read()
+            requrl = urlopen(req, context=context)
+            html = requrl.read()
+            encoding = requrl.info().getheader('Content-Encoding')
+            if encoding == 'gzip':
+                 html = gzip.GzipFile(fileobj=StringIO(html)).read()
+                 url_charset = WebContent.get_url_charset(html)
             if html:
-                url_charset = None
                 for charset in CHARSETS:
                     if not url_charset:
                         html_content = html.decode(charset, 'ignore').encode('utf-8')
@@ -74,11 +81,11 @@ class WebContent (object):
         return html_content
 
     @classmethod
-    def get_url_content(cls, url):
+    def get_url_content(cls, url, show=True):
         if re.match('https://', url):
-            return WebContent.get_html(url, WebContent.CONTEXT_UNVERIFIED)
+            return WebContent.get_html(url = url, context=WebContent.CONTEXT_UNVERIFIED, show=show)
         else:
-            return WebContent.get_html(url)
+            return WebContent.get_html(url = url, show = show)
 
     @staticmethod
     def urlretrieve_callback(blocknum, blocksize, totalsize):

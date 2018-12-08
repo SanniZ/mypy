@@ -67,6 +67,9 @@ class Meizitu(object):
             MyBase.print_exit('error: %d > %d\n' % (self._url, self._end))
         return True
 
+    def get_title(self, title):
+        return title[ : len(title) - len(' | 妹子图')]
+
     def main(self):
         if self.get_user_input() != True:
             MyBase.print_exit('Invalid input, -h for help.')
@@ -79,7 +82,7 @@ class Meizitu(object):
                 continue
             title = WebImage.get_url_title(url_content)
             if title:
-                title = title[ : len(title) - len(' | 妹子图')]
+                title = self.get_title(title)
             else:
                 title = re.sub('(/|:|\.)', '_', url)
             subpath = os.path.join(self._path, title)

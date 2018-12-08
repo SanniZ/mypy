@@ -38,16 +38,12 @@ class Mzitu(object):
         self._path = None
         self._show = False
         self.__base_url = 'https://m.mzitu.com'
-        self.__re_img_url = re.compile('http(s)?://[a-zA-Z0-9/&_-]*?\.(jpg|gif|png|jpeg)', re.IGNORECASE)
-        self.__re_prepages = re.compile('[0-9]+页')
+        self.__re_img_url = re.compile('src=\"https://i.meizitu\.net/.+\.jpg', flags=re.I)
+        self.__re_prepages = re.compile('/[0-9]+页')
         self.__re_pages = re.compile('[0-9]+')
-        self.__re_title = re.compile('<span class="s\d+">.+</span>')
 
-    def get_title(self, html_content):
-        title = self.__re_title.search(html_content)
-        if title:
-            title = title.group()
-        return title
+    def get_title(self, title):
+        return title[ : len(title) - len(' | 妹子图')]
 
     def get_pages(self, html_content):
         pages = self.__re_prepages.search(html_content)
@@ -96,8 +92,10 @@ class Mzitu(object):
                 print('warning: no content from %s' % url)
                 continue
             # get url title.
-            title = self.get_title(url_content)
-            if not title:
+            title = WebImage.get_url_title(url_content)
+            if title:
+                title = self.get_title(title)
+            else:
                 title = re.sub('(/|:|\.)', '_', url)
             # create path to store data.
             subpath = os.path.join(self._path, title)
@@ -111,16 +109,17 @@ class Mzitu(object):
                 # get sub pages.
                 if page > 0:
                     url = '%s/%s/%d' % (self.__base_url, index, page + 1)
-                    url_content = WebImage.get_url_content(url)
+                    url_content = WebImage.get_url_content(url, show=False)
                 # get pic url.
                 imgs = WebImage.get_image_url(url_content, self.__re_img_url)
+                #print imgs
                 for img in imgs:
-                    WebImage.retrieve_url_image(subpath, img[0])
+                    WebImage.retrieve_url_image(subpath, re.sub('src=\"', '', img))
             # write web info.
             with open(os.path.join(subpath, WEB_TXT), 'w') as f:
 		            f.write( '%s\n%s' % (title, url))
             # remove small image
-            Image.remove_small_image(subpath)
+            #Image.remove_small_image(subpath)
             if self._show:
                 print('output: %s/%s' % (subpath, title))
 
