@@ -21,9 +21,9 @@ class Meizitu(object):
         '======================================',
         '     Meizitu Pictures',
         '======================================',
-        'option: -s number -e number -p path -v',
-        '  -s:',
-        '    start of web number',
+        'option: -u number -e number -p path -v',
+        '  -u:',
+        '    start of web url number',
         '  -e:',
         '    end of web number',
         '  -p:',
@@ -34,18 +34,18 @@ class Meizitu(object):
 
     def __init__(self):
         self.__re_img_url = re.compile('src="(http://.*?(png|jpg|gif))"', re.IGNORECASE)
-        self.__url_base = 'http://www.meizitu.com/a'
-        self._start = None
+        self.__base_url = 'http://www.meizitu.com/a'
+        self._url = None
         self._end = None
         self._path = None
         self._show = False
 
     def get_user_input(self):
-        args = MyBase.get_user_input('hs:e:p:v')
+        args = MyBase.get_user_input('hu:e:p:v')
         if '-h' in args:
             MyBase.print_help(self.help_menu)
-        if '-s' in args:
-            self._start = int(args['-s'])
+        if '-u' in args:
+            self._url = int(args['-u'])
         if '-e' in args:
             self._end = int(args['-e'])
         if '-p' in args:
@@ -54,25 +54,25 @@ class Meizitu(object):
             self._show = True
 
         # start id is must be set, otherwise return..
-        if not self._start:
+        if not self._url:
             return False
         # next to start if _end is not set.
         if not self._end:
-            self._end = self._start
+            self._end = self._url
         # path is not set, set default path now.
         if not self._path:
             self._path = MyBase.PATH_DWN
         # check start < end.
-        if self._start > self._end:
-            MyBase.print_exit('error: %d > %d\n' % (self._start, self._end))
+        if self._url > self._end:
+            MyBase.print_exit('error: %d > %d\n' % (self._url, self._end))
         return True
 
     def main(self):
         if self.get_user_input() != True:
             MyBase.print_exit('Invalid input, -h for help.')
         # get web now.
-        for index in range(self._start, self._end + 1):
-            url = '%s/%s.html' % (self.__url_base, index)
+        for index in range(self._url, self._end + 1):
+            url = '%s/%s.html' % (self.__base_url, index)
             url_content = WebImage.get_url_content(url)
             if not url_content:
                 print('warning: no content from %s' % url)

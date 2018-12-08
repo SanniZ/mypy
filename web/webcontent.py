@@ -24,7 +24,9 @@ URL_HEADER = {
 }
 
 
-DEFAULT_CHARSET=r'gb2312'
+DEFAULT_CHARSET = r'GB2312'
+
+CHARSETS = ('UTF-8', 'GB2312', 'GBK', 'UTF-16')
 
 class WebContent (object):
 
@@ -32,11 +34,11 @@ class WebContent (object):
     CONTEXT_TLSv1 = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
 
     @classmethod
-    def get_charset(cls, data):
-        charset = re.compile('charset=(gb2312|gbk|utf-8)', flags=re.I).search(data)
+    def get_url_charset(cls, html):
+        charset = re.compile('charset=[a-z0-9-]*', flags=re.I).search(html)
         if charset:
             charset = charset.group()
-            return charset[len('charset='):].lower()
+            return charset[len('charset='):].upper()
         else:
             return None
 
@@ -45,13 +47,21 @@ class WebContent (object):
         print('Downloading: %s' % url)
         req = Request(url, headers=URL_HEADER)
         try:
-            data = urlopen(req, context=context).read()
-            if data:
-                html_content = data.decode(DEFAULT_CHARSET, 'ignore').encode('utf-8')
-                if html_content:
-                    charset = WebContent.get_charset(html_content)
-                    if charset and charset != DEFAULT_CHARSET:
-                        html_content = data.decode(charset).encode('utf-8')
+            html = urlopen(req, context=context).read()
+            if html:
+                url_charset = None
+                for charset in CHARSETS:
+                    if not url_charset:
+                        html_content = html.decode(charset, 'ignore').encode('utf-8')
+                    else:
+                        html_content = html.decode(url_charset, 'ignore').encode('utf-8')
+                        break
+                    if html_content:
+                        url_charset = WebContent.get_url_charset(html_content)
+                        if url_charset and (charset == url_charset):
+                            break
+                        else:
+                            html_content = None
             else:
                 html_content = None
         except URLError, e:
