@@ -35,6 +35,8 @@ class WebContent (object):
     CONTEXT_UNVERIFIED = ssl._create_unverified_context()
     CONTEXT_TLSv1 = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
 
+    WEB_URL_FILE = r'web_url.txt'
+
     @classmethod
     def get_url_charset(cls, html):
         charset = re.compile('charset=[a-z0-8-]*', flags=re.I).search(re.sub('charset=(\"|\')', 'charset=', html))
@@ -45,30 +47,30 @@ class WebContent (object):
 
     @classmethod
     def get_html(cls, url, context=None, retry_times=3, show=True):
-        url_charset = None
         if show:
             print('Downloading: %s' % url)
+        url_charset = None
         req = Request(url, headers=URL_HEADER)
         try:
-            requrl = urlopen(req, context=context)
-            html = requrl.read()
-            encoding = requrl.info().getheader('Content-Encoding')
+            html = urlopen(req, context=context)
+            data = html.read()
+            encoding = html.info().getheader('Content-Encoding')
             if encoding == 'gzip':
-                 html = gzip.GzipFile(fileobj=StringIO(html)).read()
-                 url_charset = WebContent.get_url_charset(html)
-            if html:
+                 data = gzip.GzipFile(fileobj=StringIO(data)).read()
+                 url_charset = WebContent.get_url_charset(data)
+            if data:
                 for charset in CHARSETS:
-                    if not url_charset:
-                        html_content = html.decode(charset, 'ignore').encode('utf-8')
-                    else:
-                        html_content = html.decode(url_charset, 'ignore').encode('utf-8')
+                    if url_charset:
+                        html_content = data.decode(url_charset, 'ignore').encode('utf-8')
                         break
-                    if html_content:
-                        url_charset = WebContent.get_url_charset(html_content)
-                        if url_charset and (charset == url_charset):
-                            break
-                        else:
-                            html_content = None
+                    else:
+                        html_content = data.decode(charset, 'ignore').encode('utf-8')
+                        if html_content:
+                            url_charset = WebContent.get_url_charset(html_content)
+                            if url_charset and (charset == url_charset):
+                                break
+                            else:
+                                html_content = None
             else:
                 html_content = None
         except URLError, e:
@@ -95,7 +97,7 @@ class WebContent (object):
         print "%.2f%%"% percent
 
     @classmethod
-    def retrieve_url_file(cls, path, url):
+    def retrieve_url_file(cls, url, path):
         path = path.strip()
         MyPath.make_path(path)
         fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])

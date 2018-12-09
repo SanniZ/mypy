@@ -13,7 +13,6 @@ from mypy import MyBase
 from webcontent import WebImage
 from image import Image
 
-WEB_TXT = r'web.txt'
 
 class Meizitu(object):
 
@@ -88,10 +87,10 @@ class Meizitu(object):
             subpath = os.path.join(self._path, title)
             imgs = WebImage.get_image_url(url_content, self.__re_img_url)
             for img in imgs:
-                WebImage.retrieve_url_image(subpath, img[0])
+                WebImage.retrieve_url_image(img[0], subpath)
             if imgs:
                 # write web info.
-                with open(os.path.join(subpath, WEB_TXT), 'w') as f:
+                with open(os.path.join(subpath, WebImage.WEB_URL_FILE), 'w') as f:
                     f.write( '%s\n%s' % (title, url))
                 # remove small image
                 Image.remove_small_image(subpath)

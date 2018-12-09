@@ -13,7 +13,6 @@ from mypy import MyBase, MyPath
 from webcontent import WebImage
 from image import Image
 
-WEB_TXT = 'web.txt'
 
 class Mzitu(object):
 
@@ -114,12 +113,12 @@ class Mzitu(object):
                 imgs = WebImage.get_image_url(url_content, self.__re_img_url)
                 #print imgs
                 for img in imgs:
-                    WebImage.retrieve_url_image(subpath, re.sub('src=\"', '', img))
+                    WebImage.retrieve_url_image(re.sub('src=\"', '', img), subpath)
             # write web info.
-            with open(os.path.join(subpath, WEB_TXT), 'w') as f:
+            with open(os.path.join(subpath, WebImage.WEB_URL_FILE), 'w') as f:
 		            f.write( '%s\n%s' % (title, url))
             # remove small image
-            #Image.remove_small_image(subpath)
+            Image.remove_small_image(subpath)
             if self._show:
                 print('output: %s/%s' % (subpath, title))
 

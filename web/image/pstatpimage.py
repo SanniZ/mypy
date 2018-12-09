@@ -11,8 +11,6 @@ import re
 from mypy import MyBase
 from webcontent import WebImage
 
-WEB_TXT = r'web.txt'
-
 class PstatpImage(object):
 
     help_menu = (
@@ -62,9 +60,9 @@ class PstatpImage(object):
         imgs = WebImage.get_image_url(url_content, re.compile('\"url\":\"http://\w+\.pstatp\.com/[a-zA-Z0-9/-]+\"'))
         for img in imgs:
             img = img[len('\"url\":\"') : len(img) - len('\"')]
-            WebImage.retrieve_url_image(path, img)
+            WebImage.retrieve_url_image(img, path)
         if imgs:
-            with open('%s/%s' % (path, WEB_TXT), 'w') as f:
+            with open('%s/%s' % (path, WebImage.WEB_URL_FILE), 'w') as f:
                 f.write('%s\n%s' % (title, url))
             if self._show:
                 print('output: %s' % path)
