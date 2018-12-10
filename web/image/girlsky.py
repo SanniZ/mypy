@@ -14,11 +14,11 @@ from webcontent import WebImage
 from image import Image
 
 
-class Mzitu(object):
+class GirlSky(object):
 
     help_menu = (
         '======================================',
-        '     Mzitu Pictures',
+        '     GirlSky Pictures',
         '======================================',
         'option: -u url -n number -p path -v',
         '  -u:',
@@ -32,12 +32,12 @@ class Mzitu(object):
     )
 
     def __init__(self):
-        self._url_base = 'https://m.mzitu.com/URLID'
+        self._url_base = 'http://m.girlsky.cn/mntp/rtys/URLID.html'
         self._url = None
         self._num = 1
-        self._path = self._path = '%s/Mzitu' % MyBase.PATH_DWN
+        self._path = self._path = '%s/Girlsky' % MyBase.PATH_DWN
         self._show = False
-        self.__re_img_url = re.compile('src=\"(http(s)?://.*meizitu.*\.(jpg|png|gif))', flags=re.I)
+        self.__re_img_url = re.compile('src=\"(http(s)?://.*\.(jpg|png|gif))', flags=re.I)
 
     def get_title(self, title):
         return title[ : len(title) - len(' | 妹子图')]
@@ -64,6 +64,14 @@ class Mzitu(object):
         else:
             MyBase.print_exit('Error, no set url, -h for help!')
 
+    def get_url_pages(self, html):
+        pattern = re.compile('\d+/\d+')
+        pages =  pattern.findall(html)
+        for page in pages:
+            page = page.split('/')
+            if page[0] < page[1]:
+                return int(page[1])
+
     def main(self):
         self.get_user_input()
         # get web now.
@@ -84,14 +92,14 @@ class Mzitu(object):
             subpath = os.path.join(self._path, title)
             MyPath.make_path(subpath)
             # get count of pages
-            pages = WebImage.get_url_pages(url_content)
+            pages = self.get_url_pages(url_content)
             if not pages:
                 MyBase.print_exit('Error, not get number of pages.')
             # loop for all of pages
             for page in range(1, pages + 1):
                 # get sub pages.
                 if page > 1:
-                    sub_url = WebImage.set_url_base_and_num(self._url_base, '%d/%d' % (int(self._url), page))
+                    sub_url = WebImage.set_url_base_and_num(self._url_base, '%d_%d' % (int(self._url), page))
                     url_content = WebImage.get_url_content(sub_url, show=False)
                 # get pic url.
                 imgs = WebImage.get_image_url(url_content, self.__re_img_url)
@@ -107,5 +115,5 @@ class Mzitu(object):
                 print('output: %s/%s' % (subpath, title))
 
 if __name__ == "__main__":
-    mz = Mzitu()
-    mz.main()
+    gs = GirlSky()
+    gs.main()

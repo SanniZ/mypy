@@ -174,7 +174,11 @@ class WebImage (WebContent):
     def get_image_url(cls, html, pattern=None):
         if not pattern:
             pattern = re.compile('http(s)?://.+\.(jpg|png|gif|bmp|jpeg)')
-        return pattern.findall(html)
+        try:
+            imgs = pattern.findall(html)
+        except TypeError as e:
+            print('%s: failed to findall image url' , (e.reason))
+        return imgs
 
     @classmethod
     def retrieve_url_image(cls, path, url):
