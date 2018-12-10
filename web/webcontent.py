@@ -13,6 +13,7 @@ import os
 import ssl
 import gzip
 from StringIO import StringIO
+import requests
 
 from mypy import MyPath
 
@@ -57,7 +58,7 @@ class WebContent (object):
             encoding = html.info().getheader('Content-Encoding')
             if encoding == 'gzip':
                  data = gzip.GzipFile(fileobj=StringIO(data)).read()
-                 url_charset = WebContent.get_url_charset(data)
+                 url_charset = cls.get_url_charset(data)
             if data:
                 for charset in CHARSETS:
                     if url_charset:
@@ -66,35 +67,45 @@ class WebContent (object):
                     else:
                         html_content = data.decode(charset, 'ignore').encode('utf-8')
                         if html_content:
-                            url_charset = WebContent.get_url_charset(html_content)
-                            if url_charset and (charset == url_charset):
+                            url_charset = cls.get_url_charset(html_content)
+                            if not url_charset:
+                                url_charset = DEFAULT_CHARSET
+                            elif charset == url_charset:
                                 break
-                            else:
-                                html_content = None
             else:
+                print('Error: fail to get data from html')
                 html_content = None
-        except URLError, e:
+        except URLError as e:
             print(e.reason)
             html_content = None
             print("retry times: %s" % retry_times)
             if retry_times > 0:
                 if hasattr(e, 'code') and 500 <= e.code < 600:
-                    WebContent.get_url_content(url, retry_times - 1)
+                    cls.get_url_content(url, retry_times - 1)
         return html_content
 
     @classmethod
     def get_url_content(cls, url, show=True):
         if re.match('https://', url):
-            return WebContent.get_html(url = url, context=WebContent.CONTEXT_UNVERIFIED, show=show)
+            return cls.get_html(url = url, context = cls.CONTEXT_UNVERIFIED, show = show)
         else:
-            return WebContent.get_html(url = url, show = show)
+            return cls.get_html(url = url, show = show)
 
     @staticmethod
     def urlretrieve_callback(blocknum, blocksize, totalsize):
         percent = 100.0 * blocknum * blocksize / totalsize
         if percent > 100:
             percent = 100
-        print "%.2f%%"% percent
+        print("%.2f%%" % percent)
+
+    @classmethod
+    def retrieve_url_file2(cls, url, path):
+        path = path.strip()
+        MyPath.make_path(path)
+        fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])
+        if not os.path.exists(fname):
+            #urllib.urlretrieve(url, fname, cls.urlretrieve_callback)
+            urllib.urlretrieve(url, fname)
 
     @classmethod
     def retrieve_url_file(cls, url, path):
@@ -102,8 +113,9 @@ class WebContent (object):
         MyPath.make_path(path)
         fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])
         if not os.path.exists(fname):
-            #urllib.urlretrieve(url, fname, WebContent.urlretrieve_callback)
-            urllib.urlretrieve(url, fname)
+            r = requests.get(url)
+            with open(fname, 'wb') as f:
+                f.write(r.content)
 
     @classmethod
     def get_url_title(cls, html_content, pattern=None):
@@ -120,21 +132,38 @@ class WebContent (object):
 
     @classmethod
     def get_url_pages(cls, html, pattern=None):
-        if pattern:
-            return pattern.search(html)
-        else:
-            pattern = re.compile('\d+/\d+')
-            data = pattern.search(html)
+        if not pattern:
+            pattern = re.compile('/\d+页')
+        data = pattern.search(html.strip())
+        if data:
+            pattern = re.compile('\d+')
+            data = pattern.search(data.group())
             if data:
-                print data.group()
-                pattern = re.compile('/\d+')
-                data = pattern.search(data.group())
-                if data:
-                    return data.group()[len('/') : ]
-                else:
-                    return None
-            else:
-                return None
+                data = int(data.group())
+        return data
+
+    @classmethod
+    def get_url_base_and_num(cls, url):
+        base = None
+        num = None
+        # numbers.
+        num = re.compile('^\d+$').search(url)
+        if num:
+            num = num.group()
+        else:
+            num = re.compile('(\d)+(/)?(.html)?$').search(url)
+            if num:
+                num = re.compile('\d+').search(num.group()).group()
+                base = re.sub(num, 'URLID', url)
+        return base, num
+
+    @classmethod
+    def set_url_base_and_num(cls, base, num):
+        return re.sub('URLID', str(num), base)
+
+    @classmethod
+    def convert_url_to_title(cls, url):
+        return re.sub('(/|:|\.)', '_', url)
 
 class WebImage (WebContent):
 
@@ -149,4 +178,4 @@ class WebImage (WebContent):
 
     @classmethod
     def retrieve_url_image(cls, path, url):
-        return WebContent.retrieve_url_file(path, url)
+        return cls.retrieve_url_file(path, url)

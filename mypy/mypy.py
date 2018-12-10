@@ -29,7 +29,7 @@ class MyBase (object):
     @classmethod
     def print_exit(cls, msg=None):
         if msg:
-            print msg
+            print(msg)
         exit()
 
     @classmethod
@@ -125,7 +125,7 @@ class MyPy(MyBase, MyPath, MyFile):
         '    find: find val in file',
         '  -v val:',
         '    set value for cmd',
-        '  -w val:',
+        '  -w word:',
         '    set word to find',
     )
 
@@ -137,38 +137,65 @@ class MyPy(MyBase, MyPath, MyFile):
         self._wd = None
         self.__handlers = {
             'find' : self.find,
+            'sub' : self.sub,
         }
 
 
     # -v val:
-    #   all: find .*val.*
-    #   forward: find .*val
-    #   backward: find val.*
     def find(self):
-        if self._val:
-            if self._val == 'all':
-                refind = re.compile('.*%s.*' % self._wd)
-            elif self._val == 'forward':
-                refind = re.compile('.*%s' % self._wd)
-            elif self._val == 'backward':
-                refind = re.compile('%s.*' % self._wd)
-            else:
-                self.print_exit('Error, invalid input, -h for help!')
-        else:
-            refind = re.compile('%s' % self._wd)
+        result = dict()
+        pattern = re.compile('%s' % self._wd)
+        # check path.
+        fnane = os.path.basename(self._fs)
+        if re.compile('\*\.\w+').match(fnane):
+            self._fs = os.path.dirname(self._fs)
+        # check files now
         if self.path_is_file(self._fs):
             with open(self._fs, 'r') as f:
                 data = f.read()
-            return refind.findall(data)
+            data = pattern.findall(data)
+            lst = list()
+            for index in data:
+                lst.append(index)
+            result[self._fs] = lst
         else:
             for rt, dr, fs in os.walk(self._fs):
-                print rt, dr, fs
+                if fs:
+                    for f in fs:
+                        if self.get_exname(f) != self.get_exname(self._val):
+                            continue
+                        f = os.path.join(rt, f)
+                        lst = list()
+                        with open(f, 'r') as fd:
+                            data = fd.read()
+                        data = pattern.findall(data)
+                        for index in data:
+                            if index:
+                                lst.append(index)
+                        if lst:
+                            result[str(f)] = lst
+        return result
+
+    # -v val: old
+    # -w word: new
+    def sub(self):
+        if self.path_is_file(self._fs):
+            with open(self._fs, 'r') as fd:
+                data = fd.read()
+            data = re.sub(self._val, self._wd, data)
+            with open(self._fs, 'wr') as fd:
+                fd.write(data)
+        else:
+            for rt, dr, fs in os.walk(self._fs):
                 if fs:
                     for f in fs:
                         f = os.path.join(rt, f)
-                        with open(f, 'r') as f:
-                            data = f.read()
-                        return refind.findall(data)
+                        with open(f, 'r') as fd:
+                            data = fd.read()
+                        data = re.sub(self._val, self._wd, data)
+                        with open(self._fs, 'wr') as fd:
+                            fd.write(data)
+        return None
 
     def main(self):
         args = self.get_user_input('hf:c:v:w:')
@@ -182,10 +209,17 @@ class MyPy(MyBase, MyPath, MyFile):
             self._val = args['-v']
         if '-w' in args:
             self._wd = args['-w']
+        if not self._fs or not self._cmd:
+            self.print_exit('Error, -h for help!')
         # run cmd now.
         if self._cmd in self.__handlers:
-            for data in self.__handlers[self._cmd]():
-                print(data)
+            result = self.__handlers[self._cmd]()
+            if result:
+                for key, values in result.items():
+                    print '----%s----: ' % key
+                    for val in values:
+                        print(val)
+                    print('')
 
 if __name__ == '__main__':
     mypy = MyPy()

@@ -25,7 +25,7 @@ class Image (object):
     @classmethod
     def is_image(cls, f):
         exname = MyFile.get_exname(f)
-        if exname in ['.jpg', 'png', 'gif', '.jpeg', '.bmp']:
+        if exname in ['.jpg', '.png', '.gif', '.jpeg', '.bmp']:
             return True
         else:
             return False

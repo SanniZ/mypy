@@ -20,11 +20,11 @@ class Meizitu(object):
         '======================================',
         '     Meizitu Pictures',
         '======================================',
-        'option: -u number -e number -p path -v',
+        'option: -u number -n number -p path -v',
         '  -u:',
-        '    start of web url number',
-        '  -e:',
-        '    end of web number',
+        '    url of web to be download',
+        '  -n:',
+        '    number of web number to be download',
         '  -p:',
         '    root path to store images.',
         '  -v:',
@@ -32,49 +32,54 @@ class Meizitu(object):
     )
 
     def __init__(self):
-        self.__re_img_url = re.compile('src="(http://.*?(png|jpg|gif))"', re.IGNORECASE)
-        self.__base_url = 'http://www.meizitu.com/a'
+        self._url_base = 'http://www.meizitu.com/a/URLID.html'
         self._url = None
-        self._end = None
-        self._path = None
+        self._num = 1
+        self._path = '%s/Meizitu' % MyBase.PATH_DWN
         self._show = False
+        self.__re_img_url = re.compile('src="(http://.*?(png|jpg|gif))"', re.IGNORECASE)
+
+
+    def get_url(self, data):
+        nums = re.compile('^\d+$').match(data)
+        if nums:  # all of numbers.
+            self._url = int(nums.group())
+        else:  # parse url and base_url.
+            nums = re.compile('\d+$').search(data)
+            if nums:
+                self._url_base = data[ : len(data) - len(nums.group())]
+                self._url = int(nums.group())
 
     def get_user_input(self):
-        args = MyBase.get_user_input('hu:e:p:v')
+        args = MyBase.get_user_input('hu:n:p:v')
         if '-h' in args:
             MyBase.print_help(self.help_menu)
         if '-u' in args:
-            self._url = int(args['-u'])
-        if '-e' in args:
-            self._end = int(args['-e'])
+            self._url = args['-u']
+        if '-n' in args:
+            self._num = int(args['-n'])
         if '-p' in args:
             self._path = os.path.abspath(args['-p'])
         if '-v' in args:
             self._show = True
-
-        # start id is must be set, otherwise return..
-        if not self._url:
-            return False
-        # next to start if _end is not set.
-        if not self._end:
-            self._end = self._url
-        # path is not set, set default path now.
-        if not self._path:
-            self._path = MyBase.PATH_DWN
-        # check start < end.
-        if self._url > self._end:
-            MyBase.print_exit('error: %d > %d\n' % (self._url, self._end))
-        return True
+        # check url
+        if self._url:
+            base, num = WebImage.get_url_base_and_num(self._url)
+            if base:
+                self._url_base = base
+            if num:
+                self._url = num
+        else:
+            MyBase.print_exit('Error, no set url, -h for help!')
 
     def get_title(self, title):
         return title[ : len(title) - len(' | 妹子图')]
 
     def main(self):
-        if self.get_user_input() != True:
-            MyBase.print_exit('Invalid input, -h for help.')
+        self.get_user_input()
         # get web now.
-        for index in range(self._url, self._end + 1):
-            url = '%s/%s.html' % (self.__base_url, index)
+        for index in range(self._num):
+            url = WebImage.set_url_base_and_num(self._url_base, int(self._url) + index)
             url_content = WebImage.get_url_content(url)
             if not url_content:
                 print('warning: no content from %s' % url)
@@ -83,7 +88,7 @@ class Meizitu(object):
             if title:
                 title = self.get_title(title)
             else:
-                title = re.sub('(/|:|\.)', '_', url)
+                title = WebImage.convert_url_to_title(url)
             subpath = os.path.join(self._path, title)
             imgs = WebImage.get_image_url(url_content, self.__re_img_url)
             for img in imgs:
@@ -96,6 +101,7 @@ class Meizitu(object):
                 Image.remove_small_image(subpath)
                 if self._show:
                     print('output: %s/%s' % (subpath, title))
+
 
 if __name__ == "__main__":
     mz = Meizitu()
