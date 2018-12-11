@@ -80,16 +80,16 @@ class WebContent (object):
             html_content = None
             print("retry times: %s" % retry_times)
             if retry_times > 0:
-                if hasattr(e, 'code') and 500 <= e.code < 600:
-                    cls.get_url_content(url, retry_times - 1)
+                #if hasattr(e, 'code') and 500 <= e.code < 600:
+                cls.get_url_content(url, retry_times - 1, False)
         return html_content
 
     @classmethod
-    def get_url_content(cls, url, show=True):
+    def get_url_content(cls, url, retry_times=3, show=True):
         if re.match('https://', url):
-            return cls.get_html(url = url, context = cls.CONTEXT_UNVERIFIED, show = show)
+            return cls.get_html(url = url, context = cls.CONTEXT_UNVERIFIED, retry_times = retry_times,show = show)
         else:
-            return cls.get_html(url = url, show = show)
+            return cls.get_html(url = url, retry_times = retry_times, show = show)
 
     @staticmethod
     def urlretrieve_callback(blocknum, blocksize, totalsize):
@@ -99,7 +99,7 @@ class WebContent (object):
         print("%.2f%%" % percent)
 
     @classmethod
-    def retrieve_url_file2(cls, url, path):
+    def retrieve_url_file(cls, url, path):
         path = path.strip()
         MyPath.make_path(path)
         fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])
@@ -108,7 +108,7 @@ class WebContent (object):
             urllib.urlretrieve(url, fname)
 
     @classmethod
-    def retrieve_url_file(cls, url, path):
+    def retrieve_get_url_file(cls, url, path):
         path = path.strip()
         MyPath.make_path(path)
         fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])
@@ -159,27 +159,12 @@ class WebContent (object):
 
     @classmethod
     def set_url_base_and_num(cls, base, num):
-        return re.sub('URLID', str(num), base)
+        if base:
+            return re.sub('URLID', str(num), base)
+        else:
+            return num
 
     @classmethod
     def convert_url_to_title(cls, url):
         return re.sub('(/|:|\.)', '_', url)
 
-class WebImage (WebContent):
-
-    def __init__(self):
-        super(WebImage, self).__init__()
-
-    @classmethod
-    def get_image_url(cls, html, pattern=None):
-        if not pattern:
-            pattern = re.compile('http(s)?://.+\.(jpg|png|gif|bmp|jpeg)')
-        try:
-            imgs = pattern.findall(html)
-        except TypeError as e:
-            print('%s: failed to findall image url' , (e.reason))
-        return imgs
-
-    @classmethod
-    def retrieve_url_image(cls, path, url):
-        return cls.retrieve_url_file(path, url)

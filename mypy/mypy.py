@@ -16,7 +16,7 @@ import StringIO
 
 class MyBase (object):
 
-    PATH_DWN=os.getenv('DWN')
+    DEFAULT_DOWNLOAD_PATH = '%s/Downloads' % os.getenv('HOME')
 
     @classmethod
     def print_help(cls, help_menu, _exit=True):
