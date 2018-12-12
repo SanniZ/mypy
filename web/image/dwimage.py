@@ -124,8 +124,8 @@ class DWImage(WebContent):
                 hdr = Meizitu()
             elif self.BASE_MAP[self._url_base] == 'mzitu':
                 hdr = Mzitu()
-            else:
-                hdr = WebImage()
+        else:
+            hdr = WebImage()
         if hdr:
             self._pr.pr_dbg('run %s class' % hdr.__class__.__name__)
             hdr.main()
