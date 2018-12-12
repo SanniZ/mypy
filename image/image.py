@@ -7,7 +7,8 @@ Created on 2018-12-03
 """
 
 import os
-from PIL import Image as PilImg
+import re
+from PIL import Image as PILImg
 
 from mypy import MyFile
 
@@ -23,12 +24,23 @@ class Image (object):
         pass
 
     @classmethod
-    def is_image(cls, f):
+    def image_file2(cls, f):
         exname = MyFile.get_exname(f)
         if exname in ['.jpg', '.png', '.gif', '.jpeg', '.bmp']:
             return True
         else:
             return False
+
+    @classmethod
+    def image_file(cls, f):
+        try:
+            img = PILImg.open(f)
+            if img.format in ['PNG', 'JPEG', 'GIF']:
+                return img
+            else:
+                return None
+        except IOError: # it is bad if open failed.
+            return None
 
     # remove small size image, default size is 10K.
     @classmethod
@@ -37,36 +49,51 @@ class Image (object):
             if len(fs) != 0:  # found files.
                 for f in fs:
                     f = os.path.join(rt, f)
-                    if Image.is_image(f) and os.path.getsize(f) < size:
+                    if cls.is_image(f) and os.path.getsize(f) < size:
                         os.remove(f)
 
     # remove small image, default width < IMG_W_MIN or height < IMG_H_MIN.
     @classmethod
     def remove_small_image(cls, path, width=IMG_W_MIN, height=IMG_H_MIN):
         for rt, dirs, fs in os.walk(path):
-            if len(fs) != 0:  # found files.
+            if len(fs):  # found files.
                 for f in fs:
                     f = os.path.join(rt, f)
-                    if Image.is_image(f):
-                        w, h = Image.get_image_size(f)
-                        # check size
-                        if w and h:
-                            if w < width or h < height:
+                    img = cls.image_file(f)
+                    if img:
+                        w, h = cls.get_image_size(img)
+                        if all((w, h)):
+                            if any((w < width, h < height)):
                                 os.remove(f)
                         else:  # fail to get size, remove it.
                             os.remove(f)
 
     @classmethod
-    def get_image_size(self, f):
-        w = None
-        h = None
-        if Image.is_image(f):
-            try:
-                img = PilImg.open(f)
-                w, h = img.size[0], img.size[1]
-            except IOError: # it is bad if open failed.
-                w, h = None, None
-        return w, h
+    def get_image_size(cls, img):
+        return img.size[0], img.size[1]
+
+    @classmethod
+    def reclaim_image_format(cls, f):
+        img = cls.image_file(f)
+        if img:
+            fmt = img.format.lower()
+            if fmt == 'jpeg':
+                fmt = 'jpg'
+            ftype = MyFile.get_filetype(f)
+            if not ftype: # no ext name
+                os.rename(f, '%s.%s' % (f, fmt))
+            else:
+                if fmt != ftype:
+                    name = re.sub(ftype, fmt, f)
+                    os.rename(f, name)
+
+    @classmethod
+    def reclaim_path_image_format(cls, path):
+        for rt, dr, fs in os.walk(path):
+            if len(fs):
+                for f in fs:
+                    f = os.path.join(rt, f)
+                    cls.reclaim_image_format(f)
 
 if __name__ == '__main__':
     Img = Image()

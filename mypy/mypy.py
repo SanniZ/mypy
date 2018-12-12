@@ -14,6 +14,7 @@ import getopt
 import gzip
 import StringIO
 
+
 class MyBase (object):
 
     DEFAULT_DOWNLOAD_PATH = '%s/Downloads' % os.getenv('HOME')
@@ -83,16 +84,22 @@ class MyPath(object):
 class MyFile(object):
 
     @classmethod
-    def get_exname(cls, f):
-        return os.path.splitext(f)[1].lower()
-
-    @classmethod
     def get_fname(cls, f):
         return os.path.basename(f)
 
     @classmethod
+    def get_exname(cls, f):
+        try:
+            return os.path.splitext(f)[1].lower()
+        except AttributeError:
+            return None
+
+    @classmethod
     def get_filetype(cls, f):
-        return os.path.splitext(f)[1][1:].lower()
+        try:
+            return os.path.splitext(f)[1][1:].lower()
+        except AttributeError:
+            return None
 
     @classmethod
     def remove_small_file(cls, path, size):
@@ -112,7 +119,47 @@ class MyFile(object):
         gz.close()
         return data
 
-class MyPy(MyBase, MyPath, MyFile):
+
+class MyPrint(object):
+
+    PR_LVL_DBG = 0x01
+    PR_LVL_INFO = 0x02
+    PR_LVL_ERR = 0x04
+
+    PR_LVL_ALL = 0x07
+
+    def __init__(self, flag=None, level= 0x02 | 0x04):
+        self._flag = flag
+        self.__pr_level = level
+
+    def pr_dbg(self, fmt):
+        if all((self.__pr_level & self.PR_LVL_DBG , fmt)):
+            if self._flag:
+                print('[%s] %s' % (self._flag, fmt))
+            else:
+                print('%s' % (fmt))
+
+    def pr_info(self, fmt):
+        if all((self.__pr_level & self.PR_LVL_INFO , fmt)):
+            if self._flag:
+                print('[%s] %s' % (self._flag, fmt))
+            else:
+                print('%s' % (fmt))
+
+    def pr_err(self, fmt):
+        if all((self.__pr_level & self.PR_LVL_ERR , fmt)):
+            if self._flag:
+                print('[%s] %s' % (self._flag, fmt))
+            else:
+                print('%s' % (fmt))
+
+    def set_pr_level(self, val):
+        self.__pr_level = val
+
+    def get_pr_level(self):
+        return self.__pr_level
+
+class MyPy(MyBase, MyPath, MyFile, MyPrint):
 
     help_menu = (
         '============================================',
@@ -123,6 +170,7 @@ class MyPy(MyBase, MyPath, MyFile):
         '    set file to be process',
         '  -c cmd:',
         '    find: find val in file',
+        '    sub : sub val in file',
         '  -v val:',
         '    set value for cmd',
         '  -w word:',
@@ -162,8 +210,9 @@ class MyPy(MyBase, MyPath, MyFile):
             for rt, dr, fs in os.walk(self._fs):
                 if fs:
                     for f in fs:
-                        if self.get_exname(f) != self.get_exname(self._val):
-                            continue
+                        if self._val:
+                            if self.get_exname(f) != self.get_exname(self._val):
+                                continue
                         f = os.path.join(rt, f)
                         lst = list()
                         with open(f, 'r') as fd:
