@@ -54,26 +54,37 @@ class Image (object):
 
     # remove small image, default width < IMG_W_MIN or height < IMG_H_MIN.
     @classmethod
-    def remove_small_image(cls, path, width=IMG_W_MIN, height=IMG_H_MIN):
+    def remove_small_image(cls, f, width=IMG_W_MIN, height=IMG_H_MIN, obj=None):
+        if obj:
+            img = obj
+        else:
+            img = cls.image_file(f)
+        # check size of image.
+        if img:
+            w, h = cls.get_image_size(img)
+            if all((w, h)):
+                if any((w < width, h < height)):
+                    os.remove(f)
+            else:  # fail to get size, remove it.
+                os.remove(f)
+        else:
+            os.remove(f)
+
+    # remove small image, default width < IMG_W_MIN or height < IMG_H_MIN.
+    @classmethod
+    def remove_path_small_images(cls, path, width=IMG_W_MIN, height=IMG_H_MIN):
         for rt, dirs, fs in os.walk(path):
             if len(fs):  # found files.
                 for f in fs:
                     f = os.path.join(rt, f)
-                    img = cls.image_file(f)
-                    if img:
-                        w, h = cls.get_image_size(img)
-                        if all((w, h)):
-                            if any((w < width, h < height)):
-                                os.remove(f)
-                        else:  # fail to get size, remove it.
-                            os.remove(f)
+                    cls.remove_small_image(f=f, width=width, height=height)
 
     @classmethod
     def get_image_size(cls, img):
         return img.size[0], img.size[1]
 
     @classmethod
-    def reclaim_image_format(cls, f):
+    def reclaim_image(cls, f, xfunc=None):
         img = cls.image_file(f)
         if img:
             fmt = img.format.lower()
@@ -86,14 +97,17 @@ class Image (object):
                 if fmt != ftype:
                     name = re.sub(ftype, fmt, f)
                     os.rename(f, name)
+            # run xfunc
+            if xfunc:
+                xfunc(f=f, obj=img)
 
     @classmethod
-    def reclaim_path_image_format(cls, path):
+    def reclaim_path_images(cls, path, xfunc=None):
         for rt, dr, fs in os.walk(path):
             if len(fs):
                 for f in fs:
                     f = os.path.join(rt, f)
-                    cls.reclaim_image_format(f)
+                    cls.reclaim_image(f, xfunc)
 
 if __name__ == '__main__':
     Img = Image()

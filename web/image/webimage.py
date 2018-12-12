@@ -48,7 +48,6 @@ class WebImage(object):
     def get_image_url_of_pages(self, pages, header_content=None):
         limg = list()
         url_pages = self.get_url_of_pages(pages)
-        self._pr.pr_dbg('====get url_pages: %s====' % url_pages)
         for index in range(len(url_pages)):
             if all((index == 0, header_content)):
                 url_content = header_content
@@ -57,7 +56,6 @@ class WebImage(object):
             if not url_content:
                 self._pr.pr_err('Error, failed to download %s' % url_pages[index])
                 continue
-            self._pr.pr_dbg('\n--------get image from: %s--------' % url_pages[index])
             imgs = self.get_image_url(url_content)
             for img in imgs:
                 limg.append(img)
@@ -168,11 +166,11 @@ class WebImage(object):
                 self.download_images(limgs, subpath)
                 # write web info
                 self.store_web_info(subpath, title, url_header)
-            # remove small image
+            # reclaim image, remove small image
             if self._remove_small_image:
-                Image.remove_small_image(subpath)
-            # reclaim images format.
-            Image.reclaim_path_image_format(subpath)
+                Image.reclaim_path_images(subpath, Image.remove_small_image)
+            else:
+                Image.reclaim_path_images(subpath)
             if self._show:
                 self._pr.pr_info('output: %s' % (subpath))
 
