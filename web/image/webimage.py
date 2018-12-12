@@ -7,6 +7,7 @@ Created on: 2018-12-07
 """
 import os
 import re
+import subprocess
 
 from mypy import MyBase, MyPath, MyPrint
 from webcontent import WebContent
@@ -64,8 +65,21 @@ class WebImage(object):
     def get_image_raw_url(self, url):
         return url
 
+    def wget_url_image(self, url, path):
+        if self._show:
+            cmd = 'wget -c -t 3 -T 10 -P %s %s' % (path, url)
+        else:
+            cmd = 'wget -c -t 3 -T 10 -P %s %s -q' % (path, url)
+        try:
+            subprocess.check_output(cmd, shell=True)
+        except subprocess.CalledProcessError:
+            pass
+
     def retrieve_url_image(self, url, path):
         return WebContent.retrieve_get_url_file(url, path)
+
+    def download_image(self, url, path):
+        self.wget_url_image(url, path)
 
     def __init__(self):
         self._url_base = None
@@ -118,7 +132,7 @@ class WebImage(object):
 
     def download_images(self, imgs, path):
         for img in imgs:
-            self.retrieve_url_image(self.get_image_raw_url(img), path)
+            self.download_image(self.get_image_raw_url(img), path)
 
     def store_web_info(self, path, title, url):
         with open('%s/%s' % (path, WebContent.WEB_URL_FILE), 'w') as fd:
@@ -168,7 +182,7 @@ class WebImage(object):
                 self.store_web_info(subpath, title, url_header)
             # reclaim image, remove small image
             if self._remove_small_image:
-                Image.reclaim_path_images(subpath, Image.remove_small_image)
+                Image.reclaim_path_images(subpath, xfunc=Image.remove_small_image)
             else:
                 Image.reclaim_path_images(subpath)
             if self._show:

@@ -67,8 +67,6 @@ class Image (object):
                     os.remove(f)
             else:  # fail to get size, remove it.
                 os.remove(f)
-        else:
-            os.remove(f)
 
     # remove small image, default width < IMG_W_MIN or height < IMG_H_MIN.
     @classmethod
@@ -77,15 +75,18 @@ class Image (object):
             if len(fs):  # found files.
                 for f in fs:
                     f = os.path.join(rt, f)
-                    cls.remove_small_image(f=f, width=width, height=height)
+                    cls.remove_small_image(f, width=width, height=height)
 
     @classmethod
     def get_image_size(cls, img):
         return img.size[0], img.size[1]
 
     @classmethod
-    def reclaim_image(cls, f, xfunc=None):
-        img = cls.image_file(f)
+    def reclaim_image(cls, f, obj=None, xfunc=None):
+        if obj:
+            img = obj
+        else:
+            img = cls.image_file(f)
         if img:
             fmt = img.format.lower()
             if fmt == 'jpeg':
@@ -93,13 +94,12 @@ class Image (object):
             ftype = MyFile.get_filetype(f)
             if not ftype: # no ext name
                 os.rename(f, '%s.%s' % (f, fmt))
-            else:
-                if fmt != ftype:
+            elif fmt != ftype:
                     name = re.sub(ftype, fmt, f)
                     os.rename(f, name)
             # run xfunc
             if xfunc:
-                xfunc(f=f, obj=img)
+                xfunc(f, obj=img)
 
     @classmethod
     def reclaim_path_images(cls, path, xfunc=None):
@@ -107,7 +107,9 @@ class Image (object):
             if len(fs):
                 for f in fs:
                     f = os.path.join(rt, f)
-                    cls.reclaim_image(f, xfunc)
+                    img = cls.image_file(f)
+                    if img:
+                        cls.reclaim_image(f, img, xfunc)
 
 if __name__ == '__main__':
     Img = Image()
