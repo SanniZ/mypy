@@ -7,7 +7,6 @@ Created on: 2018-12-07
 """
 import os
 import re
-import subprocess
 
 from mypy import MyBase, MyPath, MyPrint
 from webcontent import WebContent
@@ -32,54 +31,6 @@ class WebImage(object):
         '  -x:',
         '     val for expand cmd.',
     )
-
-    def get_image_url(self, html):
-        if not self._re_image_url:
-            pattern = re.compile('src=[\'|\"]?(http[s]?://.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?')
-        else:
-            pattern = self._re_image_url
-        # find image.
-        try:
-            imgs = pattern.findall(html)
-            #self._pr.pr_dbg('%s' % imgs)
-        except TypeError as e:
-           self._pr.pr_err('%s: failed to findall image url' , (e.reason))
-        return imgs
-
-    def get_image_url_of_pages(self, pages, header_content=None):
-        limg = list()
-        url_pages = self.get_url_of_pages(pages)
-        for index in range(len(url_pages)):
-            if all((index == 0, header_content)):
-                url_content = header_content
-            else:
-                url_content = self.get_url_content(url_pages[index])
-            if not url_content:
-                self._pr.pr_err('Error, failed to download %s' % url_pages[index])
-                continue
-            imgs = self.get_image_url(url_content)
-            for img in imgs:
-                limg.append(img)
-        return limg
-
-    def get_image_raw_url(self, url):
-        return url
-
-    def wget_url_image(self, url, path):
-        if self._show:
-            cmd = 'wget -c -t 3 -T 10 -P %s %s' % (path, url)
-        else:
-            cmd = 'wget -c -t 3 -T 10 -P %s %s -q' % (path, url)
-        try:
-            subprocess.check_output(cmd, shell=True)
-        except subprocess.CalledProcessError:
-            pass
-
-    def retrieve_url_image(self, url, path):
-        return WebContent.retrieve_get_url_file(url, path)
-
-    def download_image(self, url, path):
-        self.wget_url_image(url, path)
 
     def __init__(self):
         self._url_base = None
@@ -121,6 +72,50 @@ class WebImage(object):
         else:
             MyBase.print_exit('Error, no set url, -h for help!')
 
+    def get_image_url(self, html):
+        if not self._re_image_url:
+            pattern = re.compile('src=[\'|\"]?(http[s]?://.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?')
+        else:
+            pattern = self._re_image_url
+        # find image.
+        try:
+            imgs = pattern.findall(html)
+            #self._pr.pr_dbg('%s' % imgs)
+        except TypeError as e:
+           self._pr.pr_err('%s: failed to findall image url' , (e.reason))
+        return imgs
+
+    def get_image_url_of_pages(self, pages, header_content=None):
+        limg = list()
+        url_pages = self.get_url_of_pages(pages)
+        for index in range(len(url_pages)):
+            if all((index == 0, header_content)):
+                url_content = header_content
+            else:
+                url_content = self.get_url_content(url_pages[index])
+            if not url_content:
+                self._pr.pr_err('Error, failed to download %s sub web' % url_pages[index])
+                continue
+            imgs = self.get_image_url(url_content)
+            for img in imgs:
+                limg.append(img)
+        return limg
+
+    def get_image_raw_url(self, url):
+        return url
+
+    def retrieve_url_image(self, url, path):
+        return WebContent.retrieve_url_file(url, path)
+
+    def wget_url_image(self, url, path):
+        return WebContent.wget_url_file(url, path, self._show)
+
+    def requests_get_url_image(self, url, path):
+        return WebContent.requests_get_url_file(url, path)
+
+    def download_image(self, url, path):
+        self.wget_url_image(url, path)
+
     def get_url_content(self, url, show=False):
         return WebContent.get_url_content(url=url, show=show)
 
@@ -154,7 +149,8 @@ class WebImage(object):
                 url_header = WebContent.set_url_base_and_num(None, self._url)
             header_content = self.get_url_content(url_header, True)
             if not header_content:
-                self._pr.pr_err('Error, failed to download %s' % url_header)
+                self._pr.pr_err('Error, failed to download %s header web.' % url_header)
+                self._url = int(self._url) + 1
                 continue
             # get url title.
             title = self.get_title(header_content, self._title)

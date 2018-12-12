@@ -64,6 +64,7 @@ class DWImage(WebContent):
         'http://m.girlsky.cn/mntp/rtys/URLID.html' : 'girlsky',  # 人体艺术
         'http://m.girlsky.cn/mntp/jpmn/URLID.html' : 'girlsky',  # 街拍美女
         'http://m.girlsky.cn/mntp/gzmn/URLID.html' : 'girlsky',  # 古装美女
+        'http://m.girlsky.cn/mntpn/rtys/URLID.html' : 'girlsky',  # 人体艺术
         # pstatp
          'https://www.toutiao.com/aURLID' : 'pstatp',
         # meizitu
@@ -83,7 +84,7 @@ class DWImage(WebContent):
     def get_url_base_filter(self, url_base):
         pattern = re.compile(self._xval)
         if pattern.search(url_base):
-            return url_base
+            return url_base[0]
 
     def get_input(self):
         args = MyBase.get_user_input('hHu:n:p:x:vd')
@@ -98,10 +99,8 @@ class DWImage(WebContent):
         if '-d' in args:
             self._pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
         # get url_base from xval
-        if self._xval:
-            url_base = filter(self.get_url_base_filter, self.BASE_MAP.iterkeys())
-            if url_base:
-                self._url_base = url_base[0]
+        if all((self._xval, self._xval in self.BASE_MAP.iterkeys())):
+                self._url_base = self.BASE_MAP[self._xval]
         # check url
         if self._url:
             base, num = self.get_url_base_and_num(self._url)

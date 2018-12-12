@@ -7,6 +7,7 @@ Created on: 2018-12-11
 """
 import re
 
+from mypy import MyBase
 from webcontent import WebContent
 from webimage import WebImage
 
@@ -21,11 +22,24 @@ class Girlsky(WebImage):
         'rtys' : 'http://m.girlsky.cn/mntp/rtys/URLID.html',  # 人体艺术
         'jpmn' : 'http://m.girlsky.cn/mntp/jpmn/URLID.html',  # 街拍美女
         'gzmn' : 'http://m.girlsky.cn/mntp/gzmn/URLID.html',  # 古装美女
+        'rtys' : 'http://m.girlsky.cn/mntpn/rtys/URLID.html',  # 人体艺术
     }
+
+    PATH_MAP = {
+        'http://m.girlsky.cn/mntp/xgmn/URLID.html' : '性感美女',
+        'http://m.girlsky.cn/mntp/swmn/URLID.html' : '丝袜美女',
+        'http://m.girlsky.cn/mntp/wgmn/URLID.html' : '外国美女',
+        'http://m.girlsky.cn/mntp/zpmn/URLID.html' : '自拍美女',
+        'http://m.girlsky.cn/mntp/mnxz/URLID.html' : '美女写真',
+        'http://m.girlsky.cn/mntp/rtys/URLID.html' : '人体艺术',
+        'http://m.girlsky.cn/mntp/jpmn/URLID.html' : '街拍美女',
+        'http://m.girlsky.cn/mntp/gzmn/URLID.html' : '古装美女',
+        'http://m.girlsky.cn/mntpn/rtys/URLID.html' : '人体艺术',
+    }
+
 
     def __init__(self):
         super(Girlsky, self).__init__()
-        self._url_base = 'http://m.girlsky.cn/mntp/xgmn/URLID.html'
         #self._re_image_url = re.compile('src=\"(http://.*\.[jpg|png|gif])\"', flags=re.I)
         self._re_pages = re.compile('1/\d+')
         self._remove_small_image = False
@@ -35,6 +49,8 @@ class Girlsky(WebImage):
         if self._xval:
             self._url_base = self.URL_BASE[self._xval]
             self._pr.pr_dbg('get url_base: %s from -x %s' % (self._url_base, self._xval))
+        if self._url_base in self.PATH_MAP.keys():
+            self._path = '%s/%s/%s' %  (MyBase.DEFAULT_DOWNLOAD_PATH, self.__class__.__name__, self.PATH_MAP[self._url_base])
 
     def get_title(self, html, pattern=None):
         title = WebContent.get_url_title(html, pattern)

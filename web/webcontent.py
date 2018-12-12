@@ -14,6 +14,7 @@ import ssl
 import gzip
 from StringIO import StringIO
 import requests
+import subprocess
 
 from mypy import MyPath
 
@@ -50,38 +51,38 @@ class WebContent (object):
     def get_html(cls, url, context=None, retry_times=3, show=True):
         if show:
             print('Downloading: %s' % url)
-        url_charset = None
-        req = Request(url, headers=URL_HEADER)
-        try:
-            html = urlopen(req, context=context)
-            data = html.read()
-            encoding = html.info().getheader('Content-Encoding')
-            if encoding == 'gzip':
-                 data = gzip.GzipFile(fileobj=StringIO(data)).read()
-                 url_charset = cls.get_url_charset(data)
-            if data:
-                for charset in CHARSETS:
-                    if url_charset:
-                        html_content = data.decode(url_charset, 'ignore').encode('utf-8')
-                        break
-                    else:
-                        html_content = data.decode(charset, 'ignore').encode('utf-8')
-                        if html_content:
-                            url_charset = cls.get_url_charset(html_content)
-                            if not url_charset:
-                                url_charset = DEFAULT_CHARSET
-                            elif charset == url_charset:
-                                break
-            else:
-                print('Error: fail to get data from html')
+        for index in range(retry_times):
+            url_charset = None
+            req = Request(url, headers=URL_HEADER)
+            try:
+                html = urlopen(req, context=context)
+                data = html.read()
+                encoding = html.info().getheader('Content-Encoding')
+                if encoding == 'gzip':
+                     data = gzip.GzipFile(fileobj=StringIO(data)).read()
+                     url_charset = cls.get_url_charset(data)
+                if data:
+                    for charset in CHARSETS:
+                        if url_charset:
+                            html_content = data.decode(url_charset, 'ignore').encode('utf-8')
+                            break
+                        else:
+                            html_content = data.decode(charset, 'ignore').encode('utf-8')
+                            if html_content:
+                                url_charset = cls.get_url_charset(html_content)
+                                if not url_charset:
+                                    url_charset = DEFAULT_CHARSET
+                                elif charset == url_charset:
+                                    break
+                else:
+                    print('Error: fail to get data from html')
+                    html_content = None
+            except URLError as e:
+                print(e.reason)
                 html_content = None
-        except URLError as e:
-            print(e.reason)
-            html_content = None
-            print("retry times: %s" % retry_times)
-            if retry_times > 0:
-                #if hasattr(e, 'code') and 500 <= e.code < 600:
-                cls.get_url_content(url, retry_times - 1, False)
+            # get content and break.
+            if html_content:
+                break
         return html_content
 
     @classmethod
@@ -108,7 +109,7 @@ class WebContent (object):
             urllib.urlretrieve(url, fname)
 
     @classmethod
-    def retrieve_get_url_file(cls, url, path):
+    def requests_get_url_file(cls, url, path):
         path = path.strip()
         MyPath.make_path(path)
         fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])
@@ -116,6 +117,17 @@ class WebContent (object):
             r = requests.get(url)
             with open(fname, 'wb') as f:
                 f.write(r.content)
+
+    @classmethod
+    def wget_url_file(cls, url, path, show=False):
+        if show:
+            cmd = 'wget -c -t 3 -T 10 -P %s %s' % (path, url)
+        else:
+            cmd = 'wget -c -t 3 -T 10 -P %s %s -q' % (path, url)
+        try:
+            return subprocess.check_output(cmd, shell=True)
+        except subprocess.CalledProcessError:
+            return None
 
     @classmethod
     def get_url_title(cls, html_content, pattern=None):
@@ -126,7 +138,7 @@ class WebContent (object):
             data = pattern.search(html_content)
             if data:
                 data = data.group()
-                return data[len('<title>') : len(data) - len('</title>')]
+                return re.sub(' ', '_', data[len('<title>') : len(data) - len('</title>')])
             else:
                 return None
 
