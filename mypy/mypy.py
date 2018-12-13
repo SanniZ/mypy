@@ -67,6 +67,10 @@ class MyPath(object):
         return os.getenv('HOME')
 
     @classmethod
+    def get_download_path(cls):
+        return '%s/Downloads' % os.getenv('HOME')
+
+    @classmethod
     def get_abs_path(cls, path):
         return os.path.abspath(path)
 
@@ -110,6 +114,11 @@ class MyFile(object):
                     if os.path.getsize(f) < size:
                         os.remove(f)
 
+    @classmethod
+    def reclaim_name(cls, name):
+        name = re.sub('/', '%', name)
+        name = re.sub('\s', '_', name)
+        return name
 
     @classmethod
     def unzip(cls, data):
@@ -128,36 +137,45 @@ class MyPrint(object):
 
     PR_LVL_ALL = 0x07
 
-    def __init__(self, flag=None, level= 0x02 | 0x04):
-        self._flag = flag
-        self.__pr_level = level
+    flag = None
+    pr_level = PR_LVL_INFO | PR_LVL_ERR
 
-    def pr_dbg(self, fmt):
-        if all((self.__pr_level & self.PR_LVL_DBG , fmt)):
-            if self._flag:
-                print('[%s] %s' % (self._flag, fmt))
+    @classmethod
+    def __init__(cls, flag=None, level= 0x02 | 0x04):
+        cls.flag = flag
+        cls.pr_level = level
+
+    @classmethod
+    def pr_dbg(cls, fmt):
+        if all((cls.pr_level & cls.PR_LVL_DBG , fmt)):
+            if cls.flag:
+                print('[%s] %s' % (cls.flag, fmt))
             else:
                 print('%s' % (fmt))
 
-    def pr_info(self, fmt):
-        if all((self.__pr_level & self.PR_LVL_INFO , fmt)):
-            if self._flag:
-                print('[%s] %s' % (self._flag, fmt))
+    @classmethod
+    def pr_info(cls, fmt):
+        if all((cls.pr_level & cls.PR_LVL_INFO , fmt)):
+            if cls.flag:
+                print('[%s] %s' % (cls.flag, fmt))
             else:
                 print('%s' % (fmt))
 
-    def pr_err(self, fmt):
-        if all((self.__pr_level & self.PR_LVL_ERR , fmt)):
-            if self._flag:
-                print('[%s] %s' % (self._flag, fmt))
+    @classmethod
+    def pr_err(cls, fmt):
+        if all((cls.pr_level & cls.PR_LVL_ERR , fmt)):
+            if cls.flag:
+                print('[%s] %s' % (cls.flag, fmt))
             else:
                 print('%s' % (fmt))
 
-    def set_pr_level(self, val):
-        self.__pr_level = val
+    @classmethod
+    def set_pr_level(cls, val):
+        cls.pr_level = val
 
-    def get_pr_level(self):
-        return self.__pr_level
+    @classmethod
+    def get_pr_level(cls):
+        return cls.pr_level
 
 class MyPy(MyBase, MyPath, MyFile, MyPrint):
 

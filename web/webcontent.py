@@ -16,15 +16,18 @@ from StringIO import StringIO
 import requests
 import subprocess
 
-from mypy import MyPath
+from mypy import MyBase, MyPath, MyPrint, MyFile
 
 URL_HEADER = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:16.0) Gecko/20100101 Firefox/16.0',
+    #'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:16.0) Gecko/20100101 Firefox/16.0',
+    'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/534.16 (KHTML, like Gecko) Chrome/10.0.648.204 Safari/534.16',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Connection': 'keep-alive',
     #'Accept-Language': 'zh-CN,zh;q=0.8',
     #'Accept-Encoding': 'gzip, deflate, sdch, br',
 
+    #'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/534.16 (KHTML, like Gecko) Chrome/10.0.648.204 Safari/534.16',
+    #'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:16.0) Gecko/20100101 Firefox/16.0'
     #'Cache-Control': 'max-age=0'
     #'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36 LBBROWSER',
     #'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; it; rv:1.8.1.11) Gecko/20071127 Firefox/2.0.0.11',
@@ -38,6 +41,7 @@ URL_HEADER = {
     #'Host': 'ptlogin2.qq.com',
 }
 
+UserAgent = r'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/534.16 (KHTML, like Gecko) Chrome/10.0.648.204 Safari/534.16'
 
 DEFAULT_CHARSET = r'GB2312'
 
@@ -132,9 +136,9 @@ class WebContent (object):
     @classmethod
     def wget_url_file(cls, url, path, show=False):
         if show:
-            cmd = 'wget -c -t 3 -T 10 -P %s %s' % (path, url)
+            cmd = 'wget -c --tries=3 --timeout=10 -P %s %s -nv -U \'%s\'' % (path, url, UserAgent)
         else:
-            cmd = 'wget -c -t 3 -T 10 -P %s %s -q' % (path, url)
+            cmd = 'wget -c --tries=3 --timeout=10 -P %s %s -q -U \'%s\'' % (path, url, UserAgent)
         try:
             return subprocess.check_output(cmd, shell=True)
         except subprocess.CalledProcessError:
@@ -189,5 +193,68 @@ class WebContent (object):
 
     @classmethod
     def convert_url_to_title(cls, url):
-        return re.sub('(/|:|\.)', '_', url)
+        return MyFile.reclaim_name(re.sub('/$', '', url))
 
+if __name__ == '__main__':
+
+    HELP_MENU = (
+        '==================================',
+        '    WebContentApp help',
+        '==================================',
+        'option: -u url -p path -c cmd',
+        '  -u url:',
+        '    url of web to be download',
+        '  -p path:',
+        '    path to store data.',
+        '  -c cmd:',
+        '    wget: using wget to download file',
+        '    retrv: using retrieve to download file',
+        '    reqget: using requests to download file',
+        '    html: download html of url'
+    )
+
+    CMD_LIST = ('wget', 'retrv', 'reqget', 'html')
+
+    path = None
+    url = None
+    cmd = None
+
+    args = MyBase.get_user_input('hp:u:c:')
+    if '-h' in args:
+        MyBase.print_help(HELP_MENU)
+    if '-p' in args:
+        path = MyPath.get_abs_path(args['-p'])
+    if '-u' in args:
+        url = args['-u']
+    if '-c' in args:
+        if all((args['-c'] in CMD_LIST, url)):
+            cmd = args['-c']
+        else:
+            MyBase.print_exit('-c or -u error, -h for help!')
+
+    wc = WebContent()
+
+    # config default path
+    if not path:
+        path = '%s/%s' % (MyPath.get_download_path(), wc.__class__.__name__)
+    # run cmd
+    if cmd == 'wget':
+        wc.wget_url_file(url, path)
+        MyPrint.pr_info('wget %s to %s' % (url, path))
+    elif cmd == 'retrv':
+        wc.retrieve_url_file(url, path)
+        MyPrint.pr_info('retrieve %s to %s' % (url, path))
+    elif cmd == 'reqget':
+        wc.requests_get_url_file(url, path)
+        MyPrint.pr_info('requests_get %s to %s' % (url, path))
+    elif cmd == 'html':
+        html = wc.get_url_content(url)
+        if html:
+            MyPath.make_path(path)
+            f = '%s/%s' % (path, wc.convert_url_to_title(url))
+            if MyFile.get_exname(f) != '.html':
+                f = f + '.html'
+            with open(f, 'w') as fd:
+                fd.write(html)
+        else:
+            MyPrint.pr_err('Error, failed to store html data.')

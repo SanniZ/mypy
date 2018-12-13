@@ -34,7 +34,7 @@ class DWImage(WebContent):
         '  -v:',
         '     show info while download.',
         '  -x:',
-        '     val for expand cmd.',
+        '     type of class, -H for help',
     )
 
     XHELP_MENU = (
@@ -54,25 +54,24 @@ class DWImage(WebContent):
         '  mzitu:   mzitu of mzitu',
     )
 
-    BASE_MAP = {
-        # girlsky
-        'http://m.girlsky.cn/mntp/xgmn/URLID.html' : 'girlsky',  # 性感美女
-        'http://m.girlsky.cn/mntp/swmn/URLID.html' : 'girlsky',  # 丝袜美女
-        'http://m.girlsky.cn/mntp/wgmn/URLID.html' : 'girlsky',  # 外国美女
-        'http://m.girlsky.cn/mntp/zpmn/URLID.html' : 'girlsky',  # 自拍美女
-        'http://m.girlsky.cn/mntp/mnxz/URLID.html' : 'girlsky',  # 美女写真
-        'http://m.girlsky.cn/mntp/rtys/URLID.html' : 'girlsky',  # 人体艺术
-        'http://m.girlsky.cn/mntp/jpmn/URLID.html' : 'girlsky',  # 街拍美女
-        'http://m.girlsky.cn/mntp/gzmn/URLID.html' : 'girlsky',  # 古装美女
-        'http://m.girlsky.cn/mntpn/rtys/URLID.html' : 'girlsky',  # 人体艺术
+    URL_BASE = {
+        # xval : { url_base : class}
+        'xgmn' : {'http://m.girlsky.cn/mntp/xgmn/URLID.html' : 'girlsky'},  # 性感美女
+        'swmn' : {'http://m.girlsky.cn/mntp/swmn/URLID.html' : 'girlsky'},  # 丝袜美女
+        'wgmn' : {'http://m.girlsky.cn/mntp/wgmn/URLID.html' : 'girlsky'},  # 外国美女
+        'zpmn' : {'http://m.girlsky.cn/mntp/zpmn/URLID.html' : 'girlsky'},  # 自拍美女
+        'mnxz' : {'http://m.girlsky.cn/mntp/mnxz/URLID.html' : 'girlsky'},  # 美女写真
+        'rtys' : {'http://m.girlsky.cn/mntp/rtys/URLID.html' : 'girlsky'},  # 人体艺术
+        'jpmn' : {'http://m.girlsky.cn/mntp/jpmn/URLID.html' : 'girlsky'},  # 街拍美女
+        'gzmn' : {'http://m.girlsky.cn/mntp/gzmn/URLID.html' : 'girlsky'},  # 古装美女
+        'nrtys' : {'http://m.girlsky.cn/mntpn/rtys/URLID.html' : 'girlsky'},  # 人体艺术
         # pstatp
-         'https://www.toutiao.com/aURLID' : 'pstatp',
+        'pstatp' : {'https://www.toutiao.com/aURLID' : 'pstatp'},
         # meizitu
-        'http://www.meizitu.com/a/URLID.html' : 'meizitu',
+        'meizitu' : {'http://www.meizitu.com/a/URLID.html' : 'meizitu'},
         # mzitu
-        'https://m.mzitu.com/URLID' : 'mzitu',
+        'mzitu' : {'https://m.mzitu.com/URLID' : 'mzitu'},
     }
-
 
     def __init__(self):
         self._web_base = None
@@ -80,11 +79,7 @@ class DWImage(WebContent):
         self._url = None
         self._xval = None
         self._pr = MyPrint('DWImage')
-
-    def get_url_base_filter(self, url_base):
-        pattern = re.compile(self._xval)
-        if pattern.search(url_base):
-            return url_base[0]
+        self._class = None
 
     def get_input(self):
         args = MyBase.get_user_input('hHu:n:p:x:vd')
@@ -99,34 +94,36 @@ class DWImage(WebContent):
         if '-d' in args:
             self._pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
         # get url_base from xval
-        if all((self._xval, self._xval in self.BASE_MAP.iterkeys())):
-                self._url_base = self.BASE_MAP[self._xval]
-        # check url
+        if self._xval:
+            if self._xval in self.URL_BASE:
+                self._url_base = list(self.URL_BASE[self._xval])[0]
+                self._class = self.URL_BASE[self._xval][self._url_base]
+            else:
+                MyBase.print_exit('Error, invalid -x val!')
+        # get class from url
         if self._url:
             base, num = self.get_url_base_and_num(self._url)
             if base:
                 self._url_base = base
-            if num:
-                self._url = num
-            self._pr.pr_dbg('get base: %s, url: %s' % (base, self._url))
-        else:
-            MyBase.print_exit('Error, no set url, -h for help!')
+        # get class from url_base
+        if all((not self._class, self._url_base)):
+                for dict in self.URL_BASE.itervalues():
+                    if self._url_base == list(dict)[0]:
+                        self._class =  dict[list(dict)[0]]
 
     def process_input(self):
-        hdr = None
-        if self._url_base in self.BASE_MAP:
-            if self.BASE_MAP[self._url_base] == 'girlsky':
+        if self._class:
+            if self._class == 'girlsky':
                 hdr = Girlsky()
-            elif self.BASE_MAP[self._url_base] == 'pstatp':
+            elif self._class == 'pstatp':
                 hdr = Pstatp()
-            elif self.BASE_MAP[self._url_base] == 'meizitu':
+            elif self._class == 'meizitu':
                 hdr = Meizitu()
-            elif self.BASE_MAP[self._url_base] == 'mzitu':
+            elif self._class == 'mzitu':
                 hdr = Mzitu()
         else:
             hdr = WebImage()
         if hdr:
-            self._pr.pr_dbg('run %s class' % hdr.__class__.__name__)
             hdr.main()
         else:
             self._pr.pr_err('Error, no found handler!')

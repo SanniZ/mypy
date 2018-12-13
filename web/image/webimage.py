@@ -165,15 +165,15 @@ class WebImage(object):
             pages = self.get_pages(header_content)
             self._pr.pr_dbg('get pages: %s' % pages)
             if not pages:
-                limgs = self.get_image_url(header_content)
+                imglist = self.get_image_url(header_content)
             else:
-                limgs = self.get_image_url_of_pages(pages, header_content)
+                imglist = self.get_image_url_of_pages(pages, header_content)
             # filter images
-            limgs = set(limgs)
-            self._pr.pr_dbg('image url: %s' % limgs)
+            imglist = set(imglist)
+            self._pr.pr_dbg('image url list: %s' % imglist)
             # download images
-            if limgs:
-                self.download_images(limgs, subpath)
+            if imglist:
+                self.download_images(imglist, subpath)
                 # write web info
                 self.store_web_info(subpath, title, url_header)
             # reclaim image, remove small image

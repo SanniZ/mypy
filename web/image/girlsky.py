@@ -22,7 +22,7 @@ class Girlsky(WebImage):
         'rtys' : 'http://m.girlsky.cn/mntp/rtys/URLID.html',  # 人体艺术
         'jpmn' : 'http://m.girlsky.cn/mntp/jpmn/URLID.html',  # 街拍美女
         'gzmn' : 'http://m.girlsky.cn/mntp/gzmn/URLID.html',  # 古装美女
-        'rtys' : 'http://m.girlsky.cn/mntpn/rtys/URLID.html',  # 人体艺术
+        'nrtys' : 'http://m.girlsky.cn/mntpn/rtys/URLID.html',  # 人体艺术
     }
 
     PATH_MAP = {
