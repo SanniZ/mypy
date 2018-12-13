@@ -150,7 +150,6 @@ class WebImage(object):
             header_content = self.get_url_content(url_header, True)
             if not header_content:
                 self._pr.pr_err('Error, failed to download %s header web.' % url_header)
-                self._url = int(self._url) + 1
                 continue
             # get url title.
             title = self.get_title(header_content, self._title)
