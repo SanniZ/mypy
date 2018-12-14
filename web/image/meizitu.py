@@ -12,8 +12,8 @@ from webimage import WebImage
 
 class Meizitu(WebImage):
 
-    def __init__(self):
-        super(Meizitu, self).__init__()
+    def __init__(self, name=None):
+        super(Meizitu, self).__init__(name)
         self._url_base = 'http://www.meizitu.com/a/URLID.html'
         #self._re_image_url = re.compile('src=\"(http://.*?(?:png|jpg|gif))\"', re.IGNORECASE)
 

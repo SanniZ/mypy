@@ -16,7 +16,7 @@ from StringIO import StringIO
 import requests
 import subprocess
 
-from mypy import MyBase, MyPath, MyPrint, MyFile
+from mypy import MyPath, MyFile
 
 URL_HEADER = {
     #'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:16.0) Gecko/20100101 Firefox/16.0',
@@ -63,8 +63,8 @@ class WebContent (object):
         return charset
 
     @classmethod
-    def get_html(cls, url, context=None, retry_times=3, show=True):
-        if show:
+    def get_html(cls, url, context=None, retry_times=3, view=True):
+        if view:
             print('Downloading: %s' % url)
         for index in range(retry_times):
             url_charset = None
@@ -101,11 +101,11 @@ class WebContent (object):
         return html_content
 
     @classmethod
-    def get_url_content(cls, url, retry_times=3, show=True):
+    def get_url_content(cls, url, retry_times=3, view=True):
         if re.match('https://', url):
-            return cls.get_html(url = url, context = cls.CONTEXT_UNVERIFIED, retry_times = retry_times,show = show)
+            return cls.get_html(url = url, context = cls.CONTEXT_UNVERIFIED, retry_times = retry_times,view = view)
         else:
-            return cls.get_html(url = url, retry_times = retry_times, show = show)
+            return cls.get_html(url = url, retry_times = retry_times, view = view)
 
     @staticmethod
     def urlretrieve_callback(blocknum, blocksize, totalsize):
@@ -134,8 +134,8 @@ class WebContent (object):
                 f.write(r.content)
 
     @classmethod
-    def wget_url_file(cls, url, path, show=False):
-        if show:
+    def wget_url_file(cls, url, path, view=False):
+        if view:
             cmd = 'wget -c --tries=3 --timeout=10 -P %s %s -nv -U \'%s\'' % (path, url, UserAgent)
         else:
             cmd = 'wget -c --tries=3 --timeout=10 -P %s %s -q -U \'%s\'' % (path, url, UserAgent)
@@ -197,6 +197,8 @@ class WebContent (object):
 
 if __name__ == '__main__':
 
+    from mypy import MyBase, MyPrint
+
     HELP_MENU = (
         '==================================',
         '    WebContentApp help',
@@ -233,6 +235,7 @@ if __name__ == '__main__':
             MyBase.print_exit('-c or -u error, -h for help!')
 
     wc = WebContent()
+    pr = MyPrint('WebContent')
 
     # config default path
     if not path:
@@ -240,13 +243,13 @@ if __name__ == '__main__':
     # run cmd
     if cmd == 'wget':
         wc.wget_url_file(url, path)
-        MyPrint.pr_info('wget %s to %s' % (url, path))
+        pr.pr_info('wget %s to %s' % (url, path))
     elif cmd == 'retrv':
         wc.retrieve_url_file(url, path)
-        MyPrint.pr_info('retrieve %s to %s' % (url, path))
+        pr.pr_info('retrieve %s to %s' % (url, path))
     elif cmd == 'reqget':
         wc.requests_get_url_file(url, path)
-        MyPrint.pr_info('requests_get %s to %s' % (url, path))
+        pr.pr_info('requests_get %s to %s' % (url, path))
     elif cmd == 'html':
         html = wc.get_url_content(url)
         if html:
@@ -257,4 +260,4 @@ if __name__ == '__main__':
             with open(f, 'w') as fd:
                 fd.write(html)
         else:
-            MyPrint.pr_err('Error, failed to store html data.')
+            pr.pr_err('Error, failed to store html data.')

@@ -19,9 +19,8 @@ SMALL_IMG_SIZE = 1024 * 10 # 10K
 
 class Image (object):
 
-    def __init__(self):
-        #super(Image, self).__init__()
-        pass
+    def __init__(self, name=None):
+        self._name = name
 
     @classmethod
     def image_file2(cls, f):
@@ -112,7 +111,44 @@ class Image (object):
                         cls.reclaim_image(f, img, xfunc)
 
 if __name__ == '__main__':
+    from mypy import MyBase, MyPrint, MyPath
+
+    HELP_MENU = (
+        '============================================',
+        '    Image help',
+        '============================================',
+        'options: -c img -r path -z path -x val',
+        '  -c img:',
+        '    check img is image format',
+        '    sub : sub val in file',
+        '  -r path:',
+        '    reclaim image format: dir or file',
+        '  -z path:',
+        '    remove small size of images: dir or file',
+        '  -x val:',
+        '    xval for cmd ext functions.',
+    )
+
+    pr = MyPrint('Image')
     Img = Image()
-    w, h = Img.get_image_size('/home/yingbin/Downloads/10.jpg')
-    if w and h:
-        print w, h
+    xval = None
+    args = MyBase.get_user_input('hc:r:z:x:')
+    if '-h' in args:
+        MyBase.print_help(HELP_MENU)
+    if '-x' in args:
+        xval = args['-x']
+    if '-c' in args:
+        result = Img.image_file(MyPath.get_abs_path(args['-c']))
+        pr.pr_info(result)
+    if '-r' in args:
+        path = args['-r']
+        if Img.image_file(path):
+            Img.reclaim_image(path)
+        else:
+            Img.reclaim_path_images(path)
+    if '-z' in args:
+        path = args['-z']
+        if Img.image_file(path):
+            Img.remove_small_image(path, int(xval), int(xval))
+        else:
+            Img.remove_path_small_images(path, int(xval), int(xval))

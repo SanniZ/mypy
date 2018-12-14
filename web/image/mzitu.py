@@ -12,8 +12,8 @@ from webimage import WebImage
 
 class Mzitu(WebImage):
 
-    def __init__(self):
-        super(Mzitu, self).__init__()
+    def __init__(self, name=None):
+        super(Mzitu, self).__init__(name)
         self._url_base = 'https://m.mzitu.com/URLID'
         self._re_image_url = re.compile('src=\"(http[s]?://.*meizitu.*\.(?:jpg|png|gif))\"', flags=re.I)
 

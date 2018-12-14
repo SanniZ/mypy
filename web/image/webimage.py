@@ -27,21 +27,22 @@ class WebImage(object):
         '  -p:',
         '    root path to store images.',
         '  -v:',
-        '     show info while download.',
+        '     view info while download.',
         '  -x:',
         '     val for expand cmd.',
     )
 
-    def __init__(self):
+    def __init__(self, name=None):
+        self._name = name
         self._url_base = None
         self._url = None
         self._num = 1
-        self._path = '%s/%s' %  (MyBase.DEFAULT_DOWNLOAD_PATH, self.__class__.__name__)
+        self._path = '%s/%s' %  (MyBase.DEFAULT_DWN_PATH, self.__class__.__name__)
         self._re_image_url = re.compile('src=[\'|\"]?(http[s]?://.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?')
         self._re_pages = None
         self._title = None
         self._remove_small_image = True
-        self._show = False
+        self._view = False
         self._xval = None
         self._pr = MyPrint('WebImage')
 
@@ -56,7 +57,7 @@ class WebImage(object):
         if '-p' in args:
             self._path = os.path.abspath(args['-p'])
         if '-v' in args:
-            self._show = True
+            self._view = True
         if '-x' in args:
             self._xval = args['-x']
         if '-d' in args:
@@ -108,7 +109,7 @@ class WebImage(object):
         return WebContent.retrieve_url_file(url, path)
 
     def wget_url_image(self, url, path):
-        return WebContent.wget_url_file(url, path, self._show)
+        return WebContent.wget_url_file(url, path, self._view)
 
     def requests_get_url_image(self, url, path):
         return WebContent.requests_get_url_file(url, path)
@@ -116,8 +117,8 @@ class WebImage(object):
     def download_image(self, url, path):
         self.wget_url_image(url, path)
 
-    def get_url_content(self, url, show=False):
-        return WebContent.get_url_content(url=url, show=show)
+    def get_url_content(self, url, view=False):
+        return WebContent.get_url_content(url=url, view=view)
 
     def get_title(self, html, pattern=None):
         return WebContent.get_url_title(html, pattern)
@@ -138,15 +139,22 @@ class WebImage(object):
         url.insert(0, WebContent.set_url_base_and_num(self._url_base, self._url))
         return url
 
+    def get_url_address(self, url_base, url):
+        return WebContent.set_url_base_and_num(url_base, url)
+
+    def convert_url_to_title(self, url):
+        return WebContent.convert_url_to_title(url)
+
     def main(self):
         self.get_user_input()
         # get web now.
         for index in range(self._num):
             # get the first page.
             if self._url_base:
-                url_header = WebContent.set_url_base_and_num(self._url_base, int(self._url) + index)
+                url_header = self.get_url_address(self._url_base, int(self._url) + index)
             else:
-                url_header = WebContent.set_url_base_and_num(None, self._url)
+                url_header = self.get_url_address(None, self._url)
+            # get header web
             header_content = self.get_url_content(url_header, True)
             if not header_content:
                 self._pr.pr_err('Error, failed to download %s header web.' % url_header)
@@ -154,12 +162,11 @@ class WebImage(object):
             # get url title.
             title = self.get_title(header_content, self._title)
             if not title:
-                title = WebContent.convert_url_to_title(url_header)
+                title = self.convert_url_to_title(url_header)
             self._pr.pr_dbg('title: %s' % title )
             # create path of title to store data.
             subpath = os.path.join(self._path, title)
             self._pr.pr_dbg('subpath: %s' % subpath)
-            MyPath.make_path(subpath)
             # get count of pages
             pages = self.get_pages(header_content)
             self._pr.pr_dbg('get pages: %s' % pages)
@@ -172,16 +179,20 @@ class WebImage(object):
             self._pr.pr_dbg('image url list: %s' % imglist)
             # download images
             if imglist:
+                # create path
+                MyPath.make_path(subpath)
+                # download all of images.
                 self.download_images(imglist, subpath)
                 # write web info
                 self.store_web_info(subpath, title, url_header)
-            # reclaim image, remove small image
-            if self._remove_small_image:
-                Image.reclaim_path_images(subpath, xfunc=Image.remove_small_image)
-            else:
-                Image.reclaim_path_images(subpath)
-            if self._show:
-                self._pr.pr_info('output: %s' % (subpath))
+                # reclaim image, remove small image
+                if self._remove_small_image:
+                    Image.reclaim_path_images(subpath, xfunc=Image.remove_small_image)
+                else:
+                    Image.reclaim_path_images(subpath)
+                # show output info.
+                if self._view:
+                    self._pr.pr_info('output: %s' % (subpath))
 
 if __name__ == '__main__':
     dwimg = WebImage()

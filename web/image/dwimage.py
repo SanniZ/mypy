@@ -32,7 +32,7 @@ class DWImage(WebContent):
         '  -p:',
         '    root path to store images.',
         '  -v:',
-        '     show info while download.',
+        '     view info while download.',
         '  -x:',
         '     type of class, -H for help',
     )
@@ -73,7 +73,8 @@ class DWImage(WebContent):
         'mzitu' : {'https://m.mzitu.com/URLID' : 'mzitu'},
     }
 
-    def __init__(self):
+    def __init__(self, name=None):
+        self._name = name
         self._web_base = None
         self._url_base = None
         self._url = None

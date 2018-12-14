@@ -17,7 +17,7 @@ import StringIO
 
 class MyBase (object):
 
-    DEFAULT_DOWNLOAD_PATH = '%s/Downloads' % os.getenv('HOME')
+    DEFAULT_DWN_PATH = '%s/Downloads' % os.getenv('HOME')
 
     @classmethod
     def print_help(cls, help_menu, _exit=True):
@@ -134,160 +134,143 @@ class MyPrint(object):
     PR_LVL_DBG = 0x01
     PR_LVL_INFO = 0x02
     PR_LVL_ERR = 0x04
-
     PR_LVL_ALL = 0x07
 
-    flag = None
-    pr_level = PR_LVL_INFO | PR_LVL_ERR
+    def __init__(self, tag=None, lvl= 0x02 | 0x04):
+        self._tag = tag
+        self._pr_lvl = lvl
 
-    @classmethod
-    def __init__(cls, flag=None, level= 0x02 | 0x04):
-        cls.flag = flag
-        cls.pr_level = level
-
-    @classmethod
-    def pr_dbg(cls, fmt):
-        if all((cls.pr_level & cls.PR_LVL_DBG , fmt)):
-            if cls.flag:
-                print('[%s] %s' % (cls.flag, fmt))
+    def pr_dbg(self, fmt):
+        if all((self._pr_lvl & self.PR_LVL_DBG , fmt)):
+            if self._tag:
+                print('[%s] %s' % (self._tag, fmt))
             else:
                 print('%s' % (fmt))
 
-    @classmethod
-    def pr_info(cls, fmt):
-        if all((cls.pr_level & cls.PR_LVL_INFO , fmt)):
-            if cls.flag:
-                print('[%s] %s' % (cls.flag, fmt))
+    def pr_info(self, fmt):
+        if all((self._pr_lvl & self.PR_LVL_INFO , fmt)):
+            if self._tag:
+                print('[%s] %s' % (self._tag, fmt))
             else:
                 print('%s' % (fmt))
 
-    @classmethod
-    def pr_err(cls, fmt):
-        if all((cls.pr_level & cls.PR_LVL_ERR , fmt)):
-            if cls.flag:
-                print('[%s] %s' % (cls.flag, fmt))
+    def pr_err(self, fmt):
+        if all((self._pr_lvl & self.PR_LVL_ERR , fmt)):
+            if self._tag:
+                print('[%s] %s' % (self._tag, fmt))
             else:
                 print('%s' % (fmt))
 
-    @classmethod
-    def set_pr_level(cls, val):
-        cls.pr_level = val
+    def set_pr_level(self, val):
+        self._pr_lvl = val
+
+    def get_pr_level(self):
+        return self._pr_lvl
+
+class MyPy(object):
 
     @classmethod
-    def get_pr_level(cls):
-        return cls.pr_level
-
-class MyPy(MyBase, MyPath, MyFile, MyPrint):
-
-    help_menu = (
-        '============================================',
-        '    mypy help',
-        '============================================',
-        'options: -f file -c cmd -v val -w word',
-        '  -f file:',
-        '    set file to be process',
-        '  -c cmd:',
-        '    find: find val in file',
-        '    sub : sub val in file',
-        '  -v val:',
-        '    set value for cmd',
-        '  -w word:',
-        '    set word to find',
-    )
-
-    def __init__(self):
-        super(MyPy, self).__init__()
-        self._fs = None
-        self._cmd = None
-        self._val = None
-        self._wd = None
-        self.__handlers = {
-            'find' : self.find,
-            'sub' : self.sub,
-        }
-
-
-    # -v val:
-    def find(self):
+    def find(cls, wd, path, mode='word'):
         result = dict()
-        pattern = re.compile('%s' % self._wd)
-        # check path.
-        fnane = os.path.basename(self._fs)
-        if re.compile('\*\.\w+').match(fnane):
-            self._fs = os.path.dirname(self._fs)
+        fs = None
+        pattern = re.compile('%s' % wd)
         # check files now
-        if self.path_is_file(self._fs):
-            with open(self._fs, 'r') as f:
-                data = f.read()
+        if MyPath.path_is_file(path):
+            with open(path, 'r') as fd:
+                data = fd.read()
             data = pattern.findall(data)
-            lst = list()
-            for index in data:
-                lst.append(index)
-            result[self._fs] = lst
+            lst = map(lambda x: x, data)
+            result[path] = lst
         else:
-            for rt, dr, fs in os.walk(self._fs):
+            # check path.
+            ftype = re.compile('\*\.\w+$').search(path)
+            if ftype:
+                ftype = ftype.group()
+                path = os.path.dirname(path)
+            for rt, ds, fs in os.walk(path):
                 if fs:
                     for f in fs:
-                        if self._val:
-                            if self.get_exname(f) != self.get_exname(self._val):
+                        if ftype:
+                            # check type of file.
+                            if MyFile.get_exname(f) != ftype:
                                 continue
                         f = os.path.join(rt, f)
                         lst = list()
                         with open(f, 'r') as fd:
                             data = fd.read()
                         data = pattern.findall(data)
-                        for index in data:
-                            if index:
-                                lst.append(index)
+                        lst = map(lambda x: x, data)
                         if lst:
-                            result[str(f)] = lst
+                            result[f] = lst
         return result
 
     # -v val: old
     # -w word: new
-    def sub(self):
-        if self.path_is_file(self._fs):
-            with open(self._fs, 'r') as fd:
+    @classmethod
+    def sub(cls, old, new, path):
+        if MyPath.path_is_file(path):
+            with open(path, 'r') as fd:
                 data = fd.read()
-            data = re.sub(self._val, self._wd, data)
-            with open(self._fs, 'wr') as fd:
+            data = re.sub(old, new, data)
+            with open(path, 'w') as fd:
                 fd.write(data)
         else:
-            for rt, dr, fs in os.walk(self._fs):
+            for rt, ds, fs in os.walk(path):
                 if fs:
                     for f in fs:
                         f = os.path.join(rt, f)
                         with open(f, 'r') as fd:
                             data = fd.read()
-                        data = re.sub(self._val, self._wd, data)
-                        with open(self._fs, 'wr') as fd:
+                        data = re.sub(old, new, data)
+                        with open(f, 'wr') as fd:
                             fd.write(data)
-        return None
-
-    def main(self):
-        args = self.get_user_input('hf:c:v:w:')
-        if '-h' in args:
-            self.print_help(self.help_menu)
-        if '-f' in args:
-            self._fs = self.get_abs_path(args['-f'])
-        if '-c' in args:
-            self._cmd = args['-c']
-        if '-v' in args:
-            self._val = args['-v']
-        if '-w' in args:
-            self._wd = args['-w']
-        if not self._fs or not self._cmd:
-            self.print_exit('Error, -h for help!')
-        # run cmd now.
-        if self._cmd in self.__handlers:
-            result = self.__handlers[self._cmd]()
-            if result:
-                for key, values in result.items():
-                    print '----%s----: ' % key
-                    for val in values:
-                        print(val)
-                    print('')
 
 if __name__ == '__main__':
-    mypy = MyPy()
-    mypy.main()
+    HELP_MENU = (
+        '============================================',
+        '    mypy help',
+        '============================================',
+        'options: -p path -c cmd -w word -v val',
+        '  -p path:',
+        '    path to dir or file',
+        '  -c cmd:',
+        '    find: find val in file',
+        '    sub : sub val in file',
+        '  -w word:',
+        '    set word to find',
+        '  -v val:',
+        '    set word to replace for sub',
+    )
+
+    pr = MyPrint('MyPy')
+    path = None
+    cmd = None
+    val = None
+    wd = None
+
+    args = MyBase.get_user_input('hp:c:v:w:')
+    if '-h' in args:
+        MyBase.print_help(HELP_MENU)
+    if '-p' in args:
+        path = MyPath.get_abs_path(args['-p'])
+    if '-c' in args:
+        cmd = args['-c']
+    if '-v' in args:
+        val = args['-v']
+    if '-w' in args:
+        wd = args['-w']
+    if not path:
+        path = os.getcwd()
+        #mypy.print_exit('Error, -h for help!')
+    # run cmd now.
+    if cmd in ['find', 'sub']:
+        if cmd == 'find':
+            if wd:
+                result = MyPy.find(wd, path)
+                for key, values in result.iteritems():
+                    pr.pr_info(key)
+                    for val in values:
+                        pr.pr_info(val)
+        elif cmd == 'sub':
+            if all((wd, val)):
+                MyPy.sub(wd, val, path)

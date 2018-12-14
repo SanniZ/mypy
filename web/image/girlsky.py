@@ -38,8 +38,8 @@ class Girlsky(WebImage):
     }
 
 
-    def __init__(self):
-        super(Girlsky, self).__init__()
+    def __init__(self, name=None):
+        super(Girlsky, self).__init__(name)
         #self._re_image_url = re.compile('src=\"(http://.*\.[jpg|png|gif])\"', flags=re.I)
         self._re_pages = re.compile('1/\d+')
         self._remove_small_image = False
@@ -50,7 +50,7 @@ class Girlsky(WebImage):
             self._url_base = self.URL_BASE[self._xval]
             self._pr.pr_dbg('get url_base: %s from -x %s' % (self._url_base, self._xval))
         if self._url_base in self.PATH_MAP.keys():
-            self._path = '%s/%s/%s' %  (MyBase.DEFAULT_DOWNLOAD_PATH, self.__class__.__name__, self.PATH_MAP[self._url_base])
+            self._path = '%s/%s/%s' %  (MyBase.DEFAULT_DWN_PATH, self.__class__.__name__, self.PATH_MAP[self._url_base])
 
     def get_title(self, html, pattern=None):
         title = WebContent.get_url_title(html, pattern)
