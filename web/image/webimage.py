@@ -39,11 +39,11 @@ class WebImage(object):
         self._num = 1
         self._path = '%s/%s' %  (MyBase.DEFAULT_DWN_PATH, self.__class__.__name__)
         self._re_image_url = re.compile('src=[\'|\"]?(http[s]?://.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?')
-        self._re_pages = None
         self._title = None
         self._remove_small_image = True
         self._view = False
         self._xval = None
+        self._redundant_title = None
         self._pr = MyPrint('WebImage')
 
     def get_user_input(self):
@@ -115,13 +115,17 @@ class WebImage(object):
         return WebContent.requests_get_url_file(url, path)
 
     def download_image(self, url, path):
-        self.wget_url_image(url, path)
+        self.requests_get_url_image(url, path)
 
     def get_url_content(self, url, view=False):
         return WebContent.get_url_content(url=url, view=view)
 
     def get_title(self, html, pattern=None):
-        return WebContent.get_url_title(html, pattern)
+        title = WebContent.get_url_title(html, pattern)
+        if self._redundant_title:
+            for rt in self._redundant_title:
+                title = title.replace(rt, '')
+        return title
 
     def get_pages(self, html, pattern=None):
         return WebContent.get_url_pages(html, pattern)

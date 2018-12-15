@@ -55,8 +55,14 @@ class WebContent (object):
     WEB_URL_FILE = r'web_url.txt'
 
     @classmethod
-    def get_url_charset(cls, html):
-        charset = re.compile('charset=[a-z0-8-]*', flags=re.I).search(re.sub('charset=(\"|\')', 'charset=', html))
+    def get_url_charset(cls, html=None, content_type=None):
+        charset = None
+        pattern = re.compile('charset=[a-z0-8-]*', flags=re.I)
+        if content_type:
+            charset = pattern.search(re.sub('charset=(\"|\')', 'charset=', content_type))
+        if all((html, not charset)):
+            charset = pattern.search(re.sub('charset=(\"|\')', 'charset=', html))
+        # get data
         if charset:
             charset = charset.group()
             charset = charset[len('charset='):].upper()
@@ -71,11 +77,13 @@ class WebContent (object):
             req = Request(url, headers=URL_HEADER)
             try:
                 html = urlopen(req, context=context)
+                content_type = html.info().getheader('Content-Type')
+                if content_type:
+                    url_charset = cls.get_url_charset(content_type=content_type)
                 data = html.read()
                 encoding = html.info().getheader('Content-Encoding')
                 if encoding == 'gzip':
                      data = gzip.GzipFile(fileobj=StringIO(data)).read()
-                     url_charset = cls.get_url_charset(data)
                 if data:
                     for charset in CHARSETS:
                         if url_charset:
@@ -146,16 +154,14 @@ class WebContent (object):
 
     @classmethod
     def get_url_title(cls, html_content, pattern=None):
-        if pattern:
-            return pattern.search(html_content)
-        else:
+        if not pattern:
             pattern=re.compile('<title>.+</title>')
-            data = pattern.search(html_content)
-            if data:
-                data = data.group()
-                return re.sub(' ', '_', data[len('<title>') : len(data) - len('</title>')])
-            else:
-                return None
+        data = pattern.search(html_content)
+        if data:
+            data = data.group()
+            return data[len('<title>') : len(data) - len('</title>')]
+        else:
+            return None
 
     @classmethod
     def get_url_pages(cls, html, pattern=None):

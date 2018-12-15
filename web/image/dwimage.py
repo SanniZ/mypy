@@ -108,9 +108,11 @@ class DWImage(WebContent):
                 self._url_base = base
         # get class from url_base
         if all((not self._class, self._url_base)):
-                for dict in self.URL_BASE.itervalues():
-                    if self._url_base == list(dict)[0]:
-                        self._class =  dict[list(dict)[0]]
+                for dict_url_base in self.URL_BASE.itervalues():
+                    if self._url_base == list(dict_url_base)[0]:
+                        self._class =  dict_url_base[self._url_base]
+                        break
+
 
     def process_input(self):
         if self._class:
