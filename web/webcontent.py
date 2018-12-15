@@ -123,22 +123,26 @@ class WebContent (object):
         print("%.2f%%" % percent)
 
     @classmethod
-    def retrieve_url_file(cls, url, path):
+    def retrieve_url_file(cls, url, path, view=False):
         path = path.strip()
         MyPath.make_path(path)
         fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])
         if not os.path.exists(fname):
-            #urllib.urlretrieve(url, fname, cls.urlretrieve_callback)
-            urllib.urlretrieve(url, fname)
+            if view:
+                urllib.urlretrieve(url, fname, cls.urlretrieve_callback)
+            else:
+                urllib.urlretrieve(url, fname)
 
     @classmethod
-    def requests_get_url_file(cls, url, path):
+    def requests_get_url_file(cls, url, path, view=False):
         path = path.strip()
         MyPath.make_path(path)
         fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])
         if not os.path.exists(fname):
             r = requests.get(url)
             with open(fname, 'wb') as f:
+                if view:
+                    print('requests get file: %s', fname)
                 f.write(r.content)
 
     @classmethod

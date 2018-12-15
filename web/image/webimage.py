@@ -19,7 +19,7 @@ class WebImage(object):
         '==================================',
         '    WebImage help',
         '==================================',
-        'option: -u url -n number -p path -x val -v',
+        'option: -u url -n number -p path -x val -D mode -v',
         '  -u:',
         '    url of web to be download',
         '  -n:',
@@ -27,9 +27,13 @@ class WebImage(object):
         '  -p:',
         '    root path to store images.',
         '  -v:',
-        '     view info while download.',
+        '    view info while download.',
         '  -x:',
-        '     val for expand cmd.',
+        '    val for expand cmd.',
+        '  -D:',
+        '    wget: using wget to download imgages',
+        '    rtrv: using retrieve to download images',
+        '    rget: using requests to download images',
     )
 
     def __init__(self, name=None):
@@ -43,11 +47,12 @@ class WebImage(object):
         self._remove_small_image = True
         self._view = False
         self._xval = None
+        self._dl_image = self.wget_url_image
         self._redundant_title = None
         self._pr = MyPrint('WebImage')
 
     def get_user_input(self):
-        args = MyBase.get_user_input('hu:n:p:x:vd')
+        args = MyBase.get_user_input('hu:n:p:x:vDd')
         if '-h' in args:
             MyBase.print_help(self.help_menu)
         if '-u' in args:
@@ -60,6 +65,13 @@ class WebImage(object):
             self._view = True
         if '-x' in args:
             self._xval = args['-x']
+        if '-D' in args:
+            if '-wget' == args['-D']:
+                self._dl_image = self.wget_url_image
+            elif '-rtrv' == args['-D']:
+                self._dl_image = self.retrieve_url_image
+            elif '-rget' == args['-D']:
+                self._dl_image = self.requests_get_url_image
         if '-d' in args:
             self._pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
         # check url
@@ -107,19 +119,19 @@ class WebImage(object):
         return url
 
     def retrieve_url_image(self, url, path):
-        return WebContent.retrieve_url_file(url, path)
+        return WebContent.retrieve_url_file(url, path, self._view)
 
     def wget_url_image(self, url, path):
         return WebContent.wget_url_file(url, path, '-c -t 3 -T 10 -U \'%s\'' % UserAgent, self._view)
 
     def requests_get_url_image(self, url, path):
-        return WebContent.requests_get_url_file(url, path)
+        return WebContent.requests_get_url_file(url, path, self._view)
 
     def download_image(self, url, path):
-        self.retrieve_url_image(url, path)
+        self._dl_image(url, path)
 
-    def get_url_content(self, url, view=False):
-        return WebContent.get_url_content(url=url, view=view)
+    def get_url_content(self, url):
+        return WebContent.get_url_content(url=url, view=self._view)
 
     def get_title(self, html, pattern=None):
         title = WebContent.get_url_title(html, pattern)

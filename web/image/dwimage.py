@@ -78,7 +78,7 @@ class DWImage(WebContent):
         self._class = None
 
     def get_input(self):
-        args = MyBase.get_user_input('hu:n:p:x:vd')
+        args = MyBase.get_user_input('hu:n:p:x:vDd')
         if '-h' in args:
             MyBase.print_help(self.HELP_MENU)
         if '-u' in args:
