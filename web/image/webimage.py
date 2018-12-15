@@ -110,7 +110,7 @@ class WebImage(object):
         return WebContent.retrieve_url_file(url, path)
 
     def wget_url_image(self, url, path):
-        return WebContent.wget_url_file(url, path, self._view)
+        return WebContent.wget_url_file(url, path, '-c -t 3 -T 20', self._view)
 
     def requests_get_url_image(self, url, path):
         return WebContent.requests_get_url_file(url, path)

@@ -142,11 +142,11 @@ class WebContent (object):
                 f.write(r.content)
 
     @classmethod
-    def wget_url_file(cls, url, path, view=False):
+    def wget_url_file(cls, url, path, config='', view=False):
         if view:
-            cmd = 'wget -c --tries=3 --timeout=10 -P %s %s -nv -U \'%s\'' % (path, url, UserAgent)
+            cmd = 'wget %s %s %s -nv' % (config, path, url)
         else:
-            cmd = 'wget -c --tries=3 --timeout=10 -P %s %s -q -U \'%s\'' % (path, url, UserAgent)
+            cmd = 'wget %s %s %s -q'  % (config, path, url)
         try:
             return subprocess.check_output(cmd, shell=True)
         except subprocess.CalledProcessError:
