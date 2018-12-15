@@ -160,14 +160,23 @@ class WebContent (object):
     @classmethod
     def get_url_pages(cls, html, pattern=None):
         if not pattern:
-            pattern = re.compile('/\d+页')
-        data = pattern.search(html.strip())
+            # find all of \d+/\d+
+            pattern = re.compile('\d+/\d+')
+        data = pattern.findall(html)
         if data:
-            pattern = re.compile('\d+')
-            data = pattern.search(data.group())
-            if data:
-                data = int(data.group())
-        return data
+            # match ^1/\d+$ to get number of pages.
+            pattern = re.compile('^1/\d+$')
+            for d in data:
+                d = pattern.match(d)
+                if d:
+                    # getnumber of pages and return int.
+                    pages = int(re.compile('\d+').findall(d.group())[1])
+                    break
+                else:
+                    pages = None
+        else:
+            pages = None
+        return pages
 
     @classmethod
     def get_url_base_and_num(cls, url):

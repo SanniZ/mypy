@@ -58,15 +58,6 @@ class Girlsky(WebImage):
             title = title[ : len(title) - len('_妹子天空')]
         return title
 
-
-    def get_pages(self, html, pattern=None):
-        pattern = re.compile('\d+/\d+')
-        pages =  pattern.findall(html)
-        for page in pages:
-            page = page.split('/')
-            if all((int(page[0]) == 1, int(page[1]))):
-                return int(page[1])
-
     def get_url_of_pages(self, num):
         url = map(lambda x: WebContent.set_url_base_and_num(self._url_base, '%d_%d' % (int(self._url), x)), range(2, num + 1))
         url.insert(0, WebContent.set_url_base_and_num(self._url_base, self._url))
