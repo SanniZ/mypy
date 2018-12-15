@@ -142,7 +142,7 @@ class WebContent (object):
                 f.write(r.content)
 
     @classmethod
-    def wget_url_file(cls, url, path, config='', view=False):
+    def wget_url_file(cls, url, path, config='', view=False): #config='-c -t 3 -T 10 -U \'%s\'' % UserAgent
         if view:
             cmd = 'wget %s %s %s -nv' % (config, path, url)
         else:

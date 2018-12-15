@@ -9,7 +9,7 @@ import os
 import re
 
 from mypy import MyBase, MyPath, MyPrint
-from webcontent import WebContent
+from webcontent import WebContent, UserAgent
 from image import Image
 
 
@@ -110,13 +110,13 @@ class WebImage(object):
         return WebContent.retrieve_url_file(url, path)
 
     def wget_url_image(self, url, path):
-        return WebContent.wget_url_file(url, path, '-c -t 3 -T 20', self._view)
+        return WebContent.wget_url_file(url, path, '-c -t 3 -T 10 -U \'%s\'' % UserAgent, self._view)
 
     def requests_get_url_image(self, url, path):
         return WebContent.requests_get_url_file(url, path)
 
     def download_image(self, url, path):
-        self.wget_url_image(url, path)
+        self.retrieve_url_image(url, path)
 
     def get_url_content(self, url, view=False):
         return WebContent.get_url_content(url=url, view=view)
