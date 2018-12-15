@@ -72,6 +72,7 @@ class WebImage(object):
             self._pr.pr_dbg('get base: %s, url: %s' % (base, self._url))
         else:
             MyBase.print_exit('Error, no set url, -h for help!')
+        return args
 
     def get_image_url(self, html):
         if not self._re_image_url:
@@ -115,7 +116,7 @@ class WebImage(object):
         return WebContent.requests_get_url_file(url, path)
 
     def download_image(self, url, path):
-        self.requests_get_url_image(url, path)
+        self.wget_url_image(url, path)
 
     def get_url_content(self, url, view=False):
         return WebContent.get_url_content(url=url, view=view)
@@ -191,6 +192,7 @@ class WebImage(object):
                 self.store_web_info(subpath, title, url_header)
                 # reclaim image, remove small image
                 if self._remove_small_image:
+                    print 'remove small image'
                     Image.reclaim_path_images(subpath, xfunc=Image.remove_small_image)
                 else:
                     Image.reclaim_path_images(subpath)

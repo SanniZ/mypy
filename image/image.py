@@ -22,6 +22,7 @@ class Image (object):
     def __init__(self, name=None):
         self._name = name
 
+    # check image base on extname.
     @classmethod
     def image_file2(cls, f):
         exname = MyFile.get_exname(f)
@@ -30,6 +31,7 @@ class Image (object):
         else:
             return False
 
+    # check image base on image attr.
     @classmethod
     def image_file(cls, f):
         try:
@@ -44,37 +46,48 @@ class Image (object):
     # remove small size image, default size is 10K.
     @classmethod
     def remove_small_size_image(cls, path, size=SMALL_IMG_SIZE):
-        for rt, dirs, fs in os.walk(path):
-            if len(fs) != 0:  # found files.
-                for f in fs:
-                    f = os.path.join(rt, f)
-                    if cls.is_image(f) and os.path.getsize(f) < size:
-                        os.remove(f)
+        print 'remove_small_size_image: ', path
+        if os.path.isfile(path):
+            if all((os.path.getsize(path) < size, any((cls.image_file(path), cls.image_file(path))))):
+                os.remove(path)
+        else:
+            for rt, dirs, fs in os.walk(path):
+                if len(fs) != 0:  # found files.
+                    for f in fs:
+                        f = os.path.join(rt, f)
+                        if all((os.path.getsize(f) < size, any((cls.image_file(f), cls.image_file2(f))))):
+                                os.remove(f)
 
     # remove small image, default width < IMG_W_MIN or height < IMG_H_MIN.
     @classmethod
-    def remove_small_image(cls, f, width=IMG_W_MIN, height=IMG_H_MIN, obj=None):
+    def remove_small_image(cls, path, width=IMG_W_MIN, height=IMG_H_MIN, obj=None, remove_small_size_image=True):
+        imgs_dict = dict()
+        print 'remove_small_image: ', path
         if obj:
-            img = obj
-        else:
-            img = cls.image_file(f)
+            imgs_dict[obj]=path
+        elif os.path.isfile(path):
+            img = cls.image_file(path)
+            if img:
+                imgs_dict[img] = path
+        elif os.path.isdir(path):
+            for rt, dirs, fs in os.walk(path):
+                if fs:  # found files.
+                    for f in fs:
+                        f = os.path.join(rt, f)
+                        img = cls.image_file(f)
+                        if img:
+                            imgs_dict[img] = f
         # check size of image.
-        if img:
+        for img in imgs_dict:
             w, h = cls.get_image_size(img)
             if all((w, h)):
                 if any((w < width, h < height)):
-                    os.remove(f)
+                    os.remove(imgs_dict[img])
             else:  # fail to get size, remove it.
-                os.remove(f)
-
-    # remove small image, default width < IMG_W_MIN or height < IMG_H_MIN.
-    @classmethod
-    def remove_path_small_images(cls, path, width=IMG_W_MIN, height=IMG_H_MIN):
-        for rt, dirs, fs in os.walk(path):
-            if len(fs):  # found files.
-                for f in fs:
-                    f = os.path.join(rt, f)
-                    cls.remove_small_image(f, width=width, height=height)
+                os.remove(imgs_dict[img])
+        # remove small size of images.
+        if remove_small_size_image:
+            cls.remove_small_size_image(path)
 
     @classmethod
     def get_image_size(cls, img):
@@ -96,9 +109,9 @@ class Image (object):
             elif fmt != ftype:
                     name = re.sub(ftype, fmt, f)
                     os.rename(f, name)
-            # run xfunc
-            if xfunc:
-                xfunc(f, obj=img)
+        # run xfunc
+        if xfunc:
+            xfunc(f, obj=img)
 
     @classmethod
     def reclaim_path_images(cls, path, xfunc=None):
@@ -109,6 +122,8 @@ class Image (object):
                     img = cls.image_file(f)
                     if img:
                         cls.reclaim_image(f, img, xfunc)
+                    elif xfunc:
+                        xfunc(f, obj=img)
 
 if __name__ == '__main__':
     from mypy import MyBase, MyPrint, MyPath
@@ -148,7 +163,7 @@ if __name__ == '__main__':
             Img.reclaim_path_images(path)
     if '-z' in args:
         path = args['-z']
-        if Img.image_file(path):
+        if xval:
             Img.remove_small_image(path, int(xval), int(xval))
         else:
-            Img.remove_path_small_images(path, int(xval), int(xval))
+            Img.remove_small_image(path)

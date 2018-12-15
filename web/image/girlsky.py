@@ -5,7 +5,6 @@ Created on: 2018-12-11
 
 @author: Byng Zeng
 """
-import re
 
 from mypy import MyBase
 from webcontent import WebContent
@@ -33,15 +32,16 @@ class Girlsky(WebImage):
         self._remove_small_image = False
 
     def get_user_input(self):
-        super(Girlsky, self).get_user_input()
+        args = super(Girlsky, self).get_user_input()
         if self._xval in self.URL_BASE_MAP:
             self._url_base = list(self.URL_BASE_MAP[self._xval])[0]
             self._pr.pr_dbg('get url_base: %s from -x %s' % (self._url_base, self._xval))
         if self._url_base:
             for dict_url_base in self.URL_BASE_MAP.itervalues():
                 if self._url_base == list(dict_url_base)[0]:
-                    path =  dict_url_base[self._url_base]
-                    self._path = '%s/%s/%s' %  (MyBase.DEFAULT_DWN_PATH, self.__class__.__name__, path)
+                    if not '-p' in args:
+                        path =  dict_url_base[self._url_base]
+                        self._path = '%s/%s/%s' %  (MyBase.DEFAULT_DWN_PATH, self.__class__.__name__, path)
                     break
 
     def get_url_of_pages(self, num):

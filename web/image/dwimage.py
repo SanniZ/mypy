@@ -32,26 +32,20 @@ class DWImage(WebContent):
         '  -p:',
         '    root path to store images.',
         '  -v:',
-        '     view info while download.',
+        '    view info while download.',
         '  -x:',
-        '     type of class, -H for help',
-    )
-
-    XHELP_MENU = (
-        '==================================',
-        '    -x val help',
-        '==================================',
-        '  xgmn:    xgmn of girlsky',
-        '  swmn:    swmn of girlsky',
-        '  wgmn:    wgmn of girlsky',
-        '  zpmn:    zpmn of girlsky',
-        '  mnxz:    mnxz of girlsky',
-        '  rtys:    rtys of girlsky',
-        '  jpmn:    jpmn of girlsky',
-        '  gzmn:    gzmn of girlsky',
-        '  toutiao: toutiao for pstatp',
-        '  meizitu: meizitu of meizitu',
-        '  mzitu:   mzitu of mzitu',
+        '    xgmn:    xgmn of girlsky',
+        '    swmn:    swmn of girlsky',
+        '    wgmn:    wgmn of girlsky',
+        '    zpmn:    zpmn of girlsky',
+        '    mnxz:    mnxz of girlsky',
+        '    rtys:    rtys of girlsky',
+        '    jpmn:    jpmn of girlsky',
+        '    gzmn:    gzmn of girlsky',
+        '    pstatp:  pstatp of toutiao',
+        '    toutiao: toutiao of toutiao',
+        '    meizitu: meizitu of meizitu',
+        '    mzitu:   mzitu of mzitu',
     )
 
     URL_BASE = {
@@ -66,11 +60,12 @@ class DWImage(WebContent):
         'gzmn' : {'http://m.girlsky.cn/mntp/gzmn/URLID.html' : 'girlsky'},  # 古装美女
         'nrtys' : {'http://m.girlsky.cn/mntpn/rtys/URLID.html' : 'girlsky'},  # 人体艺术
         # pstatp
-        'pstatp' : {'https://www.toutiao.com/aURLID' : 'pstatp'},
+        'pstatp'  : {'https://www.toutiao.com/aURLID' : 'pstatp'},
+        'toutiao' : {'https://www.toutiao.com/aURLID' : 'pstatp'},
         # meizitu
         'meizitu' : {'http://www.meizitu.com/a/URLID.html' : 'meizitu'},
         # mzitu
-        'mzitu' : {'https://m.mzitu.com/URLID' : 'mzitu'},
+        'mzitu'   : {'https://m.mzitu.com/URLID' : 'mzitu'},
     }
 
     def __init__(self, name=None):
@@ -83,11 +78,9 @@ class DWImage(WebContent):
         self._class = None
 
     def get_input(self):
-        args = MyBase.get_user_input('hHu:n:p:x:vd')
+        args = MyBase.get_user_input('hu:n:p:x:vd')
         if '-h' in args:
             MyBase.print_help(self.HELP_MENU)
-        if '-H' in args:
-            MyBase.print_help(self.XHELP_MENU)
         if '-u' in args:
             self._url = re.sub('/$', '', args['-u'])
         if '-x' in args:
