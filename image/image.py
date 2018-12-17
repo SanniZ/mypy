@@ -46,9 +46,8 @@ class Image (object):
     # remove small size image, default size is 10K.
     @classmethod
     def remove_small_size_image(cls, path, size=SMALL_IMG_SIZE):
-        print 'remove_small_size_image: ', path
         if os.path.isfile(path):
-            if all((os.path.getsize(path) < size, any((cls.image_file(path), cls.image_file(path))))):
+            if all((os.path.getsize(path) < size, any((cls.image_file(path), cls.image_file2(path))))):
                 os.remove(path)
         else:
             for rt, dirs, fs in os.walk(path):
@@ -62,7 +61,6 @@ class Image (object):
     @classmethod
     def remove_small_image(cls, path, width=IMG_W_MIN, height=IMG_H_MIN, obj=None, remove_small_size_image=True):
         imgs_dict = dict()
-        print 'remove_small_image: ', path
         if obj:
             imgs_dict[obj]=path
         elif os.path.isfile(path):
@@ -123,7 +121,7 @@ class Image (object):
                     if img:
                         cls.reclaim_image(f, img, xfunc)
                     elif xfunc:
-                        xfunc(f, obj=img)
+                        xfunc(f)
 
 if __name__ == '__main__':
     from mypy import MyBase, MyPrint, MyPath
@@ -132,14 +130,14 @@ if __name__ == '__main__':
         '============================================',
         '    Image help',
         '============================================',
-        'options: -c img -r path -z path -x val',
+        'options: -c img -r path -R path -x val',
         '  -c img:',
         '    check img is image format',
         '    sub : sub val in file',
         '  -r path:',
-        '    reclaim image format: dir or file',
-        '  -z path:',
         '    remove small size of images: dir or file',
+        '  -R path:',
+        '    reclaim image format: dir or file',
         '  -x val:',
         '    xval for cmd ext functions.',
     )
@@ -147,7 +145,7 @@ if __name__ == '__main__':
     pr = MyPrint('Image')
     Img = Image()
     xval = None
-    args = MyBase.get_user_input('hc:r:z:x:')
+    args = MyBase.get_user_input('hc:r:R:x:')
     if '-h' in args:
         MyBase.print_help(HELP_MENU)
     if '-x' in args:
@@ -157,13 +155,13 @@ if __name__ == '__main__':
         pr.pr_info(result)
     if '-r' in args:
         path = args['-r']
-        if Img.image_file(path):
-            Img.reclaim_image(path)
-        else:
-            Img.reclaim_path_images(path)
-    if '-z' in args:
-        path = args['-z']
         if xval:
             Img.remove_small_image(path, int(xval), int(xval))
         else:
             Img.remove_small_image(path)
+    if '-R' in args:
+        path = args['-R']
+        if Img.image_file(path):
+            Img.reclaim_image(path)
+        else:
+            Img.reclaim_path_images(path)

@@ -9,7 +9,7 @@ import os
 import re
 
 from mypy import MyBase, MyPath, MyPrint
-from webcontent import WebContent, UserAgent
+from webcontent import WebContent, USER_AGENTS
 from image import Image
 
 
@@ -19,7 +19,7 @@ class WebImage(object):
         '==================================',
         '    WebImage help',
         '==================================',
-        'option: -u url -n number -p path -x val -D mode -v',
+        'option: -u url -n num -p path -x val -m mode -v',
         '  -u:',
         '    url of web to be download',
         '  -n:',
@@ -30,7 +30,7 @@ class WebImage(object):
         '    view info while download.',
         '  -x:',
         '    val for expand cmd.',
-        '  -D:',
+        '  -m:',
         '    wget: using wget to download imgages',
         '    rtrv: using retrieve to download images',
         '    rget: using requests to download images',
@@ -47,12 +47,12 @@ class WebImage(object):
         self._remove_small_image = True
         self._view = False
         self._xval = None
-        self._dl_image = self.wget_url_image
+        self._dl_image = self.retrieve_url_image
         self._redundant_title = None
         self._pr = MyPrint('WebImage')
 
     def get_user_input(self):
-        args = MyBase.get_user_input('hu:n:p:x:vDd')
+        args = MyBase.get_user_input('hu:n:p:x:m:vdD')
         if '-h' in args:
             MyBase.print_help(self.help_menu)
         if '-u' in args:
@@ -65,15 +65,19 @@ class WebImage(object):
             self._view = True
         if '-x' in args:
             self._xval = args['-x']
-        if '-D' in args:
-            if '-wget' == args['-D']:
-                self._dl_image = self.wget_url_image
-            elif '-rtrv' == args['-D']:
-                self._dl_image = self.retrieve_url_image
-            elif '-rget' == args['-D']:
-                self._dl_image = self.requests_get_url_image
+        if '-m' in args:
+            dl_image_funcs = {
+                'wget': self.wget_url_image,
+                'rtrv' : self.retrieve_url_image,
+                'rget' : self.requests_get_url_image
+            }
+            if args['-m'] in dl_image_funcs.keys():
+                self._dl_image = dl_image_funcs[args['-m']]
         if '-d' in args:
             self._pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
+        if '-D' in args:
+            self._pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
+            WebContent.pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
         # check url
         if self._url:
             base, num = WebContent.get_url_base_and_num(self._url)
@@ -122,13 +126,15 @@ class WebImage(object):
         return WebContent.retrieve_url_file(url, path, self._view)
 
     def wget_url_image(self, url, path):
-        return WebContent.wget_url_file(url, path, '-c -t 3 -T 10 -U \'%s\'' % UserAgent, self._view)
+        return WebContent.wget_url_file(url, path, config="-c -t 3 -T 10 -U '%s'" % USER_AGENTS['Kubuntu'], view=self._view)
 
     def requests_get_url_image(self, url, path):
         return WebContent.requests_get_url_file(url, path, self._view)
 
     def download_image(self, url, path):
-        self._dl_image(url, path)
+        if self._dl_image:
+            MyPath.make_path(path)
+            self._dl_image(url, path)
 
     def get_url_content(self, url):
         return WebContent.get_url_content(url=url, view=self._view)
@@ -172,7 +178,7 @@ class WebImage(object):
             else:
                 url_header = self.get_url_address(None, self._url)
             # get header web
-            header_content = self.get_url_content(url_header, True)
+            header_content = self.get_url_content(url_header)
             if not header_content:
                 self._pr.pr_err('Error, failed to download %s header web.' % url_header)
                 continue
@@ -193,7 +199,7 @@ class WebImage(object):
                 imglist = self.get_image_url_of_pages(pages, header_content)
             # filter images
             imglist = set(imglist)
-            self._pr.pr_dbg('image url list: %s' % imglist)
+            # self._pr.pr_dbg('image url list: %s' % imglist)
             # download images
             if imglist:
                 # create path
@@ -204,7 +210,6 @@ class WebImage(object):
                 self.store_web_info(subpath, title, url_header)
                 # reclaim image, remove small image
                 if self._remove_small_image:
-                    print 'remove small image'
                     Image.reclaim_path_images(subpath, xfunc=Image.remove_small_image)
                 else:
                     Image.reclaim_path_images(subpath)

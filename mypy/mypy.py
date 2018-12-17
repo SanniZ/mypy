@@ -115,9 +115,11 @@ class MyFile(object):
                         os.remove(f)
 
     @classmethod
-    def reclaim_name(cls, name):
-        name = re.sub('/', '%', name)
-        name = re.sub('\s', '_', name)
+    def reclaim_name(cls, name, name_dict=None):
+        if not name_dict:
+            name_dict = {'/': '%', '\s' : '_'}
+        for key, value in name_dict.items():
+            name = re.sub(key, value, name)
         return name
 
     @classmethod
@@ -141,7 +143,7 @@ class MyPrint(object):
         self._pr_lvl = lvl
 
     def pr_dbg(self, fmt):
-        if all((self._pr_lvl & self.PR_LVL_DBG , fmt)):
+        if all((self._pr_lvl & self.PR_LVL_DBG, fmt)):
             if self._tag:
                 print('[%s] %s' % (self._tag, fmt))
             else:

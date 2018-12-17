@@ -15,33 +15,25 @@ import gzip
 from StringIO import StringIO
 import requests
 import subprocess
+import socket
 
-from mypy import MyPath, MyFile
+from mypy import MyPath, MyFile, MyPrint
 
-URL_HEADER = {
-    #'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:16.0) Gecko/20100101 Firefox/16.0',
-    'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/534.16 (KHTML, like Gecko) Chrome/10.0.648.204 Safari/534.16',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Connection': 'keep-alive',
-    #'Accept-Language': 'zh-CN,zh;q=0.8',
-    #'Accept-Encoding': 'gzip, deflate, sdch, br',
-
-    #'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/534.16 (KHTML, like Gecko) Chrome/10.0.648.204 Safari/534.16',
-    #'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:16.0) Gecko/20100101 Firefox/16.0'
-    #'Cache-Control': 'max-age=0'
-    #'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36 LBBROWSER',
-    #'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; it; rv:1.8.1.11) Gecko/20071127 Firefox/2.0.0.11',
-    #'User-Agent': 'Opera/9.25 (Windows NT 5.1; U; en)',
-    #'User-Agent': 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)',
-    #'User-Agent': 'Mozilla/5.0 (compatible; Konqueror/3.5; Linux) KHTML/3.5.5 (like Gecko) (Kubuntu)',
-    #'User-Agent': 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.0.12) Gecko/20070731 Ubuntu/dapper-security Firefox/1.5.0.12',
-    #'User-Agent': 'Lynx/2.8.5rel.1 libwww-FM/2.14 SSL-MM/1.4.1 GNUTLS/1.2.9',
-    #'User-Agent': 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.7 (KHTML, like Gecko) Ubuntu/11.04 Chromium/16.0.912.77 Chrome/16.0.912.77 Safari/535.7',
-    #'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0',
-    #'Host': 'ptlogin2.qq.com',
+USER_AGENTS = {
+    'AppleWebKit/537.36' : 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36 LBBROWSER',
+    'Gecko/20071127'     : 'Mozilla/5.0 (Windows NT 6.2; rv:16.0) Gecko/20100101 Firefox/16.0',
+    'Gecko/20070731'     : 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.0.12) Gecko/20070731 Ubuntu/dapper-security Firefox/1.5.0.12',
+    'Gecko/20100101'     : 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0',
+    'Lynx/2.8.5rel.1'    : 'Lynx/2.8.5rel.1 libwww-FM/2.14 SSL-MM/1.4.1 GNUTLS/1.2.9',
+    'AppleWebKit/535.7'  : 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.7 (KHTML, like Gecko) Ubuntu/11.04 Chromium/16.0.912.77 Chrome/16.0.912.77 Safari/535.7',
+    'Kubuntu'            : 'Mozilla/5.0 (compatible; Konqueror/3.5; Linux) KHTML/3.5.5 (like Gecko) (Kubuntu)',
 }
 
-UserAgent = r'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/534.16 (KHTML, like Gecko) Chrome/10.0.648.204 Safari/534.16'
+URL_HEADER = {
+    'User-Agent': '%s' % USER_AGENTS['AppleWebKit/537.36'],
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Connection': 'keep-alive',
+}
 
 DEFAULT_CHARSET = r'GB2312'
 
@@ -53,6 +45,8 @@ class WebContent (object):
     CONTEXT_TLSv1 = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
 
     WEB_URL_FILE = r'web_url.txt'
+
+    pr = MyPrint('WebContent')
 
     @classmethod
     def get_url_charset(cls, html=None, content_type=None):
@@ -71,7 +65,7 @@ class WebContent (object):
     @classmethod
     def get_html(cls, url, context=None, retry_times=3, view=True):
         if view:
-            print('Downloading: %s' % url)
+            cls.pr.pr_info('Downloading: %s' % url)
         for index in range(retry_times):
             url_charset = None
             req = Request(url, headers=URL_HEADER)
@@ -98,10 +92,10 @@ class WebContent (object):
                                 elif charset == url_charset:
                                     break
                 else:
-                    print('Error: fail to get data from html')
+                    cls.pr.pr_err('Error: fail to get data from html')
                     html_content = None
             except URLError as e:
-                print(e.reason)
+                cls.pr.pr_info(e.reason)
                 html_content = None
             # get content and break.
             if html_content:
@@ -109,49 +103,62 @@ class WebContent (object):
         return html_content
 
     @classmethod
-    def get_url_content(cls, url, retry_times=3, view=True):
+    def get_url_content(cls, url, retry_times=3, view=True, path=None):
         if re.match('https://', url):
-            return cls.get_html(url = url, context = cls.CONTEXT_UNVERIFIED, retry_times = retry_times,view = view)
+            content = cls.get_html(url = url, context = cls.CONTEXT_UNVERIFIED, retry_times = retry_times,view = view)
         else:
-            return cls.get_html(url = url, retry_times = retry_times, view = view)
+            content = cls.get_html(url = url, retry_times = retry_times, view = view)
+        # save content to path.
+        if all((content, path)):
+            MyPath.make_path(path)
+            f = '%s/%s' % (path, cls.convert_url_to_title(url))
+            if MyFile.get_exname(f) != '.html':
+                f = f + '.html'
+            with open(f, 'w') as fd:
+                fd.write(content)
+        return content
 
-    @staticmethod
-    def urlretrieve_callback(blocknum, blocksize, totalsize):
+    @classmethod
+    def urlretrieve_callback(cls, blocknum, blocksize, totalsize):
         percent = 100.0 * blocknum * blocksize / totalsize
         if percent > 100:
             percent = 100
-        print("%.2f%%" % percent)
+        cls.pr.pr_dbg("%.2f%%" % percent)
 
     @classmethod
     def retrieve_url_file(cls, url, path, view=False):
-        path = path.strip()
-        MyPath.make_path(path)
         fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])
         if not os.path.exists(fname):
             if view:
-                urllib.urlretrieve(url, fname, cls.urlretrieve_callback)
+                cls.pr.pr_info('retrieve file: %s' % fname)
+                try:
+                    urllib.urlretrieve(url, fname, cls.urlretrieve_callback)
+                except socket.error as e:
+                    cls.pr.pr_info('urlretrieve error: %s' % e.errno)
             else:
-                urllib.urlretrieve(url, fname)
+                try:
+                    urllib.urlretrieve(url, fname)
+                except socket.error as e:
+                    cls.pr.pr_info('urlretrieve error: %s' % e.errno)
 
     @classmethod
     def requests_get_url_file(cls, url, path, view=False):
-        path = path.strip()
-        MyPath.make_path(path)
         fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])
         if not os.path.exists(fname):
             r = requests.get(url)
             with open(fname, 'wb') as f:
                 if view:
-                    print('requests get file: %s', fname)
+                    cls.pr.pr_info('requests get file: %s' % fname)
                 f.write(r.content)
 
     @classmethod
     def wget_url_file(cls, url, path, config='', view=False): #config='-c -t 3 -T 10 -U \'%s\'' % UserAgent
         if view:
-            cmd = 'wget %s %s %s -nv' % (config, path, url)
+            cmd = 'wget %s -P %s %s -nv' % (config, path, url)
         else:
-            cmd = 'wget %s %s %s -q'  % (config, path, url)
+            cmd = 'wget %s -P %s %s -q'  % (config, path, url)
         try:
+            cls.pr.pr_dbg('wget cmd: %s' % cmd)
             return subprocess.check_output(cmd, shell=True)
         except subprocess.CalledProcessError:
             return None
@@ -222,61 +229,47 @@ if __name__ == '__main__':
         '==================================',
         '    WebContentApp help',
         '==================================',
-        'option: -u url -p path -c cmd',
+        'option: -u url -p path -d mode',
         '  -u url:',
         '    url of web to be download',
         '  -p path:',
         '    path to store data.',
-        '  -c cmd:',
+        '  -d mode:',
         '    wget: using wget to download file',
         '    retrv: using retrieve to download file',
         '    reqget: using requests to download file',
         '    html: download html of url'
     )
 
-    CMD_LIST = ('wget', 'retrv', 'reqget', 'html')
-
     path = None
     url = None
-    cmd = None
+    df = None
 
-    args = MyBase.get_user_input('hp:u:c:')
+    wc = WebContent()
+    pr = MyPrint('WebContent')
+
+    args = MyBase.get_user_input('hp:u:d:')
     if '-h' in args:
-        MyBase.print_help(HELP_MENU)
+        MyBase.cls.pr.pr_info_help(HELP_MENU)
     if '-p' in args:
         path = MyPath.get_abs_path(args['-p'])
     if '-u' in args:
         url = args['-u']
-    if '-c' in args:
-        if all((args['-c'] in CMD_LIST, url)):
-            cmd = args['-c']
+    if '-d' in args:
+        df_funcs = {
+            'wget': wc.wget_url_file,
+            'rtrv' : wc.retrieve_url_file,
+            'rget' : wc.requests_get_url_file,
+            'html' : wc.get_url_content,
+        }
+        if all((args['-d'] in df_funcs.keys(), url)):
+            df = df_funcs[args['-d']]
         else:
-            MyBase.print_exit('-c or -u error, -h for help!')
-
-    wc = WebContent()
-    pr = MyPrint('WebContent')
+            MyBase.print_exit('-d %s error, -h for help!' % args['-d'])
 
     # config default path
     if not path:
         path = '%s/%s' % (MyPath.get_download_path(), wc.__class__.__name__)
     # run cmd
-    if cmd == 'wget':
-        wc.wget_url_file(url, path)
-        pr.pr_info('wget %s to %s' % (url, path))
-    elif cmd == 'retrv':
-        wc.retrieve_url_file(url, path)
-        pr.pr_info('retrieve %s to %s' % (url, path))
-    elif cmd == 'reqget':
-        wc.requests_get_url_file(url, path)
-        pr.pr_info('requests_get %s to %s' % (url, path))
-    elif cmd == 'html':
-        html = wc.get_url_content(url)
-        if html:
-            MyPath.make_path(path)
-            f = '%s/%s' % (path, wc.convert_url_to_title(url))
-            if MyFile.get_exname(f) != '.html':
-                f = f + '.html'
-            with open(f, 'w') as fd:
-                fd.write(html)
-        else:
-            pr.pr_err('Error, failed to store html data.')
+    if df:
+        df(url=url, path=path)

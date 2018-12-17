@@ -24,7 +24,7 @@ class DWImage(WebContent):
         '==================================',
         '    DWImage help',
         '==================================',
-        'option: -u url -n number -p path -x val -v',
+        'option: -u url -n number -p path -x val -D mode -v',
         '  -u:',
         '    url of web to be download',
         '  -n:',
@@ -46,6 +46,10 @@ class DWImage(WebContent):
         '    toutiao: toutiao of toutiao',
         '    meizitu: meizitu of meizitu',
         '    mzitu:   mzitu of mzitu',
+        '  -D:',
+        '    wget: using wget to download imgages',
+        '    rtrv: using retrieve to download images',
+        '    rget: using requests to download images',
     )
 
     URL_BASE = {
@@ -78,7 +82,7 @@ class DWImage(WebContent):
         self._class = None
 
     def get_input(self):
-        args = MyBase.get_user_input('hu:n:p:x:vDd')
+        args = MyBase.get_user_input('hu:n:p:x:m:vDd')
         if '-h' in args:
             MyBase.print_help(self.HELP_MENU)
         if '-u' in args:
