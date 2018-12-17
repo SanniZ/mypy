@@ -15,7 +15,7 @@ from mypy import MyFile
 IMG_W_MIN = 480
 IMG_H_MIN = 480
 
-SMALL_IMG_SIZE = 1024 * 10 # 10K
+SMALL_IMG_SIZE = 1024 * 20 # 20K
 
 class Image (object):
 
@@ -48,6 +48,7 @@ class Image (object):
     def remove_small_size_image(cls, path, size=SMALL_IMG_SIZE):
         if os.path.isfile(path):
             if all((os.path.getsize(path) < size, any((cls.image_file(path), cls.image_file2(path))))):
+                print 'remove: ', path
                 os.remove(path)
         else:
             for rt, dirs, fs in os.walk(path):
@@ -93,6 +94,7 @@ class Image (object):
 
     @classmethod
     def reclaim_image(cls, f, obj=None, xfunc=None):
+        fname = f
         if obj:
             img = obj
         else:
@@ -103,13 +105,13 @@ class Image (object):
                 fmt = 'jpg'
             ftype = MyFile.get_filetype(f)
             if not ftype: # no ext name
-                os.rename(f, '%s.%s' % (f, fmt))
+                fname = '%s.%s' % (f, fmt)
             elif fmt != ftype:
-                    name = re.sub(ftype, fmt, f)
-                    os.rename(f, name)
+                fname = re.sub(ftype, fmt, f)
+            os.rename(f, fname)
         # run xfunc
         if xfunc:
-            xfunc(f, obj=img)
+            xfunc(fname)
 
     @classmethod
     def reclaim_path_images(cls, path, xfunc=None):
@@ -119,7 +121,7 @@ class Image (object):
                     f = os.path.join(rt, f)
                     img = cls.image_file(f)
                     if img:
-                        cls.reclaim_image(f, img, xfunc)
+                        cls.reclaim_image(f, obj=img, xfunc=xfunc)
                     elif xfunc:
                         xfunc(f)
 

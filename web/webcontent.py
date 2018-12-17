@@ -105,7 +105,8 @@ class WebContent (object):
     @classmethod
     def get_url_content(cls, url, retry_times=3, view=True, path=None):
         if re.match('https://', url):
-            content = cls.get_html(url = url, context = cls.CONTEXT_UNVERIFIED, retry_times = retry_times,view = view)
+            content = cls.get_html(url = url, context = cls.CONTEXT_UNVERIFIED,
+                                   retry_times = retry_times,view = view)
         else:
             content = cls.get_html(url = url, retry_times = retry_times, view = view)
         # save content to path.
@@ -120,6 +121,8 @@ class WebContent (object):
 
     @classmethod
     def urlretrieve_callback(cls, blocknum, blocksize, totalsize):
+        if not totalsize:
+            return
         percent = 100.0 * blocknum * blocksize / totalsize
         if percent > 100:
             percent = 100
@@ -133,7 +136,7 @@ class WebContent (object):
                 cls.pr.pr_info('retrieve file: %s' % fname)
                 try:
                     urllib.urlretrieve(url, fname, cls.urlretrieve_callback)
-                except socket.error as e:
+                except socket.error or ZeroDivisionError as e:
                     cls.pr.pr_info('urlretrieve error: %s' % e.errno)
             else:
                 try:
@@ -152,7 +155,9 @@ class WebContent (object):
                 f.write(r.content)
 
     @classmethod
-    def wget_url_file(cls, url, path, config='', view=False): #config='-c -t 3 -T 10 -U \'%s\'' % UserAgent
+    def wget_url_file(cls, url, path,
+                      config='-c -t 3 -T 10 -U \'%s\'' % USER_AGENTS['Kubuntu'],
+                      view=False):
         if view:
             cmd = 'wget %s -P %s %s -nv' % (config, path, url)
         else:
@@ -229,7 +234,7 @@ if __name__ == '__main__':
         '==================================',
         '    WebContentApp help',
         '==================================',
-        'option: -u url -p path -d mode',
+        'option: -u url -p path -d mode -v',
         '  -u url:',
         '    url of web to be download',
         '  -p path:',
@@ -239,22 +244,28 @@ if __name__ == '__main__':
         '    retrv: using retrieve to download file',
         '    reqget: using requests to download file',
         '    html: download html of url'
+        '  -v:',
+        '    view info of webcontent.',
     )
 
     path = None
     url = None
     df = None
+    view = False
 
     wc = WebContent()
     pr = MyPrint('WebContent')
 
-    args = MyBase.get_user_input('hp:u:d:')
+    args = MyBase.get_user_input('hp:u:d:v')
     if '-h' in args:
-        MyBase.cls.pr.pr_info_help(HELP_MENU)
+        MyBase.print_help(HELP_MENU)
     if '-p' in args:
         path = MyPath.get_abs_path(args['-p'])
     if '-u' in args:
         url = args['-u']
+    if '-v' in args:
+        view = True
+        wc.pr.set_pr_level(0x07)
     if '-d' in args:
         df_funcs = {
             'wget': wc.wget_url_file,
@@ -272,4 +283,4 @@ if __name__ == '__main__':
         path = '%s/%s' % (MyPath.get_download_path(), wc.__class__.__name__)
     # run cmd
     if df:
-        df(url=url, path=path)
+        df(url=url, path=path, view=view)

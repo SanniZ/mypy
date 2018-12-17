@@ -126,7 +126,9 @@ class WebImage(object):
         return WebContent.retrieve_url_file(url, path, self._view)
 
     def wget_url_image(self, url, path):
-        return WebContent.wget_url_file(url, path, config="-c -t 3 -T 10 -U '%s'" % USER_AGENTS['Kubuntu'], view=self._view)
+        return WebContent.wget_url_file(url, path,
+                                        config="-c -t 3 -T 10 -U \'%s\'" % USER_AGENTS['AppleWebKit/537.36'],
+                                        view=self._view)
 
     def requests_get_url_image(self, url, path):
         return WebContent.requests_get_url_file(url, path, self._view)
@@ -158,7 +160,9 @@ class WebImage(object):
             fd.write('%s\n%s' % (title, url))
 
     def get_url_of_pages(self, num):
-        url = map(lambda x: WebContent.set_url_base_and_num(self._url_base, '%s/%d' % (int(self._url), x)), range(2, num + 1))
+        url = map(lambda x: WebContent.set_url_base_and_num(self._url_base,
+                                                            '%s/%d' % (int(self._url), x)),
+                                                            range(2, num + 1))
         url.insert(0, WebContent.set_url_base_and_num(self._url_base, self._url))
         return url
 
