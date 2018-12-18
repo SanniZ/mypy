@@ -7,7 +7,7 @@ Created on: 2018-12-11
 """
 import re
 
-from webcontent import WebContent
+from webcontent import WebContent, USER_AGENTS
 from webimage import WebImage
 
 class Mzitu(WebImage):
@@ -20,7 +20,12 @@ class Mzitu(WebImage):
         self._dl_image = self.urlopen_get_url_image
 
     def urlopen_get_url_image(self, url, path):
-        return WebContent.urlopen_get_url_file(url, path, ssl=True, view=self._view)
+        headers = {
+            'User-Agent': '%s' % USER_AGENTS['AppleWebKit/537.36'],
+            'GET' : url,
+            'Referer' : 'https://m.mzitu.com/',
+        }
+        return WebContent.urlopen_get_url_file(url, path, ssl=True, headers=headers, view=self._view)
 
 if __name__ == '__main__':
     mz = Mzitu()

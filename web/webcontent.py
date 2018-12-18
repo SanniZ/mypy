@@ -142,26 +142,29 @@ class WebContent (object):
                 try:
                     urllib.urlretrieve(url, fname)
                 except socket.error as e:
-                    cls.pr.pr_warn('can not retrieve %s' % url)
+                    cls.pr.pr_warn('%s, retrieve %s failed.' % (str(e), url))
 
     @classmethod
-    def urlopen_get_url_file(cls, url, path, ssl=False, view=False):
+    def urlopen_get_url_file(cls, url, path, ssl=False, headers=None, view=False):
         fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])
         if not os.path.exists(fname):
-            #req = Request(url, headers={ 'User-Agent': 'Mozilla/5.0 (compatible; Konqueror/3.5; Linux) KHTML/3.5.5 (like Gecko) (Kubuntu)'})
+            req = Request(url=url)
+            if headers:
+                for key, value in headers.items():
+                    req.add_header(key, value)
             if ssl:
                 context = cls.CONTEXT_UNVERIFIED
             else:
                 context = None
             try:
-                r = urlopen(url, context = context)
+                r = urlopen(req, context = context)
                 if r:
                     with open(fname, 'wb') as f:
                         if view:
                             cls.pr.pr_info('urllib2 get file: %s' % fname)
                         f.write(r.read())
-            except HTTPError:
-                cls.pr.pr_warn('can not uget %s.' % url)
+            except (URLError, HTTPError) as e:
+                cls.pr.pr_warn('%s, uget %s failed.' % (str(e), url))
 
     @classmethod
     def requests_get_url_file(cls, url, path, view=False):
