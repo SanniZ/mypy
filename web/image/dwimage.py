@@ -114,15 +114,15 @@ class DWImage(WebContent):
     def process_input(self):
         if self._class:
             if self._class == 'girlsky':
-                hdr = Girlsky()
+                hdr = Girlsky('Girlsky')
             elif self._class == 'pstatp':
-                hdr = Pstatp()
+                hdr = Pstatp('Pstatp')
             elif self._class == 'meizitu':
-                hdr = Meizitu()
+                hdr = Meizitu('Meizitu')
             elif self._class == 'mzitu':
-                hdr = Mzitu()
+                hdr = Mzitu('Mzitu')
         else:
-            hdr = WebImage()
+            hdr = WebImage('WebImage')
         if hdr:
             hdr.main()
         else:

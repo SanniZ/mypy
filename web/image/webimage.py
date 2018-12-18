@@ -50,6 +50,7 @@ class WebImage(object):
         self._dl_image = self.retrieve_url_image
         self._redundant_title = None
         self._pr = MyPrint('WebImage')
+        self.__dbg = None
 
     def get_user_input(self):
         args = MyBase.get_user_input('hu:n:p:x:m:vdD')
@@ -74,8 +75,10 @@ class WebImage(object):
             if args['-m'] in dl_image_funcs.keys():
                 self._dl_image = dl_image_funcs[args['-m']]
         if '-d' in args:
+            self.__dbg = 1
             self._pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
         if '-D' in args:
+            self.__dbg = 2
             self._pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
             WebContent.pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
         # check url
@@ -155,10 +158,6 @@ class WebImage(object):
         for img in imgs:
             self.download_image(self.get_image_raw_url(img), path)
 
-    def store_web_info(self, path, title, url):
-        with open('%s/%s' % (path, WebContent.WEB_URL_FILE), 'w') as fd:
-            fd.write('%s\n%s' % (title, url))
-
     def get_url_of_pages(self, num):
         url = map(lambda x: WebContent.set_url_base_and_num(self._url_base,
                                                             '%s/%d' % (int(self._url), x)),
@@ -171,6 +170,18 @@ class WebImage(object):
 
     def convert_url_to_title(self, url):
         return WebContent.convert_url_to_title(url)
+
+    def store_web_info(self, path, title, url):
+        with open('%s/%s' % (path, WebContent.WEB_URL_FILE), 'w') as fd:
+            fd.write('%s\n%s' % (title, url))
+
+    def store_url_of_images(self, path, urls):
+        with open('%s/%s' % (path, WebContent.WEB_URL_FILE), 'a') as fd:
+            fd.write('\n')
+            fd.write('\n')
+            fd.write('url of imgs:\n')
+            for url in urls:
+                fd.write('%s\n' % url)
 
     def main(self):
         self.get_user_input()
@@ -220,7 +231,11 @@ class WebImage(object):
                 # show output info.
                 if self._view:
                     self._pr.pr_info('output: %s' % (subpath))
+                # save url of images if it is full debug.
+                if self.__dbg >= 2:
+                    self.store_url_of_images(subpath, imglist)
+
 
 if __name__ == '__main__':
-    dwimg = WebImage()
-    dwimg.main()
+    wi = WebImage('WebImage')
+    wi.main()
