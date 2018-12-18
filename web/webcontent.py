@@ -6,7 +6,7 @@ Created on 2018-12-03
 @author: Byng Zeng
 """
 
-from urllib2 import Request, URLError, urlopen
+from urllib2 import Request, urlopen, URLError, HTTPError
 import re
 import urllib
 import os
@@ -95,7 +95,7 @@ class WebContent (object):
                     cls.pr.pr_err('Error: fail to get data from html')
                     html_content = None
             except URLError as e:
-                cls.pr.pr_info(e.reason)
+                cls.pr.pr_warn(e.reason)
                 html_content = None
             # get content and break.
             if html_content:
@@ -142,7 +142,26 @@ class WebContent (object):
                 try:
                     urllib.urlretrieve(url, fname)
                 except socket.error as e:
-                    cls.pr.pr_info('urlretrieve error: %s' % e.errno)
+                    cls.pr.pr_warn('can not retrieve %s' % url)
+
+    @classmethod
+    def urlopen_get_url_file(cls, url, path, ssl=False, view=False):
+        fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])
+        if not os.path.exists(fname):
+            #req = Request(url, headers={ 'User-Agent': 'Mozilla/5.0 (compatible; Konqueror/3.5; Linux) KHTML/3.5.5 (like Gecko) (Kubuntu)'})
+            if ssl:
+                context = cls.CONTEXT_UNVERIFIED
+            else:
+                context = None
+            try:
+                r = urlopen(url, context = context)
+                if r:
+                    with open(fname, 'wb') as f:
+                        if view:
+                            cls.pr.pr_info('urllib2 get file: %s' % fname)
+                        f.write(r.read())
+            except HTTPError:
+                cls.pr.pr_warn('can not uget %s.' % url)
 
     @classmethod
     def requests_get_url_file(cls, url, path, view=False):
@@ -241,8 +260,9 @@ if __name__ == '__main__':
         '    path to store data.',
         '  -d mode:',
         '    wget: using wget to download file',
-        '    retrv: using retrieve to download file',
-        '    reqget: using requests to download file',
+        '    rtrv: using retrieve to download file',
+        '    rget: using requests to download file',
+        '    uget: using urlopen to download file',
         '    html: download html of url'
         '  -v:',
         '    view info of webcontent.',
@@ -271,6 +291,7 @@ if __name__ == '__main__':
             'wget': wc.wget_url_file,
             'rtrv' : wc.retrieve_url_file,
             'rget' : wc.requests_get_url_file,
+            'uget' : wc.urlopen_get_url_file,
             'html' : wc.get_url_content,
         }
         if all((args['-d'] in df_funcs.keys(), url)):

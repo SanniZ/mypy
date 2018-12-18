@@ -24,7 +24,7 @@ class DWImage(WebContent):
         '==================================',
         '    DWImage help',
         '==================================',
-        'option: -u url -n number -p path -x val -D mode -v',
+        'option: -u url -n number -p path -x val -m mode -v',
         '  -u:',
         '    url of web to be download',
         '  -n:',
@@ -46,10 +46,11 @@ class DWImage(WebContent):
         '    toutiao: toutiao of toutiao',
         '    meizitu: meizitu of meizitu',
         '    mzitu:   mzitu of mzitu',
-        '  -D:',
+        '  -m:',
         '    wget: using wget to download imgages',
         '    rtrv: using retrieve to download images',
         '    rget: using requests to download images',
+        '    uget: using urlopen to download images',
     )
 
     URL_BASE = {

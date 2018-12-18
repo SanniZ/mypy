@@ -34,6 +34,7 @@ class WebImage(object):
         '    wget: using wget to download imgages',
         '    rtrv: using retrieve to download images',
         '    rget: using requests to download images',
+        '    uget: using urlopen to download images',
     )
 
     def __init__(self, name=None):
@@ -70,7 +71,8 @@ class WebImage(object):
             dl_image_funcs = {
                 'wget': self.wget_url_image,
                 'rtrv' : self.retrieve_url_image,
-                'rget' : self.requests_get_url_image
+                'rget' : self.requests_get_url_image,
+                'uget' : self.urlopen_get_url_image,
             }
             if args['-m'] in dl_image_funcs.keys():
                 self._dl_image = dl_image_funcs[args['-m']]
@@ -126,7 +128,7 @@ class WebImage(object):
         return url
 
     def retrieve_url_image(self, url, path):
-        return WebContent.retrieve_url_file(url, path, self._view)
+        return WebContent.retrieve_url_file(url, path, view=self._view)
 
     def wget_url_image(self, url, path):
         return WebContent.wget_url_file(url, path,
@@ -134,15 +136,18 @@ class WebImage(object):
                                         view=self._view)
 
     def requests_get_url_image(self, url, path):
-        return WebContent.requests_get_url_file(url, path, self._view)
+        return WebContent.requests_get_url_file(url, path, view=self._view)
+
+    def urlopen_get_url_image(self, url, path):
+        return WebContent.urlopen_get_url_file(url, path, view=self._view)
 
     def download_image(self, url, path):
         if self._dl_image:
             MyPath.make_path(path)
             self._dl_image(url, path)
 
-    def get_url_content(self, url):
-        return WebContent.get_url_content(url=url, view=self._view)
+    def get_url_content(self, url, view=False):
+        return WebContent.get_url_content(url=url, view=view)
 
     def get_title(self, html, pattern=None):
         title = WebContent.get_url_title(html, pattern)
@@ -193,7 +198,7 @@ class WebImage(object):
             else:
                 url_header = self.get_url_address(None, self._url)
             # get header web
-            header_content = self.get_url_content(url_header)
+            header_content = self.get_url_content(url_header, view=True)
             if not header_content:
                 self._pr.pr_err('Error, failed to download %s header web.' % url_header)
                 continue
@@ -234,7 +239,6 @@ class WebImage(object):
                 # save url of images if it is full debug.
                 if self.__dbg >= 2:
                     self.store_url_of_images(subpath, imglist)
-
 
 if __name__ == '__main__':
     wi = WebImage('WebImage')
