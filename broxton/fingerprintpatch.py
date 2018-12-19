@@ -63,9 +63,9 @@ class FingerprintPatch(object):
                 self.print_help()
                 stop_and_exit()
             elif name == r'-s':
-                self._source = self.get_abs_path(value)
+                self._source = get_abs_path(value)
             elif name == r'-p':
-                self._patch = self.get_abs_path(value)
+                self._patch = get_abs_path(value)
             elif name == r'-o':
                 self._opt = value
 

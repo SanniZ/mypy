@@ -52,7 +52,7 @@ class Broxton(object):
         'tosimage' : 'tosimage',
         'vendorimage' : 'vendorimage',
         'flashfiles' : 'flashfiles',
-        'all' : 'flashfiles',       
+        'all' : 'flashfiles',
     }
 
     def __init__(self,
@@ -197,7 +197,7 @@ class Broxton(object):
         cmd = r'sudo /opt/intel/platformflashtool/bin/ias-spi-programmer --write {}'.format(fw)
         d.info(cmd)
         subprocess.call(cmd, shell=True)
-    
+
     def flash_ioc(self, ioc):
         cmd = r'sudo /opt/intel/platformflashtool/bin/ioc_flash_server_app -s /dev/ttyUSB2 -grfabc -t {}'.format(ioc)
         d.info(cmd)
