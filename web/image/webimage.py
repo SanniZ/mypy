@@ -45,7 +45,10 @@ class WebImage(object):
         self._url = None
         self._num = 1
         self._path = '%s/%s' %  (MyBase.DEFAULT_DWN_PATH, self.__class__.__name__)
-        self._re_image_url = re.compile('src=[\'|\"]?(http[s]?://.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?')
+        self._re_image_url = [
+            re.compile('src=[\'|\"]?(http[s]?://.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
+            re.compile('src=[\'|\"]?(/.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
+        ]
         self._ex_re_image_url = None
         self._title = None
         self._remove_small_image = True
@@ -101,13 +104,10 @@ class WebImage(object):
         return args
 
     def get_image_url(self, html):
-        if not self._re_image_url:
-            pattern = re.compile('src=[\'|\"]?(http[s]?://.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?')
-        else:
-            pattern = self._re_image_url
+        pattern = self._re_image_url
+        imgs = list()
         # find image.
         try:
-            imgs = list()
             if type(pattern) == list:
                 for pt in pattern:
                     imgs = imgs + pt.findall(html)
@@ -135,6 +135,10 @@ class WebImage(object):
         return limg
 
     def get_image_raw_url(self, url):
+        if not re.match('http(s)?:', url):
+            web_base = re.match('http[s]?://.+\.(com|cn|net)', self._url_base)
+            if web_base:
+                url = '%s%s' % (web_base.group(), url)
         return url
 
     def retrieve_url_image(self, url, path, view=False):
