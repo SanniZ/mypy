@@ -48,13 +48,13 @@ class WebImage(object):
         self._remove_small_image = True
         self._view = False
         self._xval = None
-        self._dl_image = self.retrieve_url_image
+        self._dl_image = self.urlopen_get_url_image
         self._redundant_title = None
         self._pr = MyPrint('WebImage')
         self.__dbg = None
 
     def get_user_input(self):
-        args = MyBase.get_user_input('hu:n:p:x:m:vdD')
+        args = MyBase.get_user_input('hu:n:p:x:m:i:vdD')
         if '-h' in args:
             MyBase.print_help(self.help_menu)
         if '-u' in args:
@@ -127,24 +127,34 @@ class WebImage(object):
     def get_image_raw_url(self, url):
         return url
 
-    def retrieve_url_image(self, url, path):
-        return WebContent.retrieve_url_file(url, path, view=self._view)
+    def retrieve_url_image(self, url, path, view=False):
+        return WebContent.retrieve_url_file(url, path, view=view)
 
-    def wget_url_image(self, url, path):
+    def wget_url_image(self, url, path, view=False):
         return WebContent.wget_url_file(url, path,
                                         config="-c -t 3 -T 10 -U \'%s\'" % USER_AGENTS['AppleWebKit/537.36'],
-                                        view=self._view)
+                                        view=view)
 
-    def requests_get_url_image(self, url, path):
-        return WebContent.requests_get_url_file(url, path, view=self._view)
+    def requests_get_url_image(self, url, path, view=False):
+        return WebContent.requests_get_url_file(url, path, view=view)
 
-    def urlopen_get_url_image(self, url, path):
-        return WebContent.urlopen_get_url_file(url, path, view=self._view)
 
+
+    def urlopen_get_url_image(self, url, path, view=False):
+        headers = {
+            'User-Agent': '%s' % USER_AGENTS['AppleWebKit/537.36'],
+            'GET' : url,
+            #'Referer' : 'https://m.mzitu.com/',
+        }
+        return WebContent.urlopen_get_url_file(url, path,
+                                               ssl=WebContent.url_is_https(url),
+                                               headers=headers, view=view)
+
+    # download image of url.
     def download_image(self, url, path):
         if self._dl_image:
             MyPath.make_path(path)
-            self._dl_image(url, path)
+            self._dl_image(url, path, self.__dbg)
 
     def get_url_content(self, url, view=False):
         return WebContent.get_url_content(url=url, view=view)
@@ -187,6 +197,15 @@ class WebImage(object):
             fd.write('url of imgs:\n')
             for url in urls:
                 fd.write('%s\n' % url)
+
+    def output_image_exists(self, path):
+        for rt, ds, fs in os.walk(path):
+            if fs:
+                for f in fs:
+                    f = os.path.join(rt, f)
+                    if Image.image_file2(f):
+                        return True
+        return False
 
     def main(self):
         self.get_user_input()
@@ -235,7 +254,10 @@ class WebImage(object):
                     Image.reclaim_path_images(subpath)
                 # show output info.
                 if self._view:
-                    self._pr.pr_info('output: %s' % (subpath))
+                    if self.output_image_exists(subpath):
+                        self._pr.pr_info('output: %s' % (subpath))
+                    else:
+                        self._pr.pr_info('output no images: %s' % (subpath))
                 # save url of images if it is full debug.
                 if self.__dbg >= 2:
                     self.store_url_of_images(subpath, imglist)

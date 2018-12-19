@@ -7,8 +7,9 @@ Created on: 2018-12-11
 """
 
 import re
+import sys
 
-from mypy import MyBase, MyPrint
+from mypy import MyBase, MyPrint, MyPath
 
 from webcontent import WebContent
 from girlsky import Girlsky
@@ -79,11 +80,12 @@ class DWImage(WebContent):
         self._url_base = None
         self._url = None
         self._xval = None
+        self._in_file = None
         self._pr = MyPrint('DWImage')
         self._class = None
 
     def get_input(self):
-        args = MyBase.get_user_input('hu:n:p:x:m:vDd')
+        args = MyBase.get_user_input('hu:n:p:x:m:i:vDd')
         if '-h' in args:
             MyBase.print_help(self.HELP_MENU)
         if '-u' in args:
@@ -110,6 +112,8 @@ class DWImage(WebContent):
                     if self._url_base == list(dict_url_base)[0]:
                         self._class =  dict_url_base[self._url_base]
                         break
+        if '-i' in args:
+            self._in_file = MyPath.get_abs_path(args['-i'])
 
 
     def process_input(self):
@@ -130,9 +134,39 @@ class DWImage(WebContent):
             self._pr.pr_err('Error, no found handler!')
 
 
+    def process_file_input(self):
+        if self._in_file:
+            with open(self._in_file, 'r') as fd:
+                lines = fd.readlines()
+            for url in lines:
+                url = re.sub('/$', '', url)
+                url = re.sub('\n$', '', url)
+                self._class = None
+                base, num = self.get_url_base_and_num(url)
+                if base:
+                    for dict_url_base in self.URL_BASE.itervalues():
+                        if base == list(dict_url_base)[0]:
+                            self._class =  dict_url_base[base]
+                            break
+                if self._class:
+                    # remove invalid cmds.
+                    if '-i' in sys.argv:
+                        sys.argv.remove('-i')
+                        sys.argv.remove(self._in_file)
+                    if '-u' in sys.argv:
+                        sys.argv.pop(sys.argv.index('-u') + 1)
+                        sys.argv.remove('-u')
+                    # config new cmd line.
+                    sys.argv.append('-u')
+                    sys.argv.append(url)
+                    self.process_input()
+
     def main(self):
         self.get_input()
-        self.process_input()
+        if self._in_file:
+            self.process_file_input()
+        else:
+            self.process_input()
 
 if __name__ == '__main__':
     dwimg = DWImage()

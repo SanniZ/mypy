@@ -16,6 +16,7 @@ from StringIO import StringIO
 import requests
 import subprocess
 import socket
+import httplib
 
 from mypy import MyPath, MyFile, MyPrint
 
@@ -47,6 +48,13 @@ class WebContent (object):
     WEB_URL_FILE = r'web_url.txt'
 
     pr = MyPrint('WebContent')
+
+    @classmethod
+    def url_is_https(cls, url):
+        if re.match('https://', url):
+            return True
+        else:
+            return False
 
     @classmethod
     def get_url_charset(cls, html=None, content_type=None):
@@ -104,7 +112,7 @@ class WebContent (object):
 
     @classmethod
     def get_url_content(cls, url, retry_times=3, view=True, path=None):
-        if re.match('https://', url):
+        if cls.url_is_https(url):
             content = cls.get_html(url = url, context = cls.CONTEXT_UNVERIFIED,
                                    retry_times = retry_times,view = view)
         else:
@@ -133,7 +141,7 @@ class WebContent (object):
         fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])
         if not os.path.exists(fname):
             if view:
-                cls.pr.pr_info('retrieve file: %s' % fname)
+                cls.pr.pr_info('retrieve: %s' % fname)
                 try:
                     urllib.urlretrieve(url, fname, cls.urlretrieve_callback)
                 except socket.error or ZeroDivisionError as e:
@@ -161,9 +169,9 @@ class WebContent (object):
                 if r:
                     with open(fname, 'wb') as f:
                         if view:
-                            cls.pr.pr_info('urllib2 get file: %s' % fname)
+                            cls.pr.pr_info('uget: %s' % fname)
                         f.write(r.read())
-            except (URLError, HTTPError) as e:
+            except (URLError, HTTPError, httplib.BadStatusLine) as e:
                 cls.pr.pr_warn('%s, uget %s failed.' % (str(e), url))
 
     @classmethod
@@ -173,7 +181,7 @@ class WebContent (object):
             r = requests.get(url)
             with open(fname, 'wb') as f:
                 if view:
-                    cls.pr.pr_info('requests get file: %s' % fname)
+                    cls.pr.pr_info('requests get: %s' % fname)
                 f.write(r.content)
 
     @classmethod
