@@ -25,7 +25,7 @@ class DWImage(WebContent):
         '==================================',
         '    DWImage help',
         '==================================',
-        'option: -u url -n number -p path -x val -m mode -v',
+        'option: -u url -n number -p path -x val -m mode -R file -v',
         '  -u:',
         '    url of web to be download',
         '  -n:',
@@ -52,6 +52,8 @@ class DWImage(WebContent):
         '    rtrv: using retrieve to download images',
         '    rget: using requests to download images',
         '    uget: using urlopen to download images',
+        '  -R:',
+        '    re config file for re_image_url.'
     )
 
     URL_BASE = {
@@ -85,7 +87,7 @@ class DWImage(WebContent):
         self._class = None
 
     def get_input(self):
-        args = MyBase.get_user_input('hu:n:p:x:m:i:vDd')
+        args = MyBase.get_user_input('hu:n:p:x:m:i:R:vDd')
         if '-h' in args:
             MyBase.print_help(self.HELP_MENU)
         if '-u' in args:
@@ -100,7 +102,7 @@ class DWImage(WebContent):
                 self._url_base = list(self.URL_BASE[self._xval])[0]
                 self._class = self.URL_BASE[self._xval][self._url_base]
             else:
-                MyBase.print_exit('Error, invalid -x val!')
+                MyBase.print_exit('[DWImage] Error, invalid -x val!')
         # get class from url
         if self._url:
             base, num = self.get_url_base_and_num(self._url)
@@ -131,7 +133,7 @@ class DWImage(WebContent):
         if hdr:
             hdr.main()
         else:
-            self._pr.pr_err('Error, no found handler!')
+            self._pr.pr_err('[DWImage] Error, no found handler!')
 
 
     def process_file_input(self):

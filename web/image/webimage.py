@@ -19,7 +19,7 @@ class WebImage(object):
         '==================================',
         '    WebImage help',
         '==================================',
-        'option: -u url -n num -p path -x val -m mode -v',
+        'option: -u url -n num -p path -x val -m mode -R file -v',
         '  -u:',
         '    url of web to be download',
         '  -n:',
@@ -35,6 +35,8 @@ class WebImage(object):
         '    rtrv: using retrieve to download images',
         '    rget: using requests to download images',
         '    uget: using urlopen to download images',
+        '  -R:',
+        '    re config file for re_image_url.'
     )
 
     def __init__(self, name=None):
@@ -44,6 +46,7 @@ class WebImage(object):
         self._num = 1
         self._path = '%s/%s' %  (MyBase.DEFAULT_DWN_PATH, self.__class__.__name__)
         self._re_image_url = re.compile('src=[\'|\"]?(http[s]?://.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?')
+        self._ex_re_image_url = None
         self._title = None
         self._remove_small_image = True
         self._view = False
@@ -54,7 +57,7 @@ class WebImage(object):
         self.__dbg = None
 
     def get_user_input(self):
-        args = MyBase.get_user_input('hu:n:p:x:m:i:vdD')
+        args = MyBase.get_user_input('hu:n:p:x:m:i:R:vdD')
         if '-h' in args:
             MyBase.print_help(self.help_menu)
         if '-u' in args:
@@ -63,6 +66,8 @@ class WebImage(object):
             self._num = int(args['-n'])
         if '-p' in args:
             self._path = os.path.abspath(args['-p'])
+        if '-R' in args:
+            self._ex_re_image_url = os.path.abspath(args['-R'])
         if '-v' in args:
             self._view = True
         if '-x' in args:
@@ -92,7 +97,7 @@ class WebImage(object):
                 self._url = num
             self._pr.pr_dbg('get base: %s, url: %s' % (base, self._url))
         else:
-            MyBase.print_exit('Error, no set url, -h for help!')
+            MyBase.print_exit('[WebImage] Error, no set url, -h for help!')
         return args
 
     def get_image_url(self, html):
@@ -122,7 +127,7 @@ class WebImage(object):
             else:
                 url_content = self.get_url_content(url_pages[index])
             if not url_content:
-                self._pr.pr_err('Error, failed to download %s sub web' % url_pages[index])
+                self._pr.pr_err('[WebImage] Error, failed to download %s sub web' % url_pages[index])
                 continue
             imgs = self.get_image_url(url_content)
             for img in imgs:
@@ -212,8 +217,31 @@ class WebImage(object):
                         return True
         return False
 
+    def add_external_re_image_url(self):
+        if self._ex_re_image_url:
+            relist = list()
+            try:
+                with open(self._ex_re_image_url, 'r') as fd:
+                    lines = fd.readlines()
+                # list all of lines.
+                for line in lines:
+                    line = re.sub('\n', '', line)
+                    relist.append(re.compile(line))
+                # add old lines.
+                if type(self._re_image_url) == list:
+                    for r in self._re_image_url:
+                        relist.append(r)
+                else:
+                    relist.append(self._re_image_url)
+                # update re_image_url
+                self._re_image_url = relist
+            except IOError as e:
+                self._pr.pr_err('%s, open %s failed!' % (str(e), self._ex_re_image_url))
+
     def main(self):
         self.get_user_input()
+        if self._ex_re_image_url:
+            self.add_external_re_image_url()
         # get web now.
         for index in range(self._num):
             # get the first page.
@@ -224,7 +252,7 @@ class WebImage(object):
             # get header web
             header_content = self.get_url_content(url_header, view=True)
             if not header_content:
-                self._pr.pr_err('Error, failed to download %s header web.' % url_header)
+                self._pr.pr_err('[WebImage] Error, failed to download %s header web.' % url_header)
                 continue
             # get url title.
             title = self.get_title(header_content, self._title)
