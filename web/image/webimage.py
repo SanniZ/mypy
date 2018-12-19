@@ -102,7 +102,12 @@ class WebImage(object):
             pattern = self._re_image_url
         # find image.
         try:
-            imgs = pattern.findall(html)
+            imgs = list()
+            if type(pattern) == list:
+                for pt in pattern:
+                    imgs = imgs + pt.findall(html)
+            else:
+                imgs = pattern.findall(html)
             #self._pr.pr_dbg('%s' % imgs)
         except TypeError as e:
            self._pr.pr_err('%s: failed to findall image url' , (e.reason))
