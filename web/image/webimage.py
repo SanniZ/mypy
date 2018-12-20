@@ -8,6 +8,10 @@ Created on: 2018-12-07
 import os
 import re
 
+import threading
+import time
+import Queue
+
 from mypy import MyBase, MyPath, MyPrint
 from webcontent import WebContent, USER_AGENTS
 from image import Image
@@ -19,7 +23,7 @@ class WebImage(object):
         '==================================',
         '    WebImage help',
         '==================================',
-        'option: -u url -n num -p path -x val -m mode -R file -v',
+        'option: -u url -n num -p path -x val -m mode -R file -t num -v',
         '  -u:',
         '    url of web to be download',
         '  -n:',
@@ -37,6 +41,8 @@ class WebImage(object):
         '    uget: using urlopen to download images',
         '  -R:',
         '    re config file for re_image_url.'
+        '  -t:',
+        '    set number of thread to download images.'
     )
 
     def __init__(self, name=None):
@@ -59,9 +65,12 @@ class WebImage(object):
         self._redundant_title = None
         self._pr = MyPrint('WebImage')
         self.__dbg = None
+        self._thread_queue = None
+        self._threads = 5
+
 
     def get_user_input(self):
-        args = MyBase.get_user_input('hu:n:p:x:m:i:R:vdD')
+        args = MyBase.get_user_input('hu:n:p:x:m:i:R:t:vdD')
         if '-h' in args:
             MyBase.print_help(self.help_menu)
         if '-u' in args:
@@ -72,6 +81,13 @@ class WebImage(object):
             self._path = os.path.abspath(args['-p'])
         if '-R' in args:
             self._ex_re_image_url = os.path.abspath(args['-R'])
+        if '-t' in args:
+            try:
+                n = int(args['-t'])
+            except ValueError as e:
+                MyBase.print_exit('%s, -h for help!' % str(e))
+            if n:
+                self._threads = n
         if '-v' in args:
             self._view = True
         if '-x' in args:
@@ -106,7 +122,6 @@ class WebImage(object):
             www_com = re.match('http[s]?://.+\.(com|cn|net)', self._url_base)
             if www_com:
                 self._com = www_com.group()
-        print self._com
         return args
 
     def get_image_url(self, html):
@@ -246,62 +261,83 @@ class WebImage(object):
             except IOError as e:
                 self._pr.pr_err('%s, open %s failed!' % (str(e), self._ex_re_image_url))
 
+    # process url web images.
+    def process_url_web(self, url):
+        # get header web
+        header_content = self.get_url_content(url, view=True)
+        if not header_content:
+            # release thread queue
+            self._thread_queue.get()
+            self._pr.pr_err('[WebImage] Error, failed to download %s header web.' % url)
+            return
+        # get url title.
+        title = self.get_title(header_content, self._title)
+        if not title:
+            title = self.convert_url_to_title(url)
+        self._pr.pr_dbg('title: %s' % title )
+        # create path of title to store data.
+        subpath = os.path.join(self._path, title)
+        self._pr.pr_dbg('subpath: %s' % subpath)
+        # get count of pages
+        pages = self.get_pages(header_content)
+        self._pr.pr_dbg('get pages: %s' % pages)
+        if not pages:
+            imglist = self.get_image_url(header_content)
+        else:
+            imglist = self.get_image_url_of_pages(pages, header_content)
+        # filter images
+        imglist = set(imglist)
+        # self._pr.pr_dbg('image url list: %s' % imglist)
+        # download images
+        if imglist:
+            # create path
+            MyPath.make_path(subpath)
+            # download all of images.
+            self.download_images(imglist, subpath)
+            # write web info
+            self.store_web_info(subpath, title, url)
+            # reclaim image, remove small image
+            if self._remove_small_image:
+                Image.reclaim_path_images(subpath, xfunc=Image.remove_small_image)
+            else:
+                Image.reclaim_path_images(subpath)
+            # show output info.
+            if self._view:
+                if self.output_image_exists(subpath):
+                    self._pr.pr_info('output: %s' % (subpath))
+                else:
+                    self._pr.pr_info('output no images: %s' % (subpath))
+            # save url of images if it is full debug.
+            if self.__dbg >= 2:
+                self.store_url_of_images(subpath, imglist)
+        # release thread queue
+        self._thread_queue.get()
+
     def main(self):
         self.get_user_input()
+        # get external re file.
         if self._ex_re_image_url:
             self.add_external_re_image_url()
+        # create thread queue.
+        self._thread_queue = Queue.Queue(self._threads)
         # get web now.
         for index in range(self._num):
+            # thread queue is full, waitting 1s
+            while self._thread_queue.full():
+                time.sleep(1)
             # get the first page.
             if self._url_base:
-                url_header = self.get_url_address(self._url_base, int(self._url) + index)
+                url = self.get_url_address(self._url_base, int(self._url) + index)
             else:
-                url_header = self.get_url_address(None, self._url)
-            # get header web
-            header_content = self.get_url_content(url_header, view=True)
-            if not header_content:
-                self._pr.pr_err('[WebImage] Error, failed to download %s header web.' % url_header)
-                continue
-            # get url title.
-            title = self.get_title(header_content, self._title)
-            if not title:
-                title = self.convert_url_to_title(url_header)
-            self._pr.pr_dbg('title: %s' % title )
-            # create path of title to store data.
-            subpath = os.path.join(self._path, title)
-            self._pr.pr_dbg('subpath: %s' % subpath)
-            # get count of pages
-            pages = self.get_pages(header_content)
-            self._pr.pr_dbg('get pages: %s' % pages)
-            if not pages:
-                imglist = self.get_image_url(header_content)
-            else:
-                imglist = self.get_image_url_of_pages(pages, header_content)
-            # filter images
-            imglist = set(imglist)
-            # self._pr.pr_dbg('image url list: %s' % imglist)
-            # download images
-            if imglist:
-                # create path
-                MyPath.make_path(subpath)
-                # download all of images.
-                self.download_images(imglist, subpath)
-                # write web info
-                self.store_web_info(subpath, title, url_header)
-                # reclaim image, remove small image
-                if self._remove_small_image:
-                    Image.reclaim_path_images(subpath, xfunc=Image.remove_small_image)
-                else:
-                    Image.reclaim_path_images(subpath)
-                # show output info.
-                if self._view:
-                    if self.output_image_exists(subpath):
-                        self._pr.pr_info('output: %s' % (subpath))
-                    else:
-                        self._pr.pr_info('output no images: %s' % (subpath))
-                # save url of images if it is full debug.
-                if self.__dbg >= 2:
-                    self.store_url_of_images(subpath, imglist)
+                url = self.get_url_address(None, self._url)
+            #self.process_web_url(url)
+            t = threading.Thread(target=self.process_url_web, args=(url,))
+            t.start()
+            # provides time for process_input got get sys.argv.
+            time.sleep(1)
+            # push to queue.
+            self._thread_queue.put(url)
+
 
 if __name__ == '__main__':
     wi = WebImage('WebImage')

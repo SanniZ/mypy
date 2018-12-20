@@ -9,6 +9,10 @@ Created on: 2018-12-11
 import re
 import sys
 
+import threading
+import time
+import Queue
+
 from mypy import MyBase, MyPrint, MyPath
 
 from webcontent import WebContent
@@ -25,7 +29,7 @@ class DWImage(WebContent):
         '==================================',
         '    DWImage help',
         '==================================',
-        'option: -u url -n number -p path -x val -m mode -R file -v',
+        'option: -u url -n number -p path -x val -m mode -R file -t num -v',
         '  -u:',
         '    url of web to be download',
         '  -n:',
@@ -53,7 +57,9 @@ class DWImage(WebContent):
         '    rget: using requests to download images',
         '    uget: using urlopen to download images',
         '  -R:',
-        '    re config file for re_image_url.'
+        '    re config file for re_image_url.',
+        '  -t:',
+        '    set number of thread to download images.',
     )
 
     URL_BASE = {
@@ -85,9 +91,10 @@ class DWImage(WebContent):
         self._in_file = None
         self._pr = MyPrint('DWImage')
         self._class = None
+        self._thread_queue = None
 
     def get_input(self):
-        args = MyBase.get_user_input('hu:n:p:x:m:i:R:vDd')
+        args = MyBase.get_user_input('hu:n:p:x:m:i:R:t:vDd')
         if '-h' in args:
             MyBase.print_help(self.HELP_MENU)
         if '-u' in args:
@@ -134,13 +141,21 @@ class DWImage(WebContent):
             hdr.main()
         else:
             self._pr.pr_err('[DWImage] Error, no found handler!')
+        # get queue
+        if self._thread_queue:
+            # release thread queue
+            self._thread_queue.get()
 
 
     def process_file_input(self):
         if self._in_file:
             with open(self._in_file, 'r') as fd:
                 lines = fd.readlines()
+            self._thread_queue = Queue.Queue(5)
             for url in lines:
+                # thread queue is full, waitting 1s
+                while self._thread_queue.full():
+                    time.sleep(1)
                 url = re.sub('/$', '', url)
                 url = re.sub('\n$', '', url)
                 self._class = None
@@ -161,7 +176,14 @@ class DWImage(WebContent):
                     # config new cmd line.
                     sys.argv.append('-u')
                     sys.argv.append(url)
-                    self.process_input()
+                    #self.process_input()
+                    t = threading.Thread(target=self.process_input)
+                    t.start()
+                    # provides time for process_input got get sys.argv.
+                    time.sleep(1)
+                    # push to queue.
+                    self._thread_queue.put(url)
+
 
     def main(self):
         self.get_input()
