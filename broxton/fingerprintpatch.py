@@ -50,6 +50,7 @@ class FingerprintPatch(object):
         print '    am  : run git am to apply all of patch.'
         print '    ghal: get prebuild files of fingerprint HAL'
         print '    gta : get prebuild files of fingerprint TA'
+        print '    grh : revert all of patches.'
 
     # get user input.
     def get_user_input(self):
@@ -156,6 +157,30 @@ class FingerprintPatch(object):
             shutil.copy(src, tgt)
 
 
+    # revert all of patch.
+    def revert_patches(self, source_path):
+        patch_paths = {
+            'device/intel/mixins': 8,
+            'device/intel/sepolicy' : 1,
+            'kernel/bxt' : 2,
+            'kernel/config-lts/v4.9' : 1,
+            'packages/services/Car' : 1,
+            'trusty/app/keymaster' : 1,
+            'trusty/app/sand' : 23,
+            'trusty/device/x86/sand' : 1,
+            'trusty/platform/sand' : 7,
+            'trusty/lk/trusty' : 1,
+            'vendor/intel/fw/evmm' : 2,
+            'vendor/intel/hardware/fingerprint' : 18,
+            'vendor/intel/hardware/storage' : 1,
+        }
+        for path, num in patch_paths.items():
+            for i in range(num):
+                cmd = 'cd %s/%s && git reset --hard HEAD~' % (source_path, path)
+                print(cmd)
+                subprocess.call(cmd, shell=True)
+
+
     # enterance of app
     def main(self):
         # get user input
@@ -175,6 +200,8 @@ class FingerprintPatch(object):
             self.get_hal_prebuild_files()
         elif self._opt == r'gta':
             self.get_ta_prebuild_files()
+        elif self._opt == r'grh':
+            self.revert_patches(self._source)
         else:
             stop_and_exit('Error, unsupport %s' % self._opt)
 
