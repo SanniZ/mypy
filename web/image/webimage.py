@@ -41,6 +41,7 @@ class WebImage(object):
 
     def __init__(self, name=None):
         self._name = name
+        self._com = None
         self._url_base = None
         self._url = None
         self._num = 1
@@ -101,6 +102,11 @@ class WebImage(object):
             self._pr.pr_dbg('get base: %s, url: %s' % (base, self._url))
         else:
             MyBase.print_exit('[WebImage] Error, no set url, -h for help!')
+        if self._url_base:
+            www_com = re.match('http[s]?://.+\.(com|cn|net)', self._url_base)
+            if www_com:
+                self._com = www_com.group()
+        print self._com
         return args
 
     def get_image_url(self, html):
@@ -136,9 +142,7 @@ class WebImage(object):
 
     def get_image_raw_url(self, url):
         if not re.match('http(s)?:', url):
-            web_base = re.match('http[s]?://.+\.(com|cn|net)', self._url_base)
-            if web_base:
-                url = '%s%s' % (web_base.group(), url)
+            url = '%s%s' % (self._com, url)
         return url
 
     def retrieve_url_image(self, url, path, view=False):
@@ -158,7 +162,7 @@ class WebImage(object):
         headers = {
             'User-Agent': '%s' % USER_AGENTS['AppleWebKit/537.36'],
             'GET' : url,
-            #'Referer' : 'https://m.mzitu.com/',
+            'Referer' : self._com,
         }
         return WebContent.urlopen_get_url_file(url, path,
                                                ssl=WebContent.url_is_https(url),
