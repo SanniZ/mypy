@@ -12,20 +12,21 @@ from debug import Debug as d
 
 class Android(object):
     def __init__(self):
-        d.dbg('Android init done.')    
-    
+        d.dbg('Android init done.')
+
     def help(self, cmds):
         for cmd in cmds:
             if cmd == 'help':
                 d.info('adb:[option][,option]')
-                d.info('  [option]:')
                 d.info('  wait: wait for adb device')
                 d.info('  root: run adb root')
                 d.info('  device: show adb device')
                 d.info('  reboot: reboot device')
                 d.info('  rebloader: reboot bootloader')
+                d.info('  power: sent power on/off key')
+                d.info('  back: sent back key')
+                d.info('  unlock: sent tap to unlock device')
                 d.info('fastboot:[option][,option]')
-                d.info('  [option]:')
                 d.info('  reboot: reboot device')
                 d.info('  lock: lock device')
                 d.info('  unlock: unlock device')
@@ -46,49 +47,30 @@ class Android(object):
                 d.info('  clr : clear screen display')
                 d.info('  xxx : grep xxx')
 
-    def adb_wait(self):
-        cmd = r'adb wait-for-device'
-        d.info(cmd)
-        subprocess.call(cmd, shell=True)
 
-    def adb_root(self):
-        cmd = r'adb root'
-        d.dbg(cmd)
-        subprocess.call(cmd, shell=True)
+    ADB_FUNCTIONS = {
+        'wait' : 'adb wait-for-device',
+        'root' : 'adb root',
+        'devices' : 'adb devices',
+        'reboot' : 'adb reboot',
+        'rebloader' : 'adb reboot bootloader',
+        'power' : 'adb shell input keyevent 26',
+        'back' : 'adb shell input keyevent 4',
+        'unlock' : 'adb shell input tap 500 600',
+        #'unlock' : 'adb shell input swipe 500 50 500 700',
+    }
 
-    def adb_device(self):
-        cmd = r'adb devices'
-        d.dbg(cmd)
-        subprocess.call(cmd, shell=True)
-        
-    def reboot(self):
-        cmd = r'adb reboot'
-        d.dbg(cmd)
-        subprocess.call(cmd, shell=True)   
-        
-    def reboot_bootloader(self):
-        cmd = r'adb reboot bootloader'
-        d.info(cmd)
-        subprocess.call(cmd, shell=True)
 
     def adb_handler(self, cmds):
         d.dbg('adb_handlers: %s' % cmds)
         for cmd in cmds:
-            if cmd == 'wait':
-                self.adb_wait()
-            elif cmd == 'root':
-                self.adb_root()
-            elif cmd == 'device':
-                self.adb_device()
-            elif cmd == 'reboot':
-                self.reboot()
-            elif cmd == 'rebloader':
-                self.reboot_bootloader()
-                
+            if cmd in self.ADB_FUNCTIONS.keys():
+                subprocess.call(self.ADB_FUNCTIONS[cmd], shell=True)
+
     def fastboot_reboot(self):
         cmd = r'fastboot reboot'
         d.info(cmd)
-        subprocess.call(cmd, shell=True)       
+        subprocess.call(cmd, shell=True)
 
     def flash_image(self, pt, image):
         cmd = r'fastboot flash %s %s' % (pt, image)
@@ -96,12 +78,12 @@ class Android(object):
         subprocess.call(cmd, shell=True)
 
     def lock(self, lock=True):
-        if lock == True: 
+        if lock == True:
             cmd = r'fastboot flashing lock'
             d.info(cmd)
         else:
             cmd = r'fastboot flashing unlock'
-            d.info(cmd)     
+            d.info(cmd)
         subprocess.call(cmd, shell=True)
 
     def fastboot_handler(self, cmds):
