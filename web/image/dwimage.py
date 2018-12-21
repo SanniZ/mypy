@@ -10,7 +10,6 @@ import re
 import sys
 
 import threading
-import time
 import Queue
 
 from mypy import MyBase, MyPrint, MyPath
@@ -91,9 +90,8 @@ class DWImage(WebContent):
         self._in_file = None
         self._pr = MyPrint('DWImage')
         self._class = None
-        self._threads = 0
-        self._threads_max = 5
-        self._threads_lock = None
+        self._thread_max = 5
+        self._thread_queue = None
         self._input_lock = None
 
     def get_input(self):
@@ -146,19 +144,18 @@ class DWImage(WebContent):
             hdr.main()
         else:
             self._pr.pr_err('[DWImage] Error, no found handler!')
-        # get queue
-        if self._threads_lock:
-            with self._threads_lock:
-                self._threads = self._threads - 1
+        # release queue
+        if self._thread_queue:
+            self._thread_queue.get()
 
 
     def process_file_input(self):
         if self._in_file:
             with open(self._in_file, 'r') as fd:
                 lines = fd.readlines()
-            self._threads_lock = threading.Lock()
+            self._thread_queue = Queue.Queue(self._thread_max)
             self._input_lock = threading.Lock()
-            for url in lines:
+            for url in set(lines):
                 url = re.sub('/$', '', url)
                 url = re.sub('\n$', '', url)
                 self._class = None
@@ -169,9 +166,6 @@ class DWImage(WebContent):
                             self._class =  dict_url_base[base]
                             break
                 if self._class:
-                    # threads is max, waitting 1s
-                    while self._threads >= self._threads_max:
-                        time.sleep(1)
                     # acquire lock to set input args.
                     with self._input_lock:
                         # remove invalid cmds.
@@ -184,11 +178,10 @@ class DWImage(WebContent):
                         # config new cmd line.
                         sys.argv.append('-u')
                         sys.argv.append(url)
-                    with self._threads_lock:
-                        self._threads = self._threads + 1
-                        t = threading.Thread(target=self.process_input)
-                        t.start()
-
+                    # create thread and put to queue.
+                    t = threading.Thread(target=self.process_input)
+                    self._thread_queue.put(url)
+                    t.start()
 
     def main(self):
         self.get_input()

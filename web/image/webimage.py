@@ -9,7 +9,7 @@ import os
 import re
 
 import threading
-import time
+import Queue
 
 from mypy import MyBase, MyPath, MyPrint
 from webcontent import WebContent, USER_AGENTS
@@ -54,6 +54,8 @@ class WebImage(object):
         self._re_image_url = [
             re.compile('src=[\'|\"]?(http[s]?://.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
             re.compile('src=[\'|\"]?(/.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
+            re.compile('src=[\'|\"]?(http[s]?://[a-z0-9./]+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
+            re.compile('src=[\'|\"]?(/[a-z0-9./]+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
         ]
         self._ex_re_image_url = None
         self._title = None
@@ -64,9 +66,8 @@ class WebImage(object):
         self._redundant_title = None
         self._pr = MyPrint('WebImage')
         self.__dbg = None
-        self._threads = 0
-        self._threads_max = 5
-        self._threads_lock = threading.Lock()
+        self._thread_max = 5
+        self._thread_queue = None
         self._input_lock = None
 
 
@@ -95,7 +96,7 @@ class WebImage(object):
             except ValueError as e:
                 MyBase.print_exit('%s, -h for help!' % str(e))
             if n:
-                self._threads_max = n
+                self._thread_max = n
         if '-v' in args:
             self._view = True
         if '-x' in args:
@@ -272,11 +273,10 @@ class WebImage(object):
     # process url web images.
     def process_url_web(self, url):
         # get header web
+        print 'process_url_web: ', url
         header_content = self.get_url_content(url, view=True)
         if not header_content:
-            # release threads
-            with self._threads_lock:
-                self._threads = self._threads - 1
+            self._thread_queue.get()
             self._pr.pr_err('failed to download %s header web.' % url)
             return
         # get url title.
@@ -319,15 +319,16 @@ class WebImage(object):
             # save url of images if it is full debug.
             if self.__dbg >= 2:
                 self.store_url_of_images(subpath, imglist)
-        # release threads
-        with self._threads_lock:
-            self._threads = self._threads - 1
+        # release queue
+        self._thread_queue.get()
 
     def main(self):
         self.get_user_input()
         # get external re file.
         if self._ex_re_image_url:
             self.add_external_re_image_url()
+        # create queue.
+        self._thread_queue = Queue.Queue(self._thread_max)
         # get web now.
         for index in range(self._num):
             # get the first page.
@@ -335,15 +336,11 @@ class WebImage(object):
                 url = self.get_url_address(self._url_base, int(self._url) + index)
             else:
                 url = self.get_url_address(None, self._url)
-            #self.process_web_url(url)
+            # create thread and put to queue.
+            t = threading.Thread(target=self.process_url_web, args=(url,))
+            self._thread_queue.put(url)
+            t.start()
 
-            # thread queue is full, waitting 1s
-            while self._threads >= self._threads_max:
-                time.sleep(1)
-            with self._threads_lock:
-                self._threads = self._threads + 1
-                t = threading.Thread(target=self.process_url_web, args=(url,))
-                t.start()
 
 if __name__ == '__main__':
     wi = WebImage('WebImage')
