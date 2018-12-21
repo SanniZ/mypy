@@ -108,7 +108,10 @@ class Image (object):
                 fname = '%s.%s' % (f, fmt)
             elif fmt != ftype:
                 fname = re.sub(ftype, fmt, f)
-            os.rename(f, fname)
+            try:
+                os.rename(f, fname)
+            except OSError as e:
+                print('%s, failed to rename %s.' % (str(e), f))
         # run xfunc
         if xfunc:
             xfunc(fname)
