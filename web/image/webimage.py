@@ -10,7 +10,6 @@ import re
 
 import threading
 import time
-import Queue
 
 from mypy import MyBase, MyPath, MyPrint
 from webcontent import WebContent, USER_AGENTS
@@ -157,7 +156,7 @@ class WebImage(object):
             else:
                 url_content = self.get_url_content(url_pages[index])
             if not url_content:
-                self._pr.pr_err('[WebImage] Error, failed to download %s sub web' % url_pages[index])
+                self._pr.pr_err('failed to download %s sub web' % url_pages[index])
                 continue
             imgs = self.get_image_url(url_content)
             for img in imgs:
@@ -278,7 +277,7 @@ class WebImage(object):
             # release threads
             with self._threads_lock:
                 self._threads = self._threads - 1
-            self._pr.pr_err('[WebImage] failed to download %s header web.' % url)
+            self._pr.pr_err('failed to download %s header web.' % url)
             return
         # get url title.
         title = self.get_title(header_content, self._title)

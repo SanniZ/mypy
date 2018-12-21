@@ -181,10 +181,10 @@ class MyPrint(object):
 class MyPy(object):
 
     @classmethod
-    def find(cls, wd, path, mode='word'):
+    def find(cls, path, wd, ftype=None):
         result = dict()
         fs = None
-        pattern = re.compile('%s' % wd)
+        pattern = re.compile('%s' % wd, re.I)
         # check files now
         if MyPath.path_is_file(path):
             with open(path, 'r') as fd:
@@ -194,16 +194,16 @@ class MyPy(object):
             result[path] = lst
         else:
             # check path.
-            ftype = re.compile('\*\.\w+$').search(path)
-            if ftype:
-                ftype = ftype.group()
+            fty = re.compile('\*\.\w+$').search(path)
+            if fty:
+                ftype = fty.group()[2:]
                 path = os.path.dirname(path)
             for rt, ds, fs in os.walk(path):
                 if fs:
                     for f in fs:
                         if ftype:
                             # check type of file.
-                            if MyFile.get_exname(f) != ftype:
+                            if MyFile.get_filetype(f) != ftype:
                                 continue
                         f = os.path.join(rt, f)
                         lst = list()
@@ -218,21 +218,30 @@ class MyPy(object):
     # -v val: old
     # -w word: new
     @classmethod
-    def sub(cls, old, new, path):
+    def sub(cls, path, wd, newd, ftype=None):
         if MyPath.path_is_file(path):
             with open(path, 'r') as fd:
                 data = fd.read()
-            data = re.sub(old, new, data)
+            data = re.sub(wd, newd, data)
             with open(path, 'w') as fd:
                 fd.write(data)
         else:
+            # check path.
+            fty = re.compile('\*\.\w+$').search(path)
+            if fty:
+                ftype = fty.group()[2:]
+                path = os.path.dirname(path)
             for rt, ds, fs in os.walk(path):
                 if fs:
                     for f in fs:
+                        if ftype:
+                            # check type of file.
+                            if MyFile.get_filetype(f) != ftype:
+                                continue
                         f = os.path.join(rt, f)
                         with open(f, 'r') as fd:
                             data = fd.read()
-                        data = re.sub(old, new, data)
+                        data = re.sub(wd, newd, data)
                         with open(f, 'wr') as fd:
                             fd.write(data)
 
@@ -241,47 +250,55 @@ if __name__ == '__main__':
         '============================================',
         '    mypy help',
         '============================================',
-        'options: -p path -c cmd -w word -v val',
-        '  -p path:',
-        '    path to dir or file',
-        '  -c cmd:',
-        '    find: find val in file',
-        '    sub : sub val in file',
-        '  -w word:',
-        '    set word to find',
-        '  -v val:',
-        '    set word to replace for sub',
+        'options: -f path,wd[,ftype] -s path,wd,newd[,ftype]',
+        '  -f path,wd,ftype: find wd in path',
+        '    path : path to dir or file',
+        '    wd   : word will be find',
+        '    ftype: file type will be find',
+        '  -s path,wd,ftype: sub wd with newd in path',
+        '    path : path to dir or file',
+        '    wd   : word will be find',
+        '    newd : new word to replace wd',
+        '    ftype: file type will be find',
     )
 
     pr = MyPrint('MyPy')
-    path = None
-    cmd = None
-    val = None
-    wd = None
 
-    args = MyBase.get_user_input('hp:c:v:w:')
+    args = MyBase.get_user_input('hf:s:')
     if '-h' in args:
         MyBase.print_help(HELP_MENU)
-    if '-p' in args:
-        path = MyPath.get_abs_path(args['-p'])
-    if '-c' in args:
-        cmd = args['-c']
-    if '-v' in args:
-        val = args['-v']
-    if '-w' in args:
-        wd = args['-w']
-    if not path:
-        path = os.getcwd()
-        #mypy.print_exit('Error, -h for help!')
-    # run cmd now.
-    if cmd in ['find', 'sub']:
-        if cmd == 'find':
-            if wd:
-                result = MyPy.find(wd, path)
-                for key, values in result.iteritems():
-                    pr.pr_info(key)
-                    for val in values:
-                        pr.pr_info(val)
-        elif cmd == 'sub':
-            if all((wd, val)):
-                MyPy.sub(wd, val, path)
+    if '-f' in args:
+        values = args['-f'].split(',')
+        n = len(values)
+        if n < 2:
+            MyBase.print_exit('input error, -h for help')
+        elif any((not values[0], not values[1])):
+            MyBase.print_exit('input error, -h for help')
+        # get args.
+        path = MyPath.get_abs_path(values[0])
+        wd = values[1]
+        if n == 2:
+            result = MyPy.find(path, wd)
+        elif n > 2:
+            ftype = values[2]
+            result = MyPy.find(path, wd, ftype)
+        # print result
+        for key, values in result.iteritems():
+            pr.pr_info(key)
+            for val in values:
+                pr.pr_info(val)
+    if '-s' in args:
+        values = args['-s'].split(',')
+        n = len(values)
+        if n < 3:
+            MyBase.print_exit('input error, -h for help')
+        elif any((not values[0], not values[1])):
+            MyBase.print_exit('input error, -h for help')
+        path = MyPath.get_abs_path(values[0])
+        wd = values[1]
+        newd = values[2]
+        if n == 3:
+            MyPy.sub(path, wd, newd)
+        elif n > 3:
+            ftype = values[3]
+            MyPy.sub(path, wd, newd, ftype)

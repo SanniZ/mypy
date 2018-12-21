@@ -22,6 +22,22 @@ class Image (object):
     def __init__(self, name=None):
         self._name = name
 
+    @classmethod
+    def get_image_format(cls, f=None, obj=None):
+        if obj:
+            img = obj
+        elif os.path.exists(f):
+            img = PILImg.open(f)
+        # get format of image.
+        if img:
+            fmt = img.format.lower()
+            if fmt == 'jpeg':
+                fmt = 'jpg'
+        else:
+            fmt = None
+        return fmt
+
+
     # check image base on extname.
     @classmethod
     def image_file2(cls, f):
@@ -119,7 +135,7 @@ class Image (object):
     @classmethod
     def reclaim_path_images(cls, path, xfunc=None):
         for rt, dr, fs in os.walk(path):
-            if len(fs):
+            if fs:
                 for f in fs:
                     f = os.path.join(rt, f)
                     img = cls.image_file(f)
@@ -128,6 +144,44 @@ class Image (object):
                     elif xfunc:
                         xfunc(f)
 
+    @classmethod
+    def set_order_images(cls, path, rename=None, non_zero=False):
+        for rt, dr, fs in os.walk(path):
+            if fs:
+                index = 1
+                num = len(str(len(fs)))
+                fdict = dict()
+                for f in fs:
+                    f = os.path.join(rt, f)
+                    img = cls.image_file(f)
+                    if img:
+                        fmt = cls.get_image_format(obj=img)
+                        if non_zero:
+                            if rename:
+                                fname = os.path.join(rt, '%s_%d.%s' % (rename, index, fmt))
+                            else:
+                                fname = os.path.join(rt, '%d.%s' % (index, fmt))
+                        else:
+                            if rename:
+                                if num == 2:
+                                    fname = os.path.join(rt, '%s_%02d.%s' % (rename, index, fmt))
+                                elif num == 3:
+                                    fname = os.path.join(rt, '%s_%03d.%s' % (rename, index, fmt))
+                                else:
+                                    fname = os.path.join(rt, '%s_%0d.%s' % (rename, index, fmt))
+                            else:
+                                if num == 2:
+                                    fname = os.path.join(rt, '%02d.%s' % (index, fmt))
+                                elif num == 3:
+                                    fname = os.path.join(rt, '%03d.%s' % (index, fmt))
+                                else:
+                                    fname = os.path.join(rt, '%0d.%s' % (index, fmt))
+                        fdict[f] = fname
+                        index = index + 1
+                # rename all of image under this dr
+                for f, fname in fdict.items():
+                    os.rename(f, fname)
+
 if __name__ == '__main__':
     from mypy import MyBase, MyPrint, MyPath
 
@@ -135,22 +189,25 @@ if __name__ == '__main__':
         '============================================',
         '    Image help',
         '============================================',
-        'options: -c img -r path -R path -x val',
-        '  -c img:',
-        '    check img is image format',
-        '    sub : sub val in file',
-        '  -r path:',
-        '    remove small size of images: dir or file',
-        '  -R path:',
-        '    reclaim image format: dir or file',
+        'options: -c cmd -r path -R path -x val -o path[,rename][,nz]',
+        '  -c img: check img is a image file',
+        '    img: the path of image file',
+        '  -r path: remove small size of images',
+        '    path: path of dir or file',
+        '  -R path: reclaim image format',
+        '    path: path of dir or file',
         '  -x val:',
         '    xval for cmd ext functions.',
+        '  -o path,rename,nz: rename image to order',
+        '    path: path of images',
+        '    rename: the format of image to be rename'
+        '    nz: True is set %0d, False is set %d'
     )
 
     pr = MyPrint('Image')
     Img = Image()
     xval = None
-    args = MyBase.get_user_input('hc:r:R:x:')
+    args = MyBase.get_user_input('hc:r:R:x:o:')
     if '-h' in args:
         MyBase.print_help(HELP_MENU)
     if '-x' in args:
@@ -170,3 +227,12 @@ if __name__ == '__main__':
             Img.reclaim_image(path)
         else:
             Img.reclaim_path_images(path)
+    if '-o' in args:
+        val = args['-o'].split(',')
+        n = len(val)
+        if n == 2:
+            Img.set_order_images(MyPath.get_abs_path(val[0]), val[1])
+        elif n >= 3:
+            Img.set_order_images(MyPath.get_abs_path(val[0]), val[1], val[2])
+        else:
+            Img.set_order_images(MyPath.get_abs_path(val[0]))
