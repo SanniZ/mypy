@@ -31,8 +31,8 @@ class Girlsky(WebImage):
         self._redundant_title = ['_妹子天空']
         self._remove_small_image = False
 
-    def get_user_input(self):
-        args = super(Girlsky, self).get_user_input()
+    def get_user_input(self, args=None):
+        args = super(Girlsky, self).get_user_input(args)
         if self._xval in self.URL_BASE_MAP:
             self._url_base = list(self.URL_BASE_MAP[self._xval])[0]
             self._pr.pr_dbg('get url_base: %s from -x %s' % (self._url_base, self._xval))

@@ -7,7 +7,6 @@ Created on: 2018-12-11
 """
 
 import re
-import sys
 
 import threading
 import Queue
@@ -92,10 +91,11 @@ class DWImage(WebContent):
         self._class = None
         self._thread_max = 5
         self._thread_queue = None
-        self._input_lock = None
 
-    def get_input(self):
-        args = MyBase.get_user_input('hu:n:p:x:m:i:R:t:vDd')
+
+    def get_input(self, args=None):
+        if not args:
+            args = MyBase.get_user_input('hu:n:p:x:m:i:R:t:vDd')
         if '-h' in args:
             MyBase.print_help(self.HELP_MENU)
         if '-u' in args:
@@ -126,7 +126,7 @@ class DWImage(WebContent):
             self._in_file = MyPath.get_abs_path(args['-i'])
 
 
-    def process_input(self):
+    def process_input(self, args=None, info=None):
         if self._class:
             if self._class == 'girlsky':
                 hdr = Girlsky('Girlsky')
@@ -139,26 +139,31 @@ class DWImage(WebContent):
         else:
             hdr = WebImage('WebImage')
         if hdr:
-            if self._input_lock:
-                hdr.set_input_lock(self._input_lock)
-            hdr.main()
+            hdr.main(args)
         else:
             self._pr.pr_err('[DWImage] Error, no found handler!')
         # release queue
         if self._thread_queue:
             self._thread_queue.get()
+        if info:
+            index = info[0]
+            total = info[1]
+            self._pr.pr_info('process %d/%d input file done' % (index, total))
 
 
     def process_file_input(self):
         if self._in_file:
             with open(self._in_file, 'r') as fd:
-                lines = fd.readlines()
+                lines =  set(fd.readlines())
             self._thread_queue = Queue.Queue(self._thread_max)
-            self._input_lock = threading.Lock()
-            for url in set(lines):
-                url = re.sub('/$', '', url)
-                url = re.sub('\n$', '', url)
+            total = len(lines)
+            index = 1
+            for url in lines:
                 self._class = None
+                # remove invalid chars.
+                for key, value in {'/$' : '', '\n$' : ''}.items():
+                    url = re.sub(key, value, url)
+                # get base and num
                 base, num = self.get_url_base_and_num(url)
                 if base:
                     for dict_url_base in self.URL_BASE.itervalues():
@@ -166,25 +171,17 @@ class DWImage(WebContent):
                             self._class =  dict_url_base[base]
                             break
                 if self._class:
-                    # acquire lock to set input args.
-                    with self._input_lock:
-                        # remove invalid cmds.
-                        if '-i' in sys.argv:
-                            sys.argv.remove('-i')
-                            sys.argv.remove(self._in_file)
-                        if '-u' in sys.argv:
-                            sys.argv.pop(sys.argv.index('-u') + 1)
-                            sys.argv.remove('-u')
-                        # config new cmd line.
-                        sys.argv.append('-u')
-                        sys.argv.append(url)
+                    args = {'-u' : url}
+                    info = (index, total)
                     # create thread and put to queue.
-                    t = threading.Thread(target=self.process_input)
+                    t = threading.Thread(target=self.process_input, args=(args, info))
                     self._thread_queue.put(url)
                     t.start()
+                index = index + 1
 
-    def main(self):
-        self.get_input()
+    def main(self, args=None):
+        if not args:
+            self.get_input()
         if self._in_file:
             self.process_file_input()
         else:

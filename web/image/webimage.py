@@ -52,10 +52,10 @@ class WebImage(object):
         self._num = 1
         self._path = '%s/%s' %  (MyBase.DEFAULT_DWN_PATH, self.__class__.__name__)
         self._re_image_url = [
-            re.compile('src=[\'|\"]?(http[s]?://.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
-            re.compile('src=[\'|\"]?(/.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
-            re.compile('src=[\'|\"]?(http[s]?://[a-z0-9./]+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
-            re.compile('src=[\'|\"]?(/[a-z0-9./]+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
+            #re.compile('src=[\'|\"]?(http[s]?://.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
+            #re.compile('src=[\'|\"]?(/.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
+            re.compile('src=[\'|\"]?(http[s]?://[a-z0-9\./-]+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
+            re.compile('src=[\'|\"]?(/[a-z0-9\./-]+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
         ]
         self._ex_re_image_url = None
         self._title = None
@@ -68,70 +68,7 @@ class WebImage(object):
         self.__dbg = None
         self._thread_max = 5
         self._thread_queue = None
-        self._input_lock = None
 
-
-    def set_input_lock(self, lock):
-        self._input_lock = lock
-
-    def get_user_input(self):
-        if self._input_lock:
-            with self._input_lock:
-                args = MyBase.get_user_input('hu:n:p:x:m:i:R:t:vdD')
-        else:
-            args = MyBase.get_user_input('hu:n:p:x:m:i:R:t:vdD')
-        if '-h' in args:
-            MyBase.print_help(self.help_menu)
-        if '-u' in args:
-            self._url = re.sub('/$', '', args['-u'])
-        if '-n' in args:
-            self._num = int(args['-n'])
-        if '-p' in args:
-            self._path = os.path.abspath(args['-p'])
-        if '-R' in args:
-            self._ex_re_image_url = os.path.abspath(args['-R'])
-        if '-t' in args:
-            try:
-                n = int(args['-t'])
-            except ValueError as e:
-                MyBase.print_exit('%s, -h for help!' % str(e))
-            if n:
-                self._thread_max = n
-        if '-v' in args:
-            self._view = True
-        if '-x' in args:
-            self._xval = args['-x']
-        if '-m' in args:
-            dl_image_funcs = {
-                'wget': self.wget_url_image,
-                'rtrv' : self.retrieve_url_image,
-                'rget' : self.requests_get_url_image,
-                'uget' : self.urlopen_get_url_image,
-            }
-            if args['-m'] in dl_image_funcs.keys():
-                self._dl_image = dl_image_funcs[args['-m']]
-        if '-d' in args:
-            self.__dbg = 1
-            self._pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
-        if '-D' in args:
-            self.__dbg = 2
-            self._pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
-            WebContent.pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
-        # check url
-        if self._url:
-            base, num = WebContent.get_url_base_and_num(self._url)
-            if base:
-                self._url_base = base
-            if num:
-                self._url = num
-            self._pr.pr_dbg('get base: %s, url: %s' % (base, self._url))
-        else:
-            MyBase.print_exit('[WebImage] Error, no set url, -h for help!')
-        if self._url_base:
-            www_com = re.match('http[s]?://.+\.(com|cn|net)', self._url_base)
-            if www_com:
-                self._com = www_com.group()
-        return args
 
     def get_image_url(self, html):
         pattern = self._re_image_url
@@ -271,12 +208,12 @@ class WebImage(object):
                 self._pr.pr_err('%s, failed to open %s' % (str(e), self._ex_re_image_url))
 
     # process url web images.
-    def process_url_web(self, url):
+    def process_url_web(self, url, data=None):
         # get header web
-        print 'process_url_web: ', url
         header_content = self.get_url_content(url, view=True)
         if not header_content:
-            self._thread_queue.get()
+            if self._thread_queue:
+                self._thread_queue.get()
             self._pr.pr_err('failed to download %s header web.' % url)
             return
         # get url title.
@@ -320,15 +257,75 @@ class WebImage(object):
             if self.__dbg >= 2:
                 self.store_url_of_images(subpath, imglist)
         # release queue
-        self._thread_queue.get()
+        if self._thread_queue:
+            self._thread_queue.get()
+        if data:
+            self._pr.pr_info('%d/%d: process %s done!' % (data[0], data[1], url))
 
-    def main(self):
-        self.get_user_input()
+    def get_user_input(self, args=None):
+        if not args:
+            args = MyBase.get_user_input('hu:n:p:x:m:i:R:t:vdD')
+        if '-h' in args:
+            MyBase.print_help(self.help_menu)
+        if '-u' in args:
+            self._url = re.sub('/$', '', args['-u'])
+        if '-n' in args:
+            self._num = int(args['-n'])
+        if '-p' in args:
+            self._path = os.path.abspath(args['-p'])
+        if '-R' in args:
+            self._ex_re_image_url = os.path.abspath(args['-R'])
+        if '-t' in args:
+            try:
+                n = int(args['-t'])
+            except ValueError as e:
+                MyBase.print_exit('%s, -h for help!' % str(e))
+            if n:
+                self._thread_max = n
+        if '-v' in args:
+            self._view = True
+        if '-x' in args:
+            self._xval = args['-x']
+        if '-m' in args:
+            dl_image_funcs = {
+                'wget': self.wget_url_image,
+                'rtrv' : self.retrieve_url_image,
+                'rget' : self.requests_get_url_image,
+                'uget' : self.urlopen_get_url_image,
+            }
+            if args['-m'] in dl_image_funcs.keys():
+                self._dl_image = dl_image_funcs[args['-m']]
+        if '-d' in args:
+            self.__dbg = 1
+            self._pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
+        if '-D' in args:
+            self.__dbg = 2
+            self._pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
+            WebContent.pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
+        # check url
+        if self._url:
+            base, num = WebContent.get_url_base_and_num(self._url)
+            if base:
+                self._url_base = base
+            if num:
+                self._url = num
+            self._pr.pr_dbg('get base: %s, url: %s' % (base, self._url))
+        else:
+            MyBase.print_exit('[WebImage] Error, no set url, -h for help!')
+        if self._url_base:
+            www_com = re.match('http[s]?://.+\.(com|cn|net)', self._url_base)
+            if www_com:
+                self._com = www_com.group()
+        return args
+
+    def main(self, args=None):
+        self.get_user_input(args)
         # get external re file.
         if self._ex_re_image_url:
             self.add_external_re_image_url()
         # create queue.
-        self._thread_queue = Queue.Queue(self._thread_max)
+        if self._num > self._thread_max:
+            self._thread_queue = Queue.Queue(self._thread_max)
         # get web now.
         for index in range(self._num):
             # get the first page.
@@ -336,10 +333,13 @@ class WebImage(object):
                 url = self.get_url_address(self._url_base, int(self._url) + index)
             else:
                 url = self.get_url_address(None, self._url)
-            # create thread and put to queue.
-            t = threading.Thread(target=self.process_url_web, args=(url,))
-            self._thread_queue.put(url)
-            t.start()
+            if self._thread_queue:
+                # create thread and put to queue.
+                t = threading.Thread(target=self.process_url_web, args=(url, (index + 1, self._num)))
+                self._thread_queue.put(url)
+                t.start()
+            else:
+                self.process_url_web(url)
 
 
 if __name__ == '__main__':
