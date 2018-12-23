@@ -124,6 +124,7 @@ class DWImage(WebContent):
                         break
         if '-i' in args:
             self._in_file = MyPath.get_abs_path(args['-i'])
+        return args
 
 
     def process_input(self, args=None, info=None):
@@ -151,13 +152,16 @@ class DWImage(WebContent):
             self._pr.pr_info('process %d/%d input file done' % (index, total))
 
 
-    def process_file_input(self):
+    def process_file_input(self, args=None):
         if self._in_file:
             with open(self._in_file, 'r') as fd:
                 lines =  set(fd.readlines())
             self._thread_queue = Queue.Queue(self._thread_max)
             total = len(lines)
             index = 1
+            # remove -i args
+            if all((args,args.has_key('-i'))):
+                    del args['-i']
             for url in lines:
                 self._class = None
                 # remove invalid chars.
@@ -171,7 +175,8 @@ class DWImage(WebContent):
                             self._class =  dict_url_base[base]
                             break
                 if self._class:
-                    args = {'-u' : url}
+                    if all((args, args.get('-u') != url)):
+                        args['-u'] = url
                     info = (index, total)
                     # create thread and put to queue.
                     t = threading.Thread(target=self.process_input, args=(args, info))
@@ -181,9 +186,9 @@ class DWImage(WebContent):
 
     def main(self, args=None):
         if not args:
-            self.get_input()
+            args = self.get_input()
         if self._in_file:
-            self.process_file_input()
+            self.process_file_input(args)
         else:
             self.process_input()
 
