@@ -175,11 +175,11 @@ class DWImage(WebContent):
                             self._class =  dict_url_base[base]
                             break
                 if self._class:
-                    if all((args, args.get('-u') != url)):
-                        args['-u'] = url
+                    url_args = {'-u' : url}
+                    url_args.update(args)
                     info = (index, total)
                     # create thread and put to queue.
-                    t = threading.Thread(target=self.process_input, args=(args, info))
+                    t = threading.Thread(target=self.process_input, args=(url_args, info))
                     self._thread_queue.put(url)
                     t.start()
                 index = index + 1
