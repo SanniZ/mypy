@@ -284,6 +284,7 @@ class WebImage(object):
                 self._thread_max = n
         if '-v' in args:
             self._view = True
+            self._pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_WARN)
         if '-x' in args:
             self._xval = args['-x']
         if '-m' in args:

@@ -134,12 +134,12 @@ class MyFile(object):
 class MyPrint(object):
 
     PR_LVL_DBG = 0x01
-    PR_LVL_INFO = 0x02
-    PR_LVL_WARN = 0x04
+    PR_LVL_WARN = 0x02
+    PR_LVL_INFO = 0x04
     PR_LVL_ERR = 0x08
     PR_LVL_ALL = 0x0F
 
-    def __init__(self, tag=None, lvl= 0x02 | 0x04 | 0x08):
+    def __init__(self, tag=None, lvl= 0x04 | 0x08):
         self._tag = tag
         self._pr_lvl = lvl
 
