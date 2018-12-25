@@ -228,18 +228,18 @@ class WebImage(object):
         pages = self.get_pages(header_content)
         self._pr.pr_dbg('get pages: %s' % pages)
         if not pages:
-            imglist = self.get_image_url(header_content)
+            limg = self.get_image_url(header_content)
         else:
-            imglist = self.get_image_url_of_pages(pages, header_content)
+            limg = self.get_image_url_of_pages(pages, header_content)
         # filter images
-        imglist = set(imglist)
-        # self._pr.pr_dbg('image url list: %s' % imglist)
+        limg = set(limg)
+        # self._pr.pr_dbg('image url list: %s' % limg)
         # download images
-        if imglist:
+        if limg:
             # create path
             MyPath.make_path(subpath)
             # download all of images.
-            self.download_images(imglist, subpath)
+            self.download_images(limg, subpath)
             # write web info
             self.store_web_info(subpath, title, url)
             # reclaim image, remove small image
@@ -255,7 +255,7 @@ class WebImage(object):
                     self._pr.pr_info('output no images: %s' % (subpath))
             # save url of images if it is full debug.
             if self.__dbg >= 2:
-                self.store_url_of_images(subpath, imglist)
+                self.store_url_of_images(subpath, limg)
         # release queue
         if self._thread_queue:
             self._thread_queue.get()

@@ -16,8 +16,8 @@ class Pstatp(WebImage):
         super(Pstatp, self).__init__(name)
         self._url_base = 'https://www.toutiao.com/aURLID'
         self._re_image_url = [
-            re.compile('\"url\":\"(http://\w+\.pstatp\.com/[\w/-]+)\"'),
-            re.compile('http://\w+\.pstatp\.com/[\w/]*'),
+            re.compile('\"url\":\"(http://\w+\.pstatp\.com/[\w/-]+)\"', re.I),
+            re.compile('http://\w+\.pstatp\.com/[\w/-]+', re.I),
         ]
 
     def get_url_content(self, url, view=False):

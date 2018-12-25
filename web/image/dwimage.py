@@ -72,8 +72,8 @@ class DWImage(WebContent):
         'gzmn' : {'http://m.girlsky.cn/mntp/gzmn/URLID.html' : 'girlsky'},  # 古装美女
         'nrtys' : {'http://m.girlsky.cn/mntpn/rtys/URLID.html' : 'girlsky'},  # 人体艺术
         # pstatp
-        'pstatp'  : {'https://www.toutiao.com/aURLID' : 'pstatp'},
-        'toutiao' : {'https://www.toutiao.com/aURLID' : 'pstatp'},
+        'pstatp'   : {'https://www.toutiao.com/aURLID' : 'pstatp'},
+        'pstatp_i' : {'https://www.toutiao.com/iURLID' : 'pstatp'},
         # meizitu
         'meizitu' : {'http://www.meizitu.com/a/URLID.html' : 'meizitu'},
         # mzitu
