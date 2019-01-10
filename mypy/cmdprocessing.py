@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jul  5 11:17:08 2018
@@ -10,25 +11,25 @@ from input import Input
 
 class CmdProcessing(object):
     def __init__(self):
-        self._cmd_dict = dict()
+        self._cmds_list = {}
 
     def register_cmd_handler(self, handlers):
         if handlers != None and type(handlers) == dict:
             for key in handlers.keys():
-                if key in self._cmd_dict:
+                if self._cmds_list.has_key(key):
                     hdrs = list()
-                    if type(self._cmd_dict[key]) == list:
-                        for hdr in self._cmd_dict[key]:
+                    if type(self._cmds_list[key]) == list:
+                        for hdr in self._cmds_list[key]:
                             hdrs.append(hdr)
                     hdrs.append(handlers[key])
-                    self._cmd_dict[key] = hdrs
+                    self._cmds_list[key] = hdrs
                 else:
-                    self._cmd_dict[key] = handlers[key]
+                    self._cmds_list[key] = handlers[key]
 
     # run input commands
     def run(self, cmds):
         d.dbg('CmdProcessing.run(): %s' % cmds)
-        for key in cmds.keys():
+        for key in cmds.iterkeys():
             # check help.
             if key == 'help':
                 for sub_cmd in cmds[key]:
@@ -37,20 +38,20 @@ class CmdProcessing(object):
                         d.info('  help: show help')
                         d.info('  cfg : show config info')
 
-            if key in self._cmd_dict:
-                d.dbg(self._cmd_dict[key])
-                if type(self._cmd_dict[key]) == dict:
-                    sub_cmds = self._cmd_dict[key]
+            if self._cmds_list.has_key(key) == True:
+                d.dbg(self._cmds_list[key])
+                if type(self._cmds_list[key]) == dict:
+                    sub_cmds = self._cmds_list[key]
                     for sub_key in sub_cmds.iterkeys():
                         f = sub_cmds[sub_key]
                         d.dbg(f(cmds[key]))
                 else:
-                    t = type(self._cmd_dict[key])
+                    t = type(self._cmds_list[key])
                     if t == list:
-                        for f in self._cmd_dict[key]:
+                        for f in self._cmds_list[key]:
                             d.dbg(f(cmds[key]))
                     else:
-                        f = self._cmd_dict[key]
+                        f = self._cmds_list[key]
                         d.dbg(f(cmds[key]))
             else:
                 d.err('No handler for: %s' % key)

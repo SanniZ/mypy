@@ -1,4 +1,5 @@
-#!/usr/bin/python3
+#!/usr/bin/python
+
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jul  5 11:25:54 2018
@@ -37,9 +38,9 @@ class Code(object):
             cpus = 5
 
         if force == True:
-            cmd = r'repo sync -c -j{n} -f'.format(n=cpus)
+            cmd = r'repo sync -j{n} -f'.format(n=cpus)
         else:
-            cmd = r'repo sync -c -j{n}'.format(n=cpus)
+            cmd = r'repo sync -j{n}'.format(n=cpus)
         d.info(cmd)
         subprocess.call(cmd, shell=True)
 
@@ -62,7 +63,7 @@ class Code(object):
         if cmd == None:
             return hdrs
         else:
-            if cmd in hdrs:
+            if hdrs.has_key(cmd) == True:
                 return hdrs[cmd]
             else:
                 return None

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 Created on: 2018-12-19
@@ -8,27 +8,35 @@ Created on: 2018-12-19
 import os
 import re
 
-from mypy.base import Base
-from mypy.path import Path
-from mypy.pr import Print
+from mypy import MyBase, MyPrint, MyPath
 
-class WebURLCrawler(object):
+class CollectWebURL(object):
 
     HELP_MENU = (
         '==================================',
-        '    WebURLCrawler help',
+        '    CollectWebURL help',
         '==================================',
-        'option:',
+        'option: -s path -t file',
         '  -s path: path to be collect',
         '  -t file: file to be save urls',
     )
 
-    pr = Print('WebURLCrawler')
+    pr = MyPrint('Template')
 
     def __init__(self, name=None):
         self._name = name
         self._src = None
         self._tgt = None
+
+    def get_user_input(self):
+        args = MyBase.get_user_input('hs:t:')
+        if '-h' in args:
+            MyBase.print_help(self.HELP_MENU)
+        if '-s' in args:
+            self._src = re.sub('/$', '', args['-s'])
+        if '-t' in args:
+            self._tgt = MyPath.get_abs_path(args['-t'])
+        return args
 
     def collect_web_url(self):
         urls = list()
@@ -46,25 +54,16 @@ class WebURLCrawler(object):
             for url in urls:
                 fd.write('%s\n' % url)
 
-    def get_user_input(self):
-        args = Base.get_user_input('hs:t:')
-        if '-h' in args:
-            Base.print_help(self.HELP_MENU)
-        if '-s' in args:
-            self._src = re.sub('/$', '', args['-s'])
-        if '-t' in args:
-            self._tgt = Path.get_abs_path(args['-t'])
-        return args
 
     def main(self):
         self.get_user_input()
         if not self._src:
-            Base.print_exit('no -s, -h for help!')
+            MyBase.print_exit('no -s, -h for help!')
         if not self._tgt:
             self._tgt = '%s/%s.txt' % (self._src, os.path.basename(self._src))
         # collect urls.
         self.collect_web_url()
 
 if __name__ == '__main__':
-    wc = WebURLCrawler()
-    wc.main()
+    cwl = CollectWebURL()
+    cwl.main()

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 Created on: 2018-12-11
@@ -7,8 +7,8 @@ Created on: 2018-12-11
 """
 import re
 
-from web.webcontent import WebContent, USER_AGENTS
-from web.webimage.webimage import WebImage
+from webcontent import WebContent, USER_AGENTS
+from webimage import WebImage
 
 class Mzitu(WebImage):
 

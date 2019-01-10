@@ -1,4 +1,5 @@
-#!/usr/bin/python3
+#!/usr/bin/python
+
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jul  5 14:33:36 2018

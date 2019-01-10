@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 Created on: 2018-12-11
@@ -6,10 +6,9 @@ Created on: 2018-12-11
 @author: Byng Zeng
 """
 
-from mypy.base import Base
-
-from web.webcontent import WebContent
-from web.webimage.webimage import WebImage
+from mypy import MyBase
+from webcontent import WebContent
+from webimage import WebImage
 
 class Girlsky(WebImage):
 
@@ -38,15 +37,15 @@ class Girlsky(WebImage):
             self._url_base = list(self.URL_BASE_MAP[self._xval])[0]
             self._pr.pr_dbg('get url_base: %s from -x %s' % (self._url_base, self._xval))
         if self._url_base:
-            for dict_url_base in self.URL_BASE_MAP.values():
+            for dict_url_base in self.URL_BASE_MAP.itervalues():
                 if self._url_base == list(dict_url_base)[0]:
                     if not '-p' in args:
                         path =  dict_url_base[self._url_base]
-                        self._path = '%s/%s/%s' %  (Base.DEFAULT_DWN_PATH, self.__class__.__name__, path)
+                        self._path = '%s/%s/%s' %  (MyBase.DEFAULT_DWN_PATH, self.__class__.__name__, path)
                     break
 
     def get_url_of_pages(self, num):
-        url = list(map(lambda x: WebContent.set_url_base_and_num(self._url_base, '%d_%d' % (int(self._url), x)), range(2, num + 1)))
+        url = map(lambda x: WebContent.set_url_base_and_num(self._url_base, '%d_%d' % (int(self._url), x)), range(2, num + 1))
         url.insert(0, WebContent.set_url_base_and_num(self._url_base, self._url))
         return url
 

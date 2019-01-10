@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 Created on 2018-12-05
@@ -6,14 +6,13 @@ Created on 2018-12-05
 @author: Byng Zeng
 """
 
-import os
 import subprocess
 
-from mypy.base import Base
+from mypy import MyBase, MyPath
 
-WUBI_LOVE98_TXT = '%s/wubi-love98/wubi-love98.txt' % os.getenv('IBus')
-WUBI_LOVE98_DB  = '%s/wubi-love98/wubi-love98.db' % os.getenv('IBus')
-IBUS_LOVE98_DB  = '/usr/share/ibus-table/tables/wubi-love98.db'
+WUBI_LOVE98_TXT = '%s/linux/ibus/ibus-love98.txt' % MyPath.get_mypy_path()
+WUBI_LOVE98_DB = '%s/linux/ibus/ibus-love98.db' % MyPath.get_mypy_path()
+IBUS_LOVE98_DB = '/usr/share/ibus-table/tables/wubi-love98.db'
 
 class IBus(object):
 
@@ -38,9 +37,9 @@ class IBus(object):
         '-b',
         '  setup wubi-jidian86',
         '-a',
-        '  add to dataBase of wubi-love98.db',
+        '  add to dataMyBase of wubi-love98.db',
         '-u',
-        '  update dataBase of wubi-love98.db',
+        '  update dataMyBase of wubi-love98.db',
     )
 
     def ibus_restart(self):
@@ -56,17 +55,17 @@ class IBus(object):
         subprocess.call(cmd, shell=True)
 
     def ibus_add_to_wubi_love98_db(self):
-        wd = input('请输入词组：')
-        code = input('请输入编码：')
+        wd = raw_input('请输入词组：')
+        code = raw_input('请输入编码：')
         # get list of txt
-        with open(WUBI_LOVE98_TXT, 'r') as fd:
-            txt = fd.readlines()
+        with open(WUBI_LOVE98_TXT, 'r') as f:
+            txt = f.readlines()
         # add wd to txt
         wd_code = '%s	%s	1\n' % (code, wd)
         txt.insert(len(txt) - 1, wd_code)
         # update txt
-        with open(WUBI_LOVE98_TXT, 'w') as fd:
-            fd.writelines(txt)
+        with open(WUBI_LOVE98_TXT, 'w') as f:
+            f.writelines(txt)
 
     def ibus_update_wubi_love98_db(self):
         print('update ibus wubi_love98_db...')
@@ -87,9 +86,9 @@ class IBus(object):
         subprocess.call(cmd, shell=True)
 
     def main(self):
-        args = Base.get_user_input('harLPpgSBbu')
+        args = MyBase.get_user_input('harLPpgSBbu')
         if '-h' in args:
-            Base.print_help(self.help_menu)
+            MyBase.print_help(self.help_menu)
         if '-a' in args:
             self.ibus_add_to_wubi_love98_db()
         if '-r' in args:

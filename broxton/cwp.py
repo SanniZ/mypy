@@ -1,4 +1,5 @@
-#!/usr/bin/python3
+#!/usr/bin/python
+
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jul  5 15:18:47 2018
@@ -60,11 +61,11 @@ class Cwp(Code):
         if cmd == None:
             return hdrs
         else:
-            if cmd in hdrs:
+            if hdrs.has_key(cmd) == True:
                 return hdrs[cmd]
             else:
                 return None
-
+            
 
 if __name__ == '__main__':
     #d.set_debug_level('dbg,info,err')

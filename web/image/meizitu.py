@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 Created on: 2018-12-11
@@ -6,7 +6,7 @@ Created on: 2018-12-11
 @author: Byng Zeng
 """
 
-from web.webimage.webimage import WebImage
+from webimage import WebImage
 
 class Meizitu(WebImage):
 

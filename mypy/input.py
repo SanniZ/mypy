@@ -10,7 +10,7 @@ from debug import Debug as d
 
 class Parser(object):
     def __init__(self):
-        d.dbg('Parser init done.')
+        d.dbg('Parser init done.')   
 
     def parser_cmd_args(self, cmds):
         re_dict = re.compile(r'^([\w]+):([\w,\.\/\*\|#-]+)$')
@@ -26,14 +26,14 @@ class Parser(object):
             if dict_cmds != None: # dict type
                 k, v = dict_cmds.groups()
                 d.dbg((k,v))
-                if k in output:
+                if output.has_key(k):
                     for x in re_args.findall(v):
                         output[k].append(x)
                 else:
                     output[k] = re_args.findall(v)
             else:
                 k = None
-                if k in output:
+                if output.has_key(k):
                     for x in re_args.findall(cmd):
                         output[k].append(x)
                 else:

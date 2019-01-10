@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 # ===========================================
 #    Config ubuntu rxdp for remote desktop

@@ -1,4 +1,5 @@
-#!/usr/bin/python3
+#!/usr/bin/python
+
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jul  5 12:39:24 2018
@@ -62,7 +63,7 @@ class Broxton(object):
         self._opt = opt
         self._user = user
         self._fw = r'ifwi_gr_mrb_b1.bin'
-        self._ioc = r'ioc_firmware_gp_mrb_fab_e_slcan.ias_ioc'
+        self._ioc = r'ioc_firmware_gp_mrb_fab_d_slcan.ias_ioc'
         if self._pdt != None and self._opt != None and self._user!= None:
             self._out = r'out/target/product/{pdt}'.format(pdt=self._pdt)
             self._flashfiles = r'{out}/{pdt}-flashfiles-eng.{user}'.format(\
@@ -139,7 +140,7 @@ class Broxton(object):
         for image in images:
             d.dbg('create makesh for {}'.format(image))
             if type(image) is dict:
-                if 'mmm' in image:
+                if image.has_key('mmm') == True:
                     make_sh = self.create_mmm_sh(image['mmm'])
                 else:
                     d.err('Not support: %s' % str(image))
@@ -180,19 +181,17 @@ class Broxton(object):
             # setup flash env
             ad = Android()
             #ad.adb_wait()
-            # enter bootloader mode.
-            ad.run_cmd_handler(['rebootloader'])
+            ad.reboot_bootloader()
             # unlock
-            ad.run_cmd_handler(['deviceunlock'])
+            ad.lock(False)
             # flash image now
             for image in fimgs:
                 fimage = r'{}/{}.img'.format(self._flashfiles, image)
-                d.info('fastboot flash {} {}'.format(image, fimage))
+                #d.info('fastboot flash {} {}'.format(image, fimage))
                 ad.flash_image(image, fimage)
             # lock device.
-            ad.run_cmd_handler(['devicelock'])
-            # reboot
-            ad.run_cmd_handler(['fastreboot'])
+            ad.lock(True)
+            ad.fastboot_reboot()
 
     def flash_firmware(self, fw):
         cmd = r'sudo /opt/intel/platformflashtool/bin/ias-spi-programmer --write {}'.format(fw)
@@ -214,7 +213,7 @@ class Broxton(object):
         if cmd == None:
             return hdrs
         else:
-            if cmd in hdrs:
+            if hdrs.has_key(cmd) == True:
                 return hdrs[cmd]
             else:
                 return None

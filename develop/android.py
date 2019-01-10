@@ -1,4 +1,5 @@
-#!/usr/bin/python3
+#!/usr/bin/python
+
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jul  5 11:10:22 2018
@@ -47,15 +48,12 @@ class Android(object):
                 d.info('  xxx : grep xxx')
 
 
-    CMD_DICT = {
+    ADB_FUNCTIONS = {
         'wait' : 'adb wait-for-device',
         'root' : 'adb root',
         'devices' : 'adb devices',
-        'devicelock' : 'fastboot flashing lock',
-        'deviceunlock' : 'fastboot flashing unlock',
         'reboot' : 'adb reboot',
-        'rebootloader' : 'adb reboot bootloader',
-        'fastreboot' : 'fastboot reboot',
+        'rebloader' : 'adb reboot bootloader',
         'power' : 'adb shell input keyevent 26',
         'back' : 'adb shell input keyevent 4',
         'unlock' : 'adb shell input tap 500 600',
@@ -63,25 +61,39 @@ class Android(object):
     }
 
 
-    def run_cmd_handler(self, cmds):
+    def adb_handler(self, cmds):
         d.dbg('adb_handlers: %s' % cmds)
         for cmd in cmds:
-            if cmd in self.CMD_DICT.keys():
-                subprocess.call(self.CMD_DICT[cmd], shell=True)
+            if cmd in self.ADB_FUNCTIONS.keys():
+                subprocess.call(self.ADB_FUNCTIONS[cmd], shell=True)
+
+    def fastboot_reboot(self):
+        cmd = r'fastboot reboot'
+        d.info(cmd)
+        subprocess.call(cmd, shell=True)
 
     def flash_image(self, pt, image):
         cmd = r'fastboot flash %s %s' % (pt, image)
         d.info(cmd)
         subprocess.call(cmd, shell=True)
 
+    def lock(self, lock=True):
+        if lock == True:
+            cmd = r'fastboot flashing lock'
+            d.info(cmd)
+        else:
+            cmd = r'fastboot flashing unlock'
+            d.info(cmd)
+        subprocess.call(cmd, shell=True)
+
     def fastboot_handler(self, cmds):
         for cmd in cmds:
             if cmd == 'reboot':
-                self.run_cmd_handler(['fastreboot'])
+                self.fastboot_reboot()
             elif cmd == 'lock':
-                self.run_cmd_handler(['devicelock'])
+                self.lock(True)
             elif cmd == 'unlock':
-                self.run_cmd_handler(['deviceunlock'])
+                self.lock(False)
             else:
                 image=r''
                 self.flash_image(cmd, cmd, image)
@@ -136,7 +148,7 @@ class Android(object):
     def get_cmd_handlers(self, cmd=None):
         hdrs = {
             'help' : self.help,
-            'adb' : self.run_cmd_handler,
+            'adb' : self.adb_handler,
             'fastboot' : self.fastboot_handler,
             'logcat' : self.logcat_handlers,
             'dmesg'  : self.dmesg_handlers,
@@ -145,7 +157,7 @@ class Android(object):
         if cmd == None:
             return hdrs
         else:
-            if cmd in hdrs:
+            if hdrs.has_key(cmd) == True:
                 return hdrs[cmd]
             else:
                 return None

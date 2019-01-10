@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 Created on 2018-11-13
@@ -10,8 +10,7 @@ import re
 import os
 import subprocess
 
-from mypy.base import Base
-from mypy.file import File
+from mypy import MyBase, MyFile
 
 RE_DTSTART = r'DTSTART;.+'
 RE_DTEND = r'DTEND;.+'
@@ -94,16 +93,16 @@ class ICSCalendar(object):
         '======================================',
         '     iOS Calender Data Convert',
         '======================================',
-        'option:',
-        '  -c True/False :',
+        'option: -s xxx -t xxx [-f xxx] [-r xxx] [-c]',
+        '  -c:',
         '    True is combine all of .ics file together, False is not.',
-        '  -f txt/csv :',
+        '  -f txt/csv:',
         '    format of output file',
-        '  -r True/False :',
+        '  -r True/False:',
         '    True is ascending sort, False is descending, default to False.',
-        '  -s xxx.ics or xxx/ :',
+        '  -s xxx.ics or xxx/:',
         '    xxx/ is a path, xxx.ics is a ics file',
-        '  -t xxx/ or xxx.xxx :',
+        '  -t xxx/ or xxx.xxx:',
         '    xxx/ is is a path, xxx.xxx is the name of target',
     )
 
@@ -114,7 +113,7 @@ class ICSCalendar(object):
         for root, dirs, files in os.walk(path):
             if len(files) != 0:
                 for f in files:
-                    if File.get_filetype(f) == TYPE_ICS:
+                    if MyFile.get_filetype(f) == TYPE_ICS:
                         if fs == None:
                             fs = list()
                         fs.append(os.path.join(root, f))
@@ -126,10 +125,10 @@ class ICSCalendar(object):
     def get_ics_files2(cls, path):
         cmd = 'find %s -name *.ics' % path
         try:
-            fs = subprocess.check_output(cmd, shell = True)
+    	    fs = subprocess.check_output(cmd, shell = True)
             fs = list(fs.split())
         except subprocess.CalledProcessError:
-            print('No found .ics at %s' % path)
+            print 'No found .ics at %s' % path
             fs = None
         return fs
 
@@ -138,7 +137,7 @@ class ICSCalendar(object):
     def get_src_files(cls, path):
         fs = None
         if os.path.exists(path) == True:
-            if os.path.isfile(path) == True and File.get_filetype(path) == TYPE_ICS:
+            if os.path.isfile(path) == True and MyFile.get_filetype(path) == TYPE_ICS:
                 fs = list()
                 fs.append(path)
             elif os.path.isdir(path) == True:
@@ -173,9 +172,9 @@ class ICSCalendar(object):
         self._re = None
 
     def get_user_opt(self):
-        args = Base.get_user_input('hcf:r:s:t:')
+        args = MyBase.get_user_input('hcf:r:s:t:')
         if r'-h' in args:
-            Base.print_help(self.help_menu)
+            MyBase.print_help(self.help_menu)
         if r'-c' in args:
             self._combine_files = True
         if r'-f' in args:
@@ -183,7 +182,7 @@ class ICSCalendar(object):
             if fmt == TYPE_TXT or fmt == TYPE_CSV:
                 self._fmt = fmt
             else:
-                Base.print_exit("Error, unsupport format!")
+                MyBase.print_exit("Error, unsupport format!")
         if r'-r' in args:
             if args['-r'] == r'True':
                 self._sort_reverse = True
@@ -200,7 +199,7 @@ class ICSCalendar(object):
                for f in fs:
                    self._src.append(f)
         if r'-t' in args:
-            ftype = File.get_filetype(os.path.abspath(args['-t']))
+            ftype = MyFile.get_filetype(os.path.abspath(args['-t']))
             if ftype in [TYPE_TXT, TYPE_CSV]:
                 self._tgt = os.path.abspath(args['-t'])
                 self._combine_files = True
@@ -228,7 +227,7 @@ class ICSCalendar(object):
 
     # get name of output
     def get_output_name(self, fmt):
-        if File.get_filetype(self._tgt) == fmt:
+        if MyFile.get_filetype(self._tgt) == fmt:
             name = self._tgt
         elif self._combine_files == True:
 	        name = r'%s/%s.%s' % (self._tgt, u'日历', fmt.lower())
@@ -280,7 +279,7 @@ class ICSCalendar(object):
                     f.write('%s,' % event._description[len('DESCRIPTION:'):len(event._description)-1])
                 # write type of data.
                 f.write('%s\n' % event._type)
-        print('output: %s' % name)
+        print 'output: %s' % name
 
     # save data to .txt file.
     def save_to_txt(self):
@@ -318,7 +317,7 @@ class ICSCalendar(object):
                     f.write('DESCRIPTION:\n')
                 else:
                     f.write('DESCRIPTION: %s\n' % event._description[len('DESCRIPTION:'):len(event._description) - 1])
-        print('output: %s' % name)
+        print 'output: %s' % name
 
     # print all of data.
     def print_ics_contents(self):
@@ -327,35 +326,29 @@ class ICSCalendar(object):
             # date and time.
             if event._date_e == event._date_s: # at the same day.
                 if event._time_s == None or event._time_e == None: # days event: xxxx/xx/xx
-                    print('%s/%s/%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8], event._type))
+                    print '%s/%s/%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8], event._type)
                 else: # day event: xxxx/xx/xx xx:xx-xx:xx
-                    print('%s/%s/%s %s:%s-%s:%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8],
-                                                         event._time_s[0:2], event._time_s[2:4],
-                                                         event._time_e[0:2], event._time_e[2:4],
-                                                         event._type))
+                    print '%s/%s/%s %s:%s-%s:%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8],
+                                                         event._time_s[0:2], event._time_s[2:4], event._time_e[0:2], event._time_e[2:4], event._type)
             else:
                 if event._time_s == None or event._time_e == None: # days event: xxxx/xx/xx-xxxx/xx/xx
-                    print('%s/%s/%s-%s/%s/%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8],
-                                                      event._date_e[0:4], event._date_e[4:6], event._date_e[6:8],
-                                                      event._type))
+                    print '%s/%s/%s-%s/%s/%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8],
+                                                      event._date_e[0:4], event._date_e[4:6], event._date_e[6:8], event._type)
                 else: # day event: xxxx/xx/xx xx:xx-xx:xx
-                    print('%s/%s/%s %s:%s-%s/%s/%s %s:%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8],
-                                                                  event._time_s[0:2], event._time_s[2:4],
-                                                                  event._date_e[0:4], event._date_e[4:6], event._date_e[6:8],
-                                                                  event._time_e[0:2], event._time_e[2:4],
-                                                                  event._type))
+                    print '%s/%s/%s %s:%s-%s/%s/%s %s:%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8], event._time_s[0:2], event._time_s[2:4],
+                                                                  event._date_e[0:4], event._date_e[4:6], event._date_e[6:8], event._time_e[0:2], event._time_e[2:4], event._type)
             # location
             if event._location == None:
-                print('LOCATION   : \n')
+                print 'LOCATION   : \n'
             else:
-                print('LOCATION   : %s\n' % event._location[len('LOCATION:'):len(event._location)-1])
+                print 'LOCATION   : %s\n' % event._location[len('LOCATION:'):len(event._location)-1]
             # summary
-            print('SUMMARY    : %s\n' % event._summary[len('SUMMARY:'):len(event._summary)-1])
+            print 'SUMMARY    : %s\n' % event._summary[len('SUMMARY:'):len(event._summary)-1]
             # description
             if event._description == None:
-                print('DESCRIPTION:\n')
+                print 'DESCRIPTION:\n'
             else:
-                print('DESCRIPTION: %s\n' % event._description[len('DESCRIPTION:'):len(event._description) - 1])
+                print 'DESCRIPTION: %s\n' % event._description[len('DESCRIPTION:'):len(event._description) - 1]
 
     # call function to output data.
     def format_output(self):
@@ -371,8 +364,8 @@ class ICSCalendar(object):
         elif self._fmt == None:
             self.print_ics_contents()
         else:
-            print('Error, use -f txt/csv to set format output\n')
-            Base.print_help(self.help_menu)
+            print 'Error, use -f txt/csv to set format output\n'
+            MyBase.print_help(self.help_menu)
 
         # clear all of events.
         self._events = list()
@@ -386,7 +379,7 @@ class ICSCalendar(object):
     # process ics file data.
     def process_ics(self, ics):
         if os.path.isfile(ics) != True:
-            print('Error, no found %s' % ics)
+            print 'Error, no found %s' % ics
             return False
 
         with open(ics, 'r') as f:
@@ -400,7 +393,7 @@ class ICSCalendar(object):
                 # get ICSCalendar Name
                 calName = self._re.get_cal_name(buf)
                 if calName:
-                    self._cal_name = calName.group()[len('X-WR-CALNAME:'):]
+                    self._cal_name = calName.group()[len('X-WR-CALNAME:'):len(calName.group())-1]
                 # get location
                 location = self._re.get_location(buf)
                 if location:
@@ -467,7 +460,7 @@ class ICSCalendar(object):
         self.check_opt_args()
         # start to process data.
         if self._src == None or len(self._src) == 0:
-            Base.print_exit('No found .ics, do nothing.')
+            MyBase.print_exit('No found .ics, do nothing.')
         elif self._combine_files == True:
             self.combine_fs_handler()
         else:

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 Created on: 2018-12-11
@@ -7,8 +7,8 @@ Created on: 2018-12-11
 """
 import re
 
-from web.webcontent import WebContent
-from web.webimage.webimage import WebImage
+from webcontent import WebContent
+from webimage import WebImage
 
 class Pstatp(WebImage):
 
@@ -23,7 +23,7 @@ class Pstatp(WebImage):
     def get_url_content(self, url, view=False):
         url_content = WebContent.get_url_content(url=url, view=view)
         if url_content:
-            return re.sub(b'\\\\', b'', url_content)
+            return re.sub('\\\\', '', url_content)
 
 if __name__ == '__main__':
     ps = Pstatp('toutiao')

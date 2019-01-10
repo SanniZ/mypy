@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 Created on: 2018-12-07
@@ -7,21 +7,13 @@ Created on: 2018-12-07
 """
 import os
 import re
-import sys
-
-if sys.version_info[0] == 2:
-    import Queue
-else:
-    from queue import Queue
 
 import threading
+import Queue
 
-from mypy.base import Base
-from mypy.path import Path
-from mypy.pr import Print
-
-from web.webcontent import WebContent, USER_AGENTS
-from image.image import Image
+from mypy import MyBase, MyPath, MyPrint
+from webcontent import WebContent, USER_AGENTS
+from image import Image
 
 
 class WebImage(object):
@@ -30,25 +22,25 @@ class WebImage(object):
         '==================================',
         '    WebImage help',
         '==================================',
-        'option:',
-        '  -u url:',
+        'option: -u url -n num -p path -x val -m mode -R file -t num -v',
+        '  -u:',
         '    url of web to be download',
-        '  -n num:',
+        '  -n:',
         '    number of web number to be download',
-        '  -p path:',
+        '  -p:',
         '    root path to store images.',
         '  -v:',
         '    view info while download.',
-        '  -x val:',
+        '  -x:',
         '    val for expand cmd.',
-        '  -m mode:',
+        '  -m:',
         '    wget: using wget to download imgages',
         '    rtrv: using retrieve to download images',
         '    rget: using requests to download images',
         '    uget: using urlopen to download images',
-        '  -R file:',
+        '  -R:',
         '    re config file for re_image_url.'
-        '  -t num:',
+        '  -t:',
         '    set max number of thread to download web.'
     )
 
@@ -58,7 +50,7 @@ class WebImage(object):
         self._url_base = None
         self._url = None
         self._num = 1
-        self._path = '%s/%s' %  (Base.DEFAULT_DWN_PATH, self.__class__.__name__)
+        self._path = '%s/%s' %  (MyBase.DEFAULT_DWN_PATH, self.__class__.__name__)
         self._re_image_url = [
             #re.compile('src=[\'|\"]?(http[s]?://.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
             #re.compile('src=[\'|\"]?(/.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
@@ -72,8 +64,8 @@ class WebImage(object):
         self._xval = None
         self._dl_image = self.urlopen_get_url_image
         self._redundant_title = None
-        self._pr = Print(self.__class__.__name__)
-        self.__dbg = 0
+        self._pr = MyPrint('WebImage')
+        self.__dbg = None
         self._thread_max = 5
         self._thread_queue = None
 
@@ -85,12 +77,12 @@ class WebImage(object):
         try:
             if type(pattern) == list:
                 for pt in pattern:
-                    imgs = imgs + pt.findall(str(html))
+                    imgs = imgs + pt.findall(html)
             else:
-                imgs = pattern.findall(str(html))
+                imgs = pattern.findall(html)
             #self._pr.pr_dbg('%s' % imgs)
         except TypeError as e:
-           self._pr.pr_err('%s: failed to findall image url' % str(e))
+           self._pr.pr_err('%s: failed to findall image url' , (e.reason))
         return imgs
 
     def get_image_url_of_pages(self, pages, header_content=None):
@@ -140,14 +132,14 @@ class WebImage(object):
     # download image of url.
     def download_image(self, url, path):
         if self._dl_image:
-            Path.make_path(path)
+            MyPath.make_path(path)
             self._dl_image(url, path, self.__dbg)
 
     def get_url_content(self, url, view=False):
         return WebContent.get_url_content(url=url, view=view)
 
     def get_title(self, html, pattern=None):
-        title = WebContent.get_url_title(html, pattern).decode()
+        title = WebContent.get_url_title(html, pattern)
         if self._redundant_title:
             for rt in self._redundant_title:
                 title = title.replace(rt, '')
@@ -218,7 +210,7 @@ class WebImage(object):
     # process url web images.
     def process_url_web(self, url, data=None):
         # get header web
-        header_content = self.get_url_content(url, view=False)
+        header_content = self.get_url_content(url, view=True)
         if not header_content:
             if self._thread_queue:
                 self._thread_queue.get()
@@ -228,7 +220,7 @@ class WebImage(object):
         title = self.get_title(header_content, self._title)
         if not title:
             title = self.convert_url_to_title(url)
-        self._pr.pr_dbg('title: %s' % title)
+        self._pr.pr_dbg('title: %s' % title )
         # create path of title to store data.
         subpath = os.path.join(self._path, title)
         self._pr.pr_dbg('subpath: %s' % subpath)
@@ -244,6 +236,8 @@ class WebImage(object):
         # self._pr.pr_dbg('image url list: %s' % limg)
         # download images
         if limg:
+            # create path
+            MyPath.make_path(subpath)
             # download all of images.
             self.download_images(limg, subpath)
             # write web info
@@ -267,13 +261,12 @@ class WebImage(object):
             self._thread_queue.get()
         if data:
             self._pr.pr_info('%d/%d: process %s done!' % (data[0], data[1], url))
-        return subpath
 
     def get_user_input(self, args=None):
         if not args:
-            args = Base.get_user_input('hu:n:p:x:m:i:R:t:vdD')
+            args = MyBase.get_user_input('hu:n:p:x:m:i:R:t:vdD')
         if '-h' in args:
-            Base.print_help(self.help_menu)
+            MyBase.print_help(self.help_menu)
         if '-u' in args:
             self._url = re.sub('/$', '', args['-u'])
         if '-n' in args:
@@ -286,12 +279,12 @@ class WebImage(object):
             try:
                 n = int(args['-t'])
             except ValueError as e:
-                Base.print_exit('%s, -h for help!' % str(e))
+                MyBase.print_exit('%s, -h for help!' % str(e))
             if n:
                 self._thread_max = n
         if '-v' in args:
             self._view = True
-            self._pr.set_pr_level(self._pr.get_pr_level() | Print.PR_LVL_WARN)
+            self._pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_WARN)
         if '-x' in args:
             self._xval = args['-x']
         if '-m' in args:
@@ -305,11 +298,11 @@ class WebImage(object):
                 self._dl_image = dl_image_funcs[args['-m']]
         if '-d' in args:
             self.__dbg = 1
-            self._pr.set_pr_level(self._pr.get_pr_level() | Print.PR_LVL_ALL )
+            self._pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
         if '-D' in args:
             self.__dbg = 2
-            self._pr.set_pr_level(self._pr.get_pr_level() | Print.PR_LVL_DBG)
-            WebContent.pr.set_pr_level(self._pr.get_pr_level() | Print.PR_LVL_DBG)
+            self._pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
+            WebContent.pr.set_pr_level(self._pr.get_pr_level() | MyPrint.PR_LVL_DBG)
         # check url
         if self._url:
             base, num = WebContent.get_url_base_and_num(self._url)
@@ -319,7 +312,7 @@ class WebImage(object):
                 self._url = num
             self._pr.pr_dbg('get base: %s, url: %s' % (base, self._url))
         else:
-            Base.print_exit('[WebImage] Error, no set url, -h for help!')
+            MyBase.print_exit('[WebImage] Error, no set url, -h for help!')
         if self._url_base:
             www_com = re.match('http[s]?://.+\.(com|cn|net)', self._url_base)
             if www_com:
@@ -333,7 +326,7 @@ class WebImage(object):
             self.add_external_re_image_url()
         # create queue.
         if self._num > self._thread_max:
-            self._thread_queue = Queue(self._thread_max)
+            self._thread_queue = Queue.Queue(self._thread_max)
         # get web now.
         for index in range(self._num):
             # get the first page.
@@ -347,7 +340,7 @@ class WebImage(object):
                 self._thread_queue.put(url)
                 t.start()
             else:
-                return self.process_url_web(url)
+                self.process_url_web(url)
 
 
 if __name__ == '__main__':

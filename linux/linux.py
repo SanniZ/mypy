@@ -1,4 +1,5 @@
-#!/usr/bin/python3
+#!/usr/bin/python
+
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jul  5 11:21:29 2018
@@ -44,21 +45,14 @@ class HwInfo(object):
                 d.info(self.get_host_ip())
 
     def get_cmd_handlers(self, cmd=None):
-        hdrs = {
+        return {
             'help' : self.help,
             'hwinfo' : self.hwif_handler,
         }
-        if cmd == None:
-            return hdrs
-        else:
-            if cmd in hdrs:
-                return hdrs[cmd]
-            else:
-                return None
 
 class FileOps(object):
     def __init__(self):
-        d.dbg('FileOps init done!')
+        d.dbg('FileOps init done!') 
 
     def help(self, cmds):
         for cmd in cmds:
@@ -123,7 +117,7 @@ class FileOps(object):
         if cmd == None:
             return hdrs
         else:
-            if cmd in hdrs:
+            if hdrs.has_key(cmd) == True:
                 return hdrs[cmd]
             else:
                 return None
