@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
 Created on 2018-12-05
@@ -8,15 +8,17 @@ Created on 2018-12-05
 
 import os
 import re
+import subprocess
 
-from mypy import MyBase, MyFile, MyPath
-
+from mypy.base import Base
+from mypy.path import Path
+from mypy.file import File
 
 help_menu = (
     '===================================',
     '    clean .pyc',
     '===================================',
-    'option: [-p path] [-v]',
+    'option:',
     '  -p path:',
     '    root path to clean .pyc',
     '  -v',
@@ -25,30 +27,37 @@ help_menu = (
     '    clean all of .pyc at current path.'
 )
 
+def clean_pyc_shell():
+    cmd = 'find . -name *.pyc -o -name __pycache__ | xargs rm -rf {}'
+    subprocess.call(cmd,shell = True)
 
 def clean_pyc(path=os.getenv('MYPY'), show=False):
     for rt, dr, fs in os.walk(path):
-        if len(fs) != 0:
+        if fs:
             for f in fs:
                 f = os.path.join(rt, f)
-                if MyFile.get_exname(f) == '.pyc':
+                if File.get_exname(f) == '.pyc':
                     os.remove(f)
                     if show:
                         print('remove: %s' % f)
+            if dr:
+                for d in dr:
+                    if d == '__pycache__':
+                        os.remove(d)
 
 if __name__ == '__main__':
-    args = MyBase.get_user_input('hp:vc')
+    args = Base.get_user_input('hp:vc')
     # help
     if '-h' in args:
-        MyBase.print_help(help_menu)
+        Base.print_help(help_menu)
     # check path.
     if '-p' in args:
         if re.match('\.', args['-p']):
-            path = re.sub('.', MyPath.get_current_path(), args['-p'])
+            path = re.sub('.', Path.get_current_path(), args['-p'])
         else:
             path = args['-p']
     else:
-        path = MyPath.get_current_path()
+        path = Path.get_current_path()
     # check show.
     if '-v' in args:
         show = True

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
 Created on 2018-11-23
@@ -10,21 +10,22 @@ import sys
 import os
 import getopt
 
-class CounterOfPath(object):
+class PathCounter(object):
     def __init__(self):
         self._path = None
         self._name = None
         self._opt  = None
 
     def print_help(self):
-        print 'option: -p path -n name -o f/e/d'
-        print '  path : set path to be find.'
-        print '  name : set name of file to be find.'
-        print '  f/e/d: sepcial opt to find file/extname/dir'
-        print ''
-        print 'example: -p ~/Downloads -n .jpg -o e'
-        print 'example: -p ~/Downloads -n 123.jpg -o f'
-        print 'example: -p ~/Downloads -o d'
+        print('option:')
+        print('  -p path,name,type: get count of path')
+        print('    path : path to be find.')
+        print('    name : name of file to be find.')
+        print('    type : (f/e/d) - file/extname/dir')
+        print('')
+        print('example: -p ~/Downloads,.jpg,e')
+        print('example: -p ~/Downloads,123.jpg,f')
+        print('example: -p ~/Downloads,,d')
         exit()
 
     def get_count_of_name(self, path, name):
@@ -54,14 +55,14 @@ class CounterOfPath(object):
         return max
 
     def get_count(self):
-        if self._opt == 'f' and self._name != None:
+        if all((self._opt == 'f', self._name)):
             return self.get_count_of_name(self._path, self._name)
-        elif self._opt == 'e' and self._name != None:
+        elif all((self._opt == 'e', self._name)):
             return self.get_count_of_extname(self._path, self._name)
-        elif self._opt == 'd':
+        elif all((self._opt == 'd')):
             return self.get_count_of_dir(self._path)
         else:
-            self.print_help()
+            print('Error, invalid vars!')
 
     def get_user_input(self):
         try:
@@ -78,23 +79,26 @@ class CounterOfPath(object):
                 if name == r'-h':
                     self.print_help()
                 elif name == r'-p':
-                    self._path = value
-                elif name == r'-n':
-                    self._name = value
-                elif name == r'-o':
-                    self._opt = value
-        # check args.
-        if self._path == None or self._name == None:
-            return False
-        else:
+                    data = value.split(',')
+                    self._path = data[0]
+                    if len(data) < 3:
+                        return False
+                    else:
+                        self._path = data[0]
+                        self._name = data[1]
+                        if data[2] in ['f', 'e', 'd']:
+                            self._opt = data[2]
+                        else:
+                            return False
             return True
 
     def main(self):
         if self.get_user_input() == False:
-            self.print_help()
+            print('Error, -h for help!')
         else:
-            print self.get_count()
+            count = self.get_count()
+            print(count)
 
 if __name__ == '__main__':
-    ctr = CounterOfPath()
-    ctr.main()
+    pc = PathCounter()
+    pc.main()

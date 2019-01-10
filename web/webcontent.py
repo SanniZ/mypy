@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
 Created on 2018-12-03
@@ -6,19 +6,20 @@ Created on 2018-12-03
 @author: Byng Zeng
 """
 
-from urllib2 import Request, urlopen, URLError, HTTPError
+from urllib.request import Request, urlopen, URLError, HTTPError
 import re
 import urllib
 import os
 import ssl
 import gzip
-from StringIO import StringIO
+import io
 import requests
 import subprocess
 import socket
-import httplib
 
-from mypy import MyPath, MyFile, MyPrint
+from mypy.path import Path
+from mypy.file import File
+from mypy.pr import Print
 
 USER_AGENTS = {
     'AppleWebKit/537.36' : 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36 LBBROWSER',
@@ -47,7 +48,7 @@ class WebContent (object):
 
     WEB_URL_FILE = r'web_url.txt'
 
-    pr = MyPrint('WebContent')
+    pr = Print('WebContent')
 
     @classmethod
     def url_is_https(cls, url):
@@ -63,7 +64,7 @@ class WebContent (object):
         if content_type:
             charset = pattern.search(re.sub('charset=(\"|\')', 'charset=', content_type))
         if all((html, not charset)):
-            charset = pattern.search(re.sub('charset=(\"|\')', 'charset=', html))
+            charset = pattern.search(re.sub('charset=(\"|\')', 'charset=', str(html)))
         # get data
         if charset:
             charset = charset.group()
@@ -71,21 +72,27 @@ class WebContent (object):
         return charset
 
     @classmethod
-    def get_html(cls, url, context=None, retry_times=3, view=True):
+    def get_html(cls, url, context=None, retry_times=3, view=False):
         if view:
             cls.pr.pr_info('Downloading: %s' % url)
-        for index in range(retry_times):
+        html_content = None
+        while all((retry_times, not html_content)):
+            retry_times -= 1
             url_charset = None
             req = Request(url, headers=URL_HEADER)
             try:
                 html = urlopen(req, context=context)
-                content_type = html.info().getheader('Content-Type')
+            except URLError as e:
+                cls.pr.pr_warn(str(e))
+                html_content = None
+            else:
+                content_type = html.getheader('Content-Type')
                 if content_type:
                     url_charset = cls.get_url_charset(content_type=content_type)
                 data = html.read()
-                encoding = html.info().getheader('Content-Encoding')
+                encoding = html.getheader('Content-Encoding')
                 if encoding == 'gzip':
-                     data = gzip.GzipFile(fileobj=StringIO(data)).read()
+                     data = gzip.GzipFile(fileobj=io.StringIO(data)).read()
                 if data:
                     for charset in CHARSETS:
                         if url_charset:
@@ -100,14 +107,8 @@ class WebContent (object):
                                 elif charset == url_charset:
                                     break
                 else:
-                    cls.pr.pr_err('Error: fail to get data from html')
+                    #cls.pr.pr_err('Error: fail to get data from html')
                     html_content = None
-            except URLError as e:
-                cls.pr.pr_warn(e.reason)
-                html_content = None
-            # get content and break.
-            if html_content:
-                break
         return html_content
 
     @classmethod
@@ -119,9 +120,9 @@ class WebContent (object):
             content = cls.get_html(url = url, retry_times = retry_times, view = view)
         # save content to path.
         if all((content, path)):
-            MyPath.make_path(path)
+            Path.make_path(path)
             f = '%s/%s' % (path, cls.convert_url_to_title(url))
-            if MyFile.get_exname(f) != '.html':
+            if File.get_exname(f) != '.html':
                 f = f + '.html'
             with open(f, 'w') as fd:
                 fd.write(content)
@@ -166,13 +167,18 @@ class WebContent (object):
                 context = None
             try:
                 r = urlopen(req, context = context)
-                if r:
+            except (URLError, HTTPError) as e:
+                cls.pr.pr_warn('%s, uget %s failed.' % (str(e), url))
+            else:
+                try:
+                    data = r.read()
+                except ConnectionResetError as e:
+                    cls.pr.pr_err(str(e))
+                else:
                     with open(fname, 'wb') as f:
                         if view:
                             cls.pr.pr_info('uget: %s' % fname)
-                        f.write(r.read())
-            except (URLError, HTTPError, httplib.BadStatusLine) as e:
-                cls.pr.pr_warn('%s, uget %s failed.' % (str(e), url))
+                        f.write(data)
 
     @classmethod
     def requests_get_url_file(cls, url, path, view=False):
@@ -201,7 +207,7 @@ class WebContent (object):
     @classmethod
     def get_url_title(cls, html_content, pattern=None):
         if not pattern:
-            pattern=re.compile('<title>.+</title>')
+            pattern=re.compile(b'<title>.+</title>')
         data = pattern.search(html_content)
         if data:
             data = data.group()
@@ -214,7 +220,7 @@ class WebContent (object):
         if not pattern:
             # find all of \d+/\d+
             pattern = re.compile('\d+/\d+')
-        data = pattern.findall(html)
+        data = pattern.findall(str(html))
         if data:
             # match ^1/\d+$ to get number of pages.
             pattern = re.compile('^1/\d+$')
@@ -254,17 +260,17 @@ class WebContent (object):
 
     @classmethod
     def convert_url_to_title(cls, url):
-        return MyFile.reclaim_name(re.sub('/$', '', url))
+        return File.reclaim_name(re.sub('/$', '', url))
 
 if __name__ == '__main__':
 
-    from mypy import MyBase, MyPrint
+    from mypy.base import Base
 
     HELP_MENU = (
         '==================================',
         '    WebContentApp help',
         '==================================',
-        'option: -u url -p path -d mode -v',
+        'option:',
         '  -u url:',
         '    url of web to be download',
         '  -p path:',
@@ -285,13 +291,13 @@ if __name__ == '__main__':
     view = False
 
     wc = WebContent()
-    pr = MyPrint('WebContent')
+    pr = Print(wc.__class__.__name__)
 
-    args = MyBase.get_user_input('hp:u:d:v')
+    args = Base.get_user_input('hp:u:d:v')
     if '-h' in args:
-        MyBase.print_help(HELP_MENU)
+        Base.print_help(HELP_MENU)
     if '-p' in args:
-        path = MyPath.get_abs_path(args['-p'])
+        path = Path.get_abs_path(args['-p'])
     if '-u' in args:
         url = args['-u']
     if '-v' in args:
@@ -308,11 +314,11 @@ if __name__ == '__main__':
         if all((args['-d'] in df_funcs.keys(), url)):
             df = df_funcs[args['-d']]
         else:
-            MyBase.print_exit('-d %s error, -h for help!' % args['-d'])
+            Base.print_exit('-d %s error, -h for help!' % args['-d'])
 
     # config default path
     if not path:
-        path = '%s/%s' % (MyPath.get_download_path(), wc.__class__.__name__)
+        path = '%s/%s' % (Path.get_download_path(), wc.__class__.__name__)
     # run cmd
     if df:
         df(url=url, path=path, view=view)
