@@ -7,11 +7,16 @@ Created on: 2018-12-11
 """
 
 import os
+import sys
 import re
 
-import threading
-import queue
 
+if sys.version_info[0] == 2:
+    import Queue as queue
+else:
+    import queue
+
+import threading
 
 from mypy.base import Base
 from mypy.path import Path

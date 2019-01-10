@@ -6,16 +6,24 @@ Created on: 2019-01-02
 @author: Zbyng Zeng
 """
 import os
+import sys
 
-from tkinter import Tk, Frame, StringVar,\
-                    Menu, Label, Entry, Button, Listbox, Checkbutton, Scrollbar,\
-                    X, Y, TOP, LEFT, RIGHT, NORMAL, DISABLED, HORIZONTAL, BOTH
+if sys.version_info[0] == 2:
+    import Queue
+    from Tkinter import Tk, Frame, StringVar,\
+                        Menu, Label, Entry, Button, Listbox, Checkbutton, Scrollbar,\
+                        X, Y, TOP, LEFT, RIGHT, NORMAL, DISABLED, HORIZONTAL, BOTH
+else:
+    from queue import Queue
+    from tkinter import Tk, Frame, StringVar,\
+                        Menu, Label, Entry, Button, Listbox, Checkbutton, Scrollbar,\
+                        X, Y, TOP, LEFT, RIGHT, NORMAL, DISABLED, HORIZONTAL, BOTH
+
 from tkinter.filedialog import askopenfilename #askdirectory
 from tkinter import ttk
 from tkinter.messagebox import showinfo, showerror, showwarning
 
 import threading
-from queue import Queue
 
 from web.webbase import WebBase
 from web.webimage.webimagecrawler import URL_BASE

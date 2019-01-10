@@ -6,7 +6,13 @@ Created on 2018-12-03
 @author: Byng Zeng
 """
 
-from urllib.request import Request, urlopen, URLError, HTTPError
+import sys
+
+if sys.version_info[0] == 2:
+    from urllib2 import Request, urlopen, URLError, HTTPError
+else:
+    from urllib.request import Request, urlopen, URLError, HTTPError
+
 import re
 import urllib
 import os

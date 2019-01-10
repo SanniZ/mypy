@@ -7,9 +7,14 @@ Created on: 2018-12-07
 """
 import os
 import re
+import sys
+
+if sys.version_info[0] == 2:
+    import Queue
+else:
+    from queue import Queue
 
 import threading
-import queue
 
 from mypy.base import Base
 from mypy.path import Path
@@ -328,7 +333,7 @@ class WebImage(object):
             self.add_external_re_image_url()
         # create queue.
         if self._num > self._thread_max:
-            self._thread_queue = queue.Queue(self._thread_max)
+            self._thread_queue = Queue(self._thread_max)
         # get web now.
         for index in range(self._num):
             # get the first page.
