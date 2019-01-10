@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
 Created on 2018-12-05
@@ -11,7 +11,7 @@ import os
 import sys
 import getopt
 
-from base import MyBase as Base
+from mypy.base import Base
 
 
 class Template(object):
