@@ -63,7 +63,7 @@ class WizImage(object):
         for root, dirs, fs in os.walk(self._src):
             if len(fs) != 0:
                 for f in fs:
-                    if File.get_exname(f) == '.ziw':
+                    if File.get_name_ex(f) == '.ziw':
                         self._fs.append(os.path.join(root, f))
 
     def unzip_file(self, f, dst):

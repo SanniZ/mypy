@@ -128,7 +128,7 @@ class WebContent (object):
         if all((content, path)):
             Path.make_path(path)
             f = '%s/%s' % (path, cls.convert_url_to_title(url))
-            if File.get_exname(f) != '.html':
+            if File.get_name_ex(f) != '.html':
                 f = f + '.html'
             with open(f, 'w') as fd:
                 fd.write(content)
@@ -178,7 +178,7 @@ class WebContent (object):
             else:
                 try:
                     data = r.read()
-                except ConnectionResetError as e:
+                except socket.ConnectionResetError as e:
                     cls.pr.pr_err(str(e))
                 else:
                     with open(fname, 'wb') as f:

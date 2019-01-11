@@ -20,7 +20,7 @@ class File(object):
         return os.path.basename(f)
 
     @classmethod
-    def get_exname(cls, f):
+    def get_name_ex(cls, f):
         try:
             return os.path.splitext(f)[1].lower()
         except AttributeError:

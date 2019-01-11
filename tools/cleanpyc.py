@@ -36,7 +36,7 @@ def clean_pyc(path=os.getenv('MYPY'), show=False):
         if fs:
             for f in fs:
                 f = os.path.join(rt, f)
-                if File.get_exname(f) == '.pyc':
+                if File.get_name_ex(f) == '.pyc':
                     os.remove(f)
                     if show:
                         print('remove: %s' % f)

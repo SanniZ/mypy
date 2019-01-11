@@ -190,7 +190,7 @@ class WebImage(object):
             if fs:
                 for f in fs:
                     f = os.path.join(rt, f)
-                    if Image.image_file2(f):
+                    if Image.image_file_ex(f):
                         return True
         return False
 
@@ -249,10 +249,7 @@ class WebImage(object):
             # write web info
             self.store_web_info(subpath, title, url)
             # reclaim image, remove small image
-            if self._remove_small_image:
-                Image.reclaim_path_images(subpath, xfunc=Image.remove_small_image)
-            else:
-                Image.reclaim_path_images(subpath)
+            Image.reclaim_path_images(subpath, self._remove_small_image)
             # show output info.
             if self._view:
                 if self.output_image_exists(subpath):

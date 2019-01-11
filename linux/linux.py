@@ -5,8 +5,10 @@ Created on Thu Jul  5 11:21:29 2018
 
 @author: Byng.Zeng
 """
+
 import subprocess
 import socket
+import re
 
 from debug import Debug as d
 
@@ -43,10 +45,58 @@ class HwInfo(object):
             elif cmd == 'ip':
                 d.info(self.get_host_ip())
 
+    def ps_handler(self, cmds):
+        l = len(cmds)
+        if l >= 2:
+            kw = cmds[0]
+            opt = cmds[1]
+        else:
+            kw = cmds[0]
+            opt = 'list'
+        # configs
+        grep_kw_cmd = 'ps -ax | grep %s' % kw
+        pattern_ps = re.compile('(\d+) (pts|\?)')
+        # get ps
+        while 1:
+            output = subprocess.check_output(grep_kw_cmd, shell = True)
+            output = output.decode()
+            # show pids of keyword.
+            if opt in ['list', 'kill']:
+                print(output)
+                if opt == 'list':
+                    break
+            # kill pids
+            if opt == 'kill':
+                result = pattern_ps.findall(output)
+                pids = list(map(lambda x: x[0], result))
+                print('*****************************************************')
+                print(pids)
+                opt_k = input('Kill all of Ps(Y/N/O/L):').upper()
+                if opt_k == 'Y': # kill all of pids
+                    ps = ''
+                    for p in pids:
+                        ps += ' %s' % p
+                    cmd = 'sudo kill -9 %s' % ps
+                    #print(cmd)
+                    subprocess.call(cmd, shell = True)
+                elif opt_k == 'O': # options of pids.
+                    opt_pids = input('You want to kill(xxx,xxx):')
+                    opt_pids = opt_pids.split(',')
+                    ps = ''
+                    for p in opt_pids:
+                        if p in pids:
+                            ps += ' %s' % p
+                    cmd = 'sudo kill -9 %s' % ps
+                    #print(cmd)
+                    subprocess.call(cmd, shell = True)
+                elif opt_k == 'N': # cancel.
+                    break
+
     def get_cmd_handlers(self, cmd=None):
         hdrs = {
             'help' : self.help,
             'hwinfo' : self.hwif_handler,
+            'ps' : self.ps_handler,
         }
         if cmd == None:
             return hdrs

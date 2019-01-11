@@ -12,71 +12,76 @@ from PIL import Image as PILImg
 
 from mypy.file import File
 
-IMG_W_MIN = 320
-IMG_H_MIN = 320
+IMG_W_MIN = 240
+IMG_H_MIN = 240
 
-SMALL_IMG_SIZE = 1024 * 20 # 20K
+SMALL_IMG_SIZE = 1024 * 8 # 8K
 
 class Image (object):
 
     def __init__(self, name=None):
         self._name = name
 
+    # get image format, return format or None.
     @classmethod
     def get_image_format(cls, f=None, obj=None):
         if obj:
             img = obj
-        elif os.path.exists(f):
+        elif cls.image_file_ex(f):
             img = PILImg.open(f)
+        else:
+            img = None
         # get format of image.
         if img:
             fmt = img.format.lower()
             if fmt == 'jpeg':
                 fmt = 'jpg'
+            return fmt
         else:
-            fmt = None
-        return fmt
+            return None
 
-
-    # check image base on extname.
+    # check image base on extname, return True or False
     @classmethod
-    def image_file2(cls, f):
-        exname = File.get_exname(f)
+    def image_file_ex(cls, f):
+        exname = File.get_name_ex(f)
         if exname in ['.jpg', '.png', '.gif', '.jpeg', '.bmp']:
             return True
         else:
             return False
 
-    # check image base on image attr.
+    # check image, return img or None.
     @classmethod
     def image_file(cls, f):
         try:
             img = PILImg.open(f)
+        except IOError: # it is bad if open failed.
+            return None
+        else:
             if img.format in ['PNG', 'JPEG', 'GIF']:
                 return img
             else:
                 return None
-        except IOError: # it is bad if open failed.
-            return None
 
-    # remove small size image, default size is 10K.
+    # remove small size image.
     @classmethod
     def remove_small_size_image(cls, path, size=SMALL_IMG_SIZE):
         if os.path.isfile(path):
-            if all((os.path.getsize(path) < size, any((cls.image_file(path), cls.image_file2(path))))):
-                print('remove: %s' % path)
-                os.remove(path)
+            if any((cls.image_file(path), cls.image_file_ex(path))):
+                if os.path.getsize(path) < size:
+                    os.remove(path)
         else:
             for rt, dirs, fs in os.walk(path):
-                if len(fs) != 0:  # found files.
+                if fs:  # found files.
                     for f in fs:
                         f = os.path.join(rt, f)
-                        if all((os.path.getsize(f) < size, any((cls.image_file(f), cls.image_file2(f))))):
-                                os.remove(f)
+                        if any((cls.image_file(f), cls.image_file_ex(f))):
+                            if os.path.getsize(f) < size:
+                                    os.remove(f)
 
     # remove small image, default width < IMG_W_MIN or height < IMG_H_MIN.
     @classmethod
-    def remove_small_image(cls, path, width=IMG_W_MIN, height=IMG_H_MIN, obj=None, remove_small_size_image=True):
+    def remove_small_image(cls, path, width=IMG_W_MIN, height=IMG_H_MIN,
+                           obj=None, remove_small_size_image=False):
         imgs_dict = dict()
         if obj:
             imgs_dict[path]=obj
@@ -100,23 +105,25 @@ class Image (object):
                     os.remove(f)
             else:  # fail to get size, remove it.
                 os.remove(f)
-        # remove small size of images.
-        if remove_small_size_image:
-            cls.remove_small_size_image(path)
+            # remove small size of images.
+            if remove_small_size_image:
+                cls.remove_small_size_image(f)
 
     @classmethod
     def get_image_size(cls, img):
-        if not img:
+        if img:
+            return img.size[0], img.size[1]
+        else:
             return None, None
-        return img.size[0], img.size[1]
 
     @classmethod
-    def reclaim_image(cls, f, obj=None, xfunc=None):
+    def reclaim_image(cls, f, obj=None, remove_small_image=False):
         fname = f
         if obj:
             img = obj
         else:
             img = cls.image_file(f)
+        # reclaim image.
         if img:
             fmt = img.format.lower()
             if fmt == 'jpeg':
@@ -130,21 +137,19 @@ class Image (object):
                 os.rename(f, fname)
             except OSError as e:
                 print('%s, failed to rename %s.' % (str(e), f))
-        # run xfunc
-        if xfunc:
-            xfunc(fname)
+            # remove small image.
+            if remove_small_image:
+                cls.remove_small_image(fname, obj = img)
 
     @classmethod
-    def reclaim_path_images(cls, path, xfunc=None):
+    def reclaim_path_images(cls, path, remove_small_image=False):
         for rt, dr, fs in os.walk(path):
             if fs:
                 for f in fs:
                     f = os.path.join(rt, f)
                     img = cls.image_file(f)
                     if img:
-                        cls.reclaim_image(f, obj=img, xfunc=xfunc)
-                    elif xfunc:
-                        xfunc(f)
+                        cls.reclaim_image(f, img, remove_small_image)
 
     @classmethod
     def set_order_images(cls, path, rename=None, non_zero=False):
@@ -206,14 +211,16 @@ if __name__ == '__main__':
         'options:',
         '  -c img: check img is a image file',
         '    img: the path of image file',
-        '  -r path,(w,d): remove small size of images',
-        '    path: path of dir or file',
+        '  -r path,width,height: remove small size of images',
+        '    path  : path of dir or file',
+        '    width : min of width',
+        '    height: min of height',
         '  -R path: reclaim image format',
         '    path: path of dir or file',
         '  -o path,rename,nz: rename image to order',
-        '    path: path of images',
+        '    path  : path of images',
         '    rename: the format of image to be rename',
-        '    nz: True is set %0d, False is set %d',
+        '    nz    : True is set %0d, False is set %d',
         '  -i img: show detail info of image file',
         '    img: the path of image file',
     )
@@ -256,10 +263,23 @@ if __name__ == '__main__':
             print('Error, -h for help!')
     if '-i' in args:
         f = args['-i']
-        fmt, size, mode = Img.get_image_detail(f)
-        if all((fmt, size, mode)):
-            print('format:', fmt)
-            print('size:', size)
-            print('mode:', mode)
-        else:
-            print('It is a bad image file!')
+        dt = dict()
+        if os.path.isfile(f):
+            fmt, size, mode = Img.get_image_detail(f)
+            if all((fmt, size, mode)):
+                dt[f] = (fmt, size, mode)
+        elif os.path.isdir(f):
+            for rt, dr, fs in os.walk(f):
+                if fs:
+                    for f in fs:
+                        f = os.path.join(rt, f)
+                        fmt, size, mode = Img.get_image_detail(f)
+                        if all((fmt, size, mode)):
+                            dt[f] = (fmt, size, mode)
+        # print result.
+        for img, detail in dt.items():
+            print('file  :', os.path.basename(img))
+            print('format:', detail[0])
+            print('size  :', detail[1])
+            print('mode  :', detail[2])
+            print('------------------')
