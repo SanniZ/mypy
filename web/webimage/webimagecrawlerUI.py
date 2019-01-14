@@ -62,6 +62,8 @@ LANG_MAP = (
      'OK' : 'OK', 'HdrURL' : 'URL', 'State' : 'State', 'Output' : 'Output',
      'Warnning' : 'Warnning', 'Error' : 'Error', 'About' : 'About',
      'InvalidType' : 'Type/Start is invalid', 'InvalidURL' : 'URL is invalid',
+     'TypeList' : ('xgmn', 'swmn', 'wgmn', 'zpmn', 'mnxz', 'rtys',
+     'jpmn', 'gzmn', 'nrtys', 'meizitu', 'mzitu'),
     },
     {'Title' : '网页图片爬虫', 'File' : '文件', 'Open' : '打开',
      'Exit' : '退出', 'Help' : '帮助', 'About' : '关于', 'URL': '地址',
@@ -69,16 +71,10 @@ LANG_MAP = (
      'OK' : '确定', 'HdrURL' : '地址', 'State' : '状态', 'Output' : '输出',
      'Warnning' : '警告', 'Error' : '错误', 'About' : '关于',
      'InvalidType' : '分类/开始值无效', 'InvalidURL' : '地址值无效',
+     'TypeList' : ('性感美女', '丝袜美女', '外国美女', '自拍美女', '美女写真',
+     '人体艺术', '街拍美女', '古装美女', '人体艺术', '妺子图', '妺子图Mz'),
     }
 )
-
-LANG_TYPE = (
-    ('xgmn', 'swmn', 'wgmn', 'zpmn', 'mnxz', 'rtys',
-     'jpmn', 'gzmn', 'nrtys', 'meizitu', 'mzitu'),
-    ('性感美女', '丝袜美女', '外国美女', '自拍美女', '美女写真', '人体艺术',
-     '街拍美女', '古装美女', '人体艺术', '妺子图', '妺子图Mz')
-)
-
 
 
 ############################################################################
@@ -233,7 +229,7 @@ class WindowUI(object):
         self._type_var = StringVar()
         cmbType = ttk.Combobox(frm, width = 8, textvariable = self._type_var)
         cmbType.pack(side = LEFT, padx = 4)
-        cmbType['value'] = LANG_TYPE[self._lang]
+        cmbType['value'] = LANG_MAP[self._lang]['TypeList']
         lbStart = Label(frm, text = '%s:' % LANG_MAP[self._lang]['Start'])
         lbStart.pack(side = LEFT, padx = 4)
         self._type_start = StringVar()
@@ -348,8 +344,8 @@ class WebImageCrawlerUI(WindowUI):
                 n = 1
             # config args
             if self._lang:
-                index = LANG_TYPE[self._lang].index(t_type)
-                t_type = LANG_TYPE[0][index]
+                index = LANG_MAP[self._lang]['TypeList'].index(t_type)
+                t_type = LANG_MAP[0]['TypeList'][index]
             args = {'-x': t_type, '-u' : t_start, '-n' : n}
             self._path_var.set(args)
 
@@ -527,7 +523,7 @@ class WebImageCrawlerUI(WindowUI):
         threading.Thread(target = self.crawler_download_url).start()
 
 
-    def main(self):
+    def main(self, args=None):
         self.run()
 
 

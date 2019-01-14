@@ -24,6 +24,15 @@ from web.webcontent import WebContent, USER_AGENTS
 from image.image import Image
 
 
+
+def get_input(args=None, exopt=None):
+    if not args:
+        opt = 'hu:n:p:x:m:R:t:vDd'
+        if exopt:
+            opt += exopt
+        args = Base.get_user_input(opt)
+    return args
+
 class WebImage(object):
 
     help_menu = (
@@ -268,7 +277,7 @@ class WebImage(object):
 
     def get_user_input(self, args=None):
         if not args:
-            args = Base.get_user_input('hu:n:p:x:m:i:R:t:vdD')
+            args = get_input()
         if '-h' in args:
             Base.print_help(self.help_menu)
         if '-u' in args:

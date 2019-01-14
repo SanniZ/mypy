@@ -27,7 +27,7 @@ from web.webimage.girlsky import Girlsky
 from web.webimage.pstatp import Pstatp
 from web.webimage.meizitu import Meizitu
 from web.webimage.mzitu import Mzitu
-from web.webimage.webimage import WebImage
+from web.webimage.webimage import WebImage, get_input
 
 URL_BASE = {
     # xval : { url_base : class}
@@ -48,6 +48,7 @@ URL_BASE = {
     # mzitu
     'mzitu'   : {'https://m.mzitu.com/URLID' : 'mzitu'},
 }
+
 
 class WebImageCrawler(WebContent):
 
@@ -86,6 +87,8 @@ class WebImageCrawler(WebContent):
         '    re config file for re_image_url.',
         '  -t num:',
         '    set number of thread to download images.',
+        '  -U:',
+        '    run UI version of WebImageCrawler.',
     )
 
     def __init__(self, name=None):
@@ -99,15 +102,12 @@ class WebImageCrawler(WebContent):
         self._class = None
         self._thread_max = 5
         self._thread_queue = None
-        self._run_ui = None
 
-    def get_input(self, args=None):
+    def get_input_args(self, args):
         if not args:
-            args = Base.get_user_input('hu:n:p:x:m:R:t:UvDd')
+            args = get_input()
         if '-h' in args:
             Base.print_help(self.HELP_MENU)
-        if '-U' in args:
-            self._run_ui = True
         if '-u' in args:
             if os.path.isfile(args['-u']):
                 self._url_file = Path.get_abs_path(args['-u'])
@@ -197,16 +197,18 @@ class WebImageCrawler(WebContent):
                 index = index + 1
 
     def main(self, args=None):
-        if not args:
-            args = self.get_input()
-        if self._run_ui:
-            cwd = os.path.dirname(os.path.realpath(__file__))
-            os.system('%s/webimagecrawlerUI.py' % cwd)
-        elif self._url_file:
+        args = self.get_input_args(args)
+        if self._url_file:
             self.process_file_input(args)
         else:
-            self.process_input()
+            self.process_input(args)
 
 if __name__ == '__main__':
-    wc = WebImageCrawler()
-    wc.main()
+    args = get_input(None, 'U')
+    if '-U' in args:
+        from webimagecrawlerUI import WebImageCrawlerUI
+        del args['-U']  # delete -U value.
+        wc = WebImageCrawlerUI()
+    else:
+        wc = WebImageCrawler()
+    wc.main(args)
