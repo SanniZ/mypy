@@ -54,6 +54,13 @@ class Broxton(object):
         'all' : 'flashfiles',
     }
 
+    rmdir_map = {
+        'bootimage' : 'out/target/product/gordon_peak/obj/kernel',
+        'tosimage' : 'out/target/product/gordon_peak/obj/trusty',
+        'vendorimage' : 'out/target/product/gordon_peak/vendor',
+        'systemimage' : 'out/target/product/gordon_peak/system',
+    }
+
     def __init__(self,
                  url=None, pdt=None, opt=None, user=None):
         super(Broxton, self).__init__()
@@ -104,8 +111,11 @@ class Broxton(object):
 
     def create_make_sh(self, image):
         make_sh = r'.make.sh'
+        img = self.make_map[image]
         with open(make_sh, 'w') as f:
             f.write("#!/bin/bash\n")
+            if img in self.rmdir_map.keys():
+                f.write('rm -rf %s\n' % self.rmdir_map[img])
             f.write("rm -rf out/.lock\n")
             f.write("device/intel/mixins/mixin-update\n")
             f.write(". build/envsetup.sh\n")
