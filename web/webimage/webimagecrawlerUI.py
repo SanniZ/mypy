@@ -415,10 +415,10 @@ class WebImageCrawlerUI(WindowUI):
 
     def update_menu_state(self, state):
         if int(state):
-            self._wm['menu_file'].entryconfigure('%s' % LANG_MAP[self._lang]['Open'],
+            self._wm['menu_file'].entryconfigure('%s' % LANG_MAP[self._lang]['Open'].center(10),
                                                 state = NORMAL)
         else:
-            self._wm['menu_file'].entryconfigure('%s' % LANG_MAP[self._lang]['Open'],
+            self._wm['menu_file'].entryconfigure('%s' % LANG_MAP[self._lang]['Open'].center(10),
                                                 state = DISABLED)
 
     def update_widget_state(self, state):
