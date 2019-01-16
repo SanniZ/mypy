@@ -10,12 +10,12 @@ import sys
 
 if sys.version_info[0] == 2:
     import Queue
-    from Tkinter import Tk, Frame, StringVar,\
+    from Tkinter import Tk, Frame, StringVar, IntVar, \
         Menu, Label, Entry, Button, Listbox, Checkbutton, Scrollbar,\
         X, Y, TOP, LEFT, RIGHT, NORMAL, DISABLED, HORIZONTAL, BOTH
 else:
     from queue import Queue
-    from tkinter import Tk, Frame, StringVar,\
+    from tkinter import Tk, Frame, StringVar, IntVar,\
         Menu, Label, Entry, Button, Listbox, Checkbutton, Scrollbar,\
         X, Y, TOP, LEFT, RIGHT, NORMAL, DISABLED, HORIZONTAL, BOTH
 
@@ -27,10 +27,6 @@ import threading
 
 from web.webbase import WebBase
 from web.webimage.webimagecrawler import URL_BASE
-from web.webimage.girlsky import Girlsky
-from web.webimage.pstatp import Pstatp
-from web.webimage.meizitu import Meizitu
-from web.webimage.mzitu import Mzitu
 from web.webimage.webimage import WebImage
 
 STAT_WAITTING = 'Waitting'
@@ -59,7 +55,7 @@ LANG_MAP = (
     {'Title' : 'WebImageCrawler', 'File' : 'File', 'Open' : 'Open',
      'Exit' : 'Exit', 'Help' : 'Help', 'About' : 'About', 'URL': 'URL' ,
      'Run' : 'Run', 'Type' : 'Type', 'Start' : 'Start', 'End' : 'End',
-     'OK' : 'OK', 'HdrURL' : 'URL', 'State' : 'State', 'Output' : 'Output',
+     'OK' : 'OK', 'State' : 'State', 'Output' : 'Output',
      'Warnning' : 'Warnning', 'Error' : 'Error', 'About' : 'About',
      'InvalidType' : 'Type/Start is invalid', 'InvalidURL' : 'URL is invalid',
      'TypeList' : ('xgmn', 'swmn', 'wgmn', 'zpmn', 'mnxz', 'rtys',
@@ -68,7 +64,7 @@ LANG_MAP = (
     {'Title' : '网页图片爬虫', 'File' : '文件', 'Open' : '打开',
      'Exit' : '退出', 'Help' : '帮助', 'About' : '关于', 'URL': '地址',
      'Run' : '运行', 'Type' : '分类', 'Start' : '开始', 'End' : '结束',
-     'OK' : '确定', 'HdrURL' : '地址', 'State' : '状态', 'Output' : '输出',
+     'OK' : '确定', 'State' : '状态', 'Output' : '输出',
      'Warnning' : '警告', 'Error' : '错误', 'About' : '关于',
      'InvalidType' : '分类/开始值无效', 'InvalidURL' : '地址值无效',
      'TypeList' : ('性感美女', '丝袜美女', '外国美女', '自拍美女', '美女写真',
@@ -128,6 +124,21 @@ class WindowUI(object):
     def menu_file_exit(self):
         self._wm['top'].quit()
 
+    def menu_help_lang(self):
+        self._lang = self._lang_set.get()
+
+        self.create_menu(self._wm['top'])
+
+        self._wm['lbPath']['text'] = '%s:' % LANG_MAP[self._lang]['URL']
+        self._wm['bnPath']['text'] = LANG_MAP[self._lang]['Run']
+        self._wm['lbType']['text'] = '%s:' % LANG_MAP[self._lang]['Type']
+        self._wm['lbStart']['text'] = '%s:' % LANG_MAP[self._lang]['Start']
+        self._wm['lbEnd']['text'] = '%s:' % LANG_MAP[self._lang]['End']
+        self._wm['bnType']['text'] = LANG_MAP[self._lang]['OK']
+        self._wm['lbURL']['text'] = LANG_MAP[self._lang]['URL']
+        self._wm['lbState']['text'] = LANG_MAP[self._lang]['State']
+        self._wm['lbOutput']['text'] = LANG_MAP[self._lang]['Output']
+
     def menu_help_about(self):
         print('run menu_help_about')
 
@@ -135,23 +146,37 @@ class WindowUI(object):
         menubar = Menu(root)
 
         menu_file = Menu(menubar, tearoff = 0)
-        menu_file.add_command(label = '%s' % LANG_MAP[self._lang]['Open'],
-                              command=self.menu_file_open)
+        menu_open = menu_file.add_command(command=self.menu_file_open,
+                      label = '%s' % LANG_MAP[self._lang]['Open'].center(10))
         #menu_file.add_separator()
-        menu_file.add_command(label = '%s' % LANG_MAP[self._lang]['Exit'],
-                              command=self.menu_file_exit)
+        menu_exit = menu_file.add_command(command=self.menu_file_exit,
+                      label = '%s' % LANG_MAP[self._lang]['Exit'].center(10))
 
         menu_help = Menu(menubar, tearoff = 0)
-        menu_help.add_command(label = '%s' % LANG_MAP[self._lang]['About'],
-                              command=self.menu_help_about)
+        self._lang_set = IntVar()
+        menu_help.add_radiobutton(label = 'English', variable = self._lang_set,
+                              command=self.menu_help_lang, value=0)
+        menu_help.add_radiobutton(label = '中文', variable = self._lang_set,
+                              command=self.menu_help_lang, value=1)
+        self._lang_set.set(self._lang)
+        menu_help.add_separator()
+        menu_about = menu_help.add_command(command=self.menu_help_about,
+                            label = '%s' % LANG_MAP[self._lang]['About'])
 
-        menubar.add_cascade(label = '%s' % LANG_MAP[self._lang]['File'],
-                            menu = menu_file)
-        menubar.add_cascade(label = '%s' % LANG_MAP[self._lang]['Help'],
-                            menu = menu_help)
+        mbar_file = menubar.add_cascade(menu = menu_file,
+                                label = '%s' % LANG_MAP[self._lang]['File'])
+
+        mbar_help = menubar.add_cascade(menu = menu_help,
+                              label = '%s' % LANG_MAP[self._lang]['Help'])
         root['menu'] = menubar
+
+        self._wm['mbar_file'] = mbar_file
+        self._wm['mbar_help'] = mbar_help
         self._wm['menu_file'] = menu_file
         self._wm['menu_help'] = menu_help
+        self._wm['menu_open'] = menu_open
+        self._wm['menu_exit'] = menu_exit
+        self._wm['menu_about'] = menu_about
 
     def create_main_window_frames(self, root):
         Args = Frame(root)
@@ -250,6 +275,9 @@ class WindowUI(object):
         bnType['state'] = DISABLED
 
         self._wm['chkType'] = chkType
+        self._wm['lbType'] = lbType
+        self._wm['lbStart'] = lbStart
+        self._wm['lbEnd'] = lbEnd
         self._wm['cmbType'] = cmbType
         self._wm['enStart'] = enStart
         self._wm['enEnd'] = enEnd
@@ -257,16 +285,20 @@ class WindowUI(object):
 
     def create_header_widgets(self):
         frm = self._wm['frmHdr']
-        self.lbFsURL = Label(frm, text = '%s' % LANG_MAP[self._lang]['HdrURL'],
+        lbURL = Label(frm, text = '%s' % LANG_MAP[self._lang]['URL'],
                              width = 32)
-        self.lbFsState = Label(frm, text = '%s' % LANG_MAP[self._lang]['State'],
+        lbState = Label(frm, text = '%s' % LANG_MAP[self._lang]['State'],
                                width = 8)
-        self.lbFsOutput = Label(frm, text = '%s' % LANG_MAP[self._lang]['Output'],
+        lbOutput = Label(frm, text = '%s' % LANG_MAP[self._lang]['Output'],
                                 width = 32)
         #self.chkFsSelAll.pack(side = LEFT, expand =1, fill = X)
-        self.lbFsURL.pack(side = LEFT, expand =1, fill=X)
-        self.lbFsState.pack(side = LEFT, expand =1, fill=X)
-        self.lbFsOutput.pack(side = LEFT, expand =1, fill=X)
+        lbURL.pack(side = LEFT, expand =1, fill=X)
+        lbState.pack(side = LEFT, expand =1, fill=X)
+        lbOutput.pack(side = LEFT, expand =1, fill=X)
+
+        self._wm['lbURL'] = lbURL
+        self._wm['lbState'] = lbState
+        self._wm['lbOutput'] = lbOutput
 
 
     def create_file_list_widgets(self):
@@ -463,14 +495,7 @@ class WebImageCrawlerUI(WindowUI):
     def download_url(self, args=None):
         url = args['-u']
         if self._class:
-            if self._class == 'girlsky':
-                hdr = Girlsky('Girlsky')
-            elif self._class == 'pstatp':
-                hdr = Pstatp('Pstatp')
-            elif self._class == 'meizitu':
-                hdr = Meizitu('Meizitu')
-            elif self._class == 'mzitu':
-                hdr = Mzitu('Mzitu')
+            hdr = self._class
         else:
             hdr = WebImage('WebImage')
         if hdr:

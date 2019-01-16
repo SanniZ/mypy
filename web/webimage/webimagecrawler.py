@@ -28,25 +28,27 @@ from web.webimage.pstatp import Pstatp
 from web.webimage.meizitu import Meizitu
 from web.webimage.mzitu import Mzitu
 from web.webimage.webimage import WebImage, get_input
+from web.webimage.weibo import Weibo
 
 URL_BASE = {
     # xval : { url_base : class}
-    'xgmn' : {'http://m.girlsky.cn/mntp/xgmn/URLID.html' : 'girlsky'},  # 性感美女
-    'swmn' : {'http://m.girlsky.cn/mntp/swmn/URLID.html' : 'girlsky'},  # 丝袜美女
-    'wgmn' : {'http://m.girlsky.cn/mntp/wgmn/URLID.html' : 'girlsky'},  # 外国美女
-    'zpmn' : {'http://m.girlsky.cn/mntp/zpmn/URLID.html' : 'girlsky'},  # 自拍美女
-    'mnxz' : {'http://m.girlsky.cn/mntp/mnxz/URLID.html' : 'girlsky'},  # 美女写真
-    'rtys' : {'http://m.girlsky.cn/mntp/rtys/URLID.html' : 'girlsky'},  # 人体艺术
-    'jpmn' : {'http://m.girlsky.cn/mntp/jpmn/URLID.html' : 'girlsky'},  # 街拍美女
-    'gzmn' : {'http://m.girlsky.cn/mntp/gzmn/URLID.html' : 'girlsky'},  # 古装美女
-    'nrtys' : {'http://m.girlsky.cn/mntpn/rtys/URLID.html' : 'girlsky'},  # 人体艺术
+    'xgmn' : {'http://m.girlsky.cn/mntp/xgmn/URLID.html' : Girlsky('Girlsky')},  # 性感美女
+    'swmn' : {'http://m.girlsky.cn/mntp/swmn/URLID.html' : Girlsky('Girlsky')},  # 丝袜美女
+    'wgmn' : {'http://m.girlsky.cn/mntp/wgmn/URLID.html' : Girlsky('Girlsky')},  # 外国美女
+    'zpmn' : {'http://m.girlsky.cn/mntp/zpmn/URLID.html' : Girlsky('Girlsky')},  # 自拍美女
+    'mnxz' : {'http://m.girlsky.cn/mntp/mnxz/URLID.html' : Girlsky('Girlsky')},  # 美女写真
+    'rtys' : {'http://m.girlsky.cn/mntp/rtys/URLID.html' : Girlsky('Girlsky')},  # 人体艺术
+    'jpmn' : {'http://m.girlsky.cn/mntp/jpmn/URLID.html' : Girlsky('Girlsky')},  # 街拍美女
+    'gzmn' : {'http://m.girlsky.cn/mntp/gzmn/URLID.html' : Girlsky('Girlsky')},  # 古装美女
+    'nrtys' : {'http://m.girlsky.cn/mntpn/rtys/URLID.html' : Girlsky('Girlsky')},  # 人体艺术
     # pstatp
-    'pstatp'   : {'https://www.toutiao.com/aURLID' : 'pstatp'},
-    'pstatp_i' : {'https://www.toutiao.com/iURLID' : 'pstatp'},
+    'pstatp'   : {'https://www.toutiao.com/aURLID' : Pstatp('Pstatp')},
+    'pstatp_i' : {'https://www.toutiao.com/iURLID' : Pstatp('Pstatp')},
     # meizitu
-    'meizitu' : {'http://www.meizitu.com/a/URLID.html' : 'meizitu'},
+    'meizitu' : {'http://www.meizitu.com/a/URLID.html' : Meizitu('Meizitu')},
     # mzitu
-    'mzitu'   : {'https://m.mzitu.com/URLID' : 'mzitu'},
+    'mzitu'   : {'https://m.mzitu.com/URLID' : Mzitu('Mzitu')},
+    'weibo'   : {'https://m.weibo.cn/detail/URLID' : Weibo('Weibo')},
 }
 
 
@@ -140,14 +142,7 @@ class WebImageCrawler(WebContent):
 
     def process_input(self, args=None, info=None):
         if self._class:
-            if self._class == 'girlsky':
-                hdr = Girlsky('Girlsky')
-            elif self._class == 'pstatp':
-                hdr = Pstatp('Pstatp')
-            elif self._class == 'meizitu':
-                hdr = Meizitu('Meizitu')
-            elif self._class == 'mzitu':
-                hdr = Mzitu('Mzitu')
+            hdr = self._class
         else:
             hdr = WebImage('WebImage')
         if hdr:

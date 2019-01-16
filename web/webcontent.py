@@ -131,7 +131,7 @@ class WebContent (object):
             if File.get_name_ex(f) != '.html':
                 f = f + '.html'
             with open(f, 'w') as fd:
-                fd.write(content)
+                fd.write(content.decode())
         return content
 
     @classmethod
