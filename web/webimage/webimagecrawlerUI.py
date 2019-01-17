@@ -33,42 +33,36 @@ STAT_WAITTING = 'Waitting'
 STAT_DOWNLOADING = 'Downloading'
 STAT_DONE = 'Done'
 STAT_FAIL = 'Failed'
-
-ABOUT_MAP = (
-'''
-    WebImage Crawler 1.0
-
-    Auther@Zbyng.Zeng
-
-    Copyright(c)Zbyng.Zeng
-''',
-'''
-    网页图片爬虫 1.0
-
-    作者@Zbyng.Zeng
-
-    版权所有(c)Zbyng.Zeng
-'''
-)
+STAT_NOT_SUPPORT = 'Not Support'
 
 LANG_MAP = (
     {'Title' : 'WebImageCrawler', 'File' : 'File', 'Open' : 'Open',
      'Exit' : 'Exit', 'Help' : 'Help', 'About' : 'About', 'URL': 'URL' ,
      'Run' : 'Run', 'Type' : 'Type', 'Start' : 'Start', 'End' : 'End',
-     'OK' : 'OK', 'State' : 'State', 'Output' : 'Output',
+     'OK' : 'OK', 'State' : 'State', 'Output' : 'Output', 'Lang' : 'Language',
      'Warnning' : 'Warnning', 'Error' : 'Error', 'About' : 'About',
      'InvalidType' : 'Type/Start is invalid', 'InvalidURL' : 'URL is invalid',
      'TypeList' : ('xgmn', 'swmn', 'wgmn', 'zpmn', 'mnxz', 'rtys',
      'jpmn', 'gzmn', 'nrtys', 'meizitu', 'mzitu'),
+     'AboutVersion' :  'WebImage Crawler 1.0\n'
+                       '\n'
+                       'Auther@Zbyng.Zeng\n'
+                       '\n'
+                       'Copyright(c)Zbyng.Zeng\n',
     },
     {'Title' : '网页图片爬虫', 'File' : '文件', 'Open' : '打开',
      'Exit' : '退出', 'Help' : '帮助', 'About' : '关于', 'URL': '地址',
      'Run' : '运行', 'Type' : '分类', 'Start' : '开始', 'End' : '结束',
-     'OK' : '确定', 'State' : '状态', 'Output' : '输出',
+     'OK' : '确定', 'State' : '状态', 'Output' : '输出', 'Lang' : '语言',
      'Warnning' : '警告', 'Error' : '错误', 'About' : '关于',
      'InvalidType' : '分类/开始值无效', 'InvalidURL' : '地址值无效',
      'TypeList' : ('性感美女', '丝袜美女', '外国美女', '自拍美女', '美女写真',
-     '人体艺术', '街拍美女', '古装美女', '人体艺术', '妺子图', '妺子图Mz'),
+     '人体艺术', '街拍美女', '古装美女', '人体艺术n', '妺子图', '妺子图Mz'),
+     'AboutVersion' : '网页图片爬虫 1.0\n'
+                      '\n'
+                      '作者@Zbyng.Zeng\n'
+                      '\n'
+                      '版权所有(c)Zbyng.Zeng\n',
     }
 )
 
@@ -127,6 +121,7 @@ class WindowUI(object):
     def menu_help_lang(self):
         self._lang = self._lang_set.get()
 
+        self._wm['top'].title('%s' % LANG_MAP[self._lang]['Title'])
         self.create_menu(self._wm['top'])
 
         self._wm['lbPath']['text'] = '%s:' % LANG_MAP[self._lang]['URL']
@@ -143,8 +138,10 @@ class WindowUI(object):
         print('run menu_help_about')
 
     def create_menu(self, root):
+        # create menu bar.
         menubar = Menu(root)
 
+        # create file menu and add commands
         menu_file = Menu(menubar, tearoff = 0)
         menu_open = menu_file.add_command(command=self.menu_file_open,
                       label = '%s' % LANG_MAP[self._lang]['Open'].center(10))
@@ -152,28 +149,35 @@ class WindowUI(object):
         menu_exit = menu_file.add_command(command=self.menu_file_exit,
                       label = '%s' % LANG_MAP[self._lang]['Exit'].center(10))
 
+        # create help menu
         menu_help = Menu(menubar, tearoff = 0)
+        # create language nemu and add cascade
+        menu_lang = Menu(menu_help, tearoff = 0)
+        mbar_lang = menu_help.add_cascade(menu = menu_lang,
+                              label = '%s' % LANG_MAP[self._lang]['Lang'])
         self._lang_set = IntVar()
-        menu_help.add_radiobutton(label = 'English', variable = self._lang_set,
+        menu_lang.add_radiobutton(label = 'English', variable = self._lang_set,
                               command=self.menu_help_lang, value=0)
-        menu_help.add_radiobutton(label = '中文', variable = self._lang_set,
+        menu_lang.add_radiobutton(label = '中文', variable = self._lang_set,
                               command=self.menu_help_lang, value=1)
         self._lang_set.set(self._lang)
-        menu_help.add_separator()
+        # add about to help menu.
         menu_about = menu_help.add_command(command=self.menu_help_about,
                             label = '%s' % LANG_MAP[self._lang]['About'])
 
+        # add cascade to menu bar.
         mbar_file = menubar.add_cascade(menu = menu_file,
                                 label = '%s' % LANG_MAP[self._lang]['File'])
-
         mbar_help = menubar.add_cascade(menu = menu_help,
                               label = '%s' % LANG_MAP[self._lang]['Help'])
+
         root['menu'] = menubar
 
         self._wm['mbar_file'] = mbar_file
         self._wm['mbar_help'] = mbar_help
         self._wm['menu_file'] = menu_file
         self._wm['menu_help'] = menu_help
+        self._wm['mbar_lang'] = mbar_lang
         self._wm['menu_open'] = menu_open
         self._wm['menu_exit'] = menu_exit
         self._wm['menu_about'] = menu_about
@@ -351,7 +355,8 @@ class WebImageCrawlerUI(WindowUI):
             self.update_list_info()
 
     def menu_help_about(self):
-        showinfo(LANG_MAP[self._lang]['About'], ABOUT_MAP[self._lang])
+        showinfo(LANG_MAP[self._lang]['About'],
+                 LANG_MAP[self._lang]['AboutVersion'])
 
     def on_chk_type_click(self):
         self.update_type_widget_state(self._type_chk.get())
@@ -414,12 +419,13 @@ class WebImageCrawlerUI(WindowUI):
             self._wm['bnType']['state'] = DISABLED
 
     def update_menu_state(self, state):
+        menu_file = self._wm['menu_file']
         if int(state):
-            self._wm['menu_file'].entryconfigure('%s' % LANG_MAP[self._lang]['Open'].center(10),
-                                                state = NORMAL)
+            menu_file.entryconfigure(
+              '%s' % LANG_MAP[self._lang]['Open'].center(10), state = NORMAL)
         else:
-            self._wm['menu_file'].entryconfigure('%s' % LANG_MAP[self._lang]['Open'].center(10),
-                                                state = DISABLED)
+            menu_file.entryconfigure(
+              '%s' % LANG_MAP[self._lang]['Open'].center(10), state = DISABLED)
 
     def update_widget_state(self, state):
         # update state of menu
@@ -537,14 +543,14 @@ class WebImageCrawlerUI(WindowUI):
                     self._download_thread_queue.put(url)
                     self._download_threads.append(t)
                     t.start()
+                else:
+                    self.update_list_info(url = url, state = STAT_NOT_SUPPORT)
             for t in self._download_threads:
                 t.join()
             self.update_widget_state(1)
             #print('All of url are done!')
 
     def download_url_list(self):
-        self.update_url_list()
-        self.update_list_info()
         threading.Thread(target = self.crawler_download_url).start()
 
 
