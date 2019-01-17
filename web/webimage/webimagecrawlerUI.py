@@ -6,7 +6,9 @@ Created on: 2019-01-02
 @author: Zbyng Zeng
 """
 import os
+import re
 import sys
+import subprocess
 
 if sys.version_info[0] == 2:
     import Queue
@@ -41,6 +43,7 @@ LANG_MAP = (
      'Run' : 'Run', 'Type' : 'Type', 'Start' : 'Start', 'End' : 'End',
      'OK' : 'OK', 'State' : 'State', 'Output' : 'Output', 'Lang' : 'Language',
      'Warnning' : 'Warnning', 'Error' : 'Error', 'About' : 'About',
+     'Cancel': 'Cancel', 'NoOutput' : '\nNo Output', 'Notice' : 'Notice',
      'InvalidType' : 'Type/Start is invalid', 'InvalidURL' : 'URL is invalid',
      'TypeList' : ('xgmn', 'swmn', 'wgmn', 'zpmn', 'mnxz', 'rtys',
      'jpmn', 'gzmn', 'nrtys', 'meizitu', 'mzitu'),
@@ -55,6 +58,7 @@ LANG_MAP = (
      'Run' : '运行', 'Type' : '分类', 'Start' : '开始', 'End' : '结束',
      'OK' : '确定', 'State' : '状态', 'Output' : '输出', 'Lang' : '语言',
      'Warnning' : '警告', 'Error' : '错误', 'About' : '关于',
+     'Cancel': '取消', 'NoOutput' : '\n没有输出文件', 'Notice' : '提示',
      'InvalidType' : '分类/开始值无效', 'InvalidURL' : '地址值无效',
      'TypeList' : ('性感美女', '丝袜美女', '外国美女', '自拍美女', '美女写真',
      '人体艺术', '街拍美女', '古装美女', '人体艺术n', '妺子图', '妺子图Mz'),
@@ -113,17 +117,17 @@ class WindowUI(object):
         root.mainloop()
 
     def menu_file_open(self):
-        print('run menu_file_open')
+        pass
 
     def menu_file_exit(self):
         self._wm['top'].quit()
 
     def menu_help_lang(self):
         self._lang = self._lang_set.get()
-
+        # update title and menu.
         self._wm['top'].title('%s' % LANG_MAP[self._lang]['Title'])
         self.create_menu(self._wm['top'])
-
+        # update lang of widgets.
         self._wm['lbPath']['text'] = '%s:' % LANG_MAP[self._lang]['URL']
         self._wm['bnPath']['text'] = LANG_MAP[self._lang]['Run']
         self._wm['lbType']['text'] = '%s:' % LANG_MAP[self._lang]['Type']
@@ -133,9 +137,11 @@ class WindowUI(object):
         self._wm['lbURL']['text'] = LANG_MAP[self._lang]['URL']
         self._wm['lbState']['text'] = LANG_MAP[self._lang]['State']
         self._wm['lbOutput']['text'] = LANG_MAP[self._lang]['Output']
+        # update type list.
+        self._wm['cmbType']['value'] = LANG_MAP[self._lang]['TypeList']
 
     def menu_help_about(self):
-        print('run menu_help_about')
+        pass
 
     def create_menu(self, root):
         # create menu bar.
@@ -182,6 +188,7 @@ class WindowUI(object):
         self._wm['menu_exit'] = menu_exit
         self._wm['menu_about'] = menu_about
 
+
     def create_main_window_frames(self, root):
         Args = Frame(root)
         Args.pack(side = TOP, fill = X)
@@ -222,7 +229,7 @@ class WindowUI(object):
         self._wm['frmSbY'] = SbY
 
     def on_run_click(self):
-        print('run on_run_click')
+        pass
 
     def create_path_widgets(self):
         frm = self._wm['frmPath']
@@ -240,10 +247,10 @@ class WindowUI(object):
         self._wm['bnPath'] = bnPath
 
     def on_chk_type_click(self):
-        print('run on_bn_type_click')
+        pass
 
     def on_bn_type_click(self):
-        print('run on_chk_type_click')
+        pass
 
     def create_type_widgets(self):
         frm = self._wm['frmType']
@@ -304,6 +311,25 @@ class WindowUI(object):
         self._wm['lbState'] = lbState
         self._wm['lbOutput'] = lbOutput
 
+    def on_popmenu_open(self):
+        pass
+
+    def on_popmenu_leave(self, event):
+        fs_popmenu = self._wm['fs_popmenu']
+        fs_popmenu.unpost()
+
+    def create_file_list_popmenu(self):
+        fs_popmenu = Menu(self._wm['top'], tearoff = 0)
+        fs_popmenu.add_command(command = self.on_popmenu_open,
+                               label = '%s' % LANG_MAP[self._lang]['Open'])
+        # bind leave event
+        fs_popmenu.bind("<Leave>", self.on_popmenu_leave)
+
+        self._wm['fs_popmenu'] = fs_popmenu
+
+    def pop_fs_menu(self, event):
+        fs_popmenu = self._wm['fs_popmenu']
+        fs_popmenu.post(event.x_root, event.y_root)
 
     def create_file_list_widgets(self):
         frmFsList = self._wm['frmFsList']
@@ -322,10 +348,12 @@ class WindowUI(object):
         lbFs['xscrollcommand'] = sbX.set
         sbX['command'] = lbFs.xview
 
+        self.create_file_list_popmenu()
+        lbFs.bind("<Button-3>", self.pop_fs_menu)
+
         self._wm['lbFs'] = lbFs
         self._wm['sbY'] = sbY
         self._wm['sbX'] = sbX
-
 
 ############################################################################
 #               WebImageCrawlerUI Class
@@ -366,19 +394,23 @@ class WebImageCrawlerUI(WindowUI):
         t_start = self._type_start.get()
         t_end   = self._type_end.get()
         if all((t_type, t_start)):
-            url_start = int(t_start)
-            if t_end:
-                url_end = int(t_end)
-                if url_end > url_start:
-                    n = url_end - url_start + 1
+            try:
+                url_start = int(t_start)
+                if t_end:
+                    url_end = int(t_end)
+                    if url_end > url_start:
+                        n = url_end - url_start + 1
+                    else:
+                        showerror('%s' % LANG_MAP[self._lang]['Error'],
+                            '%s(%d) > %s(%d)!' %
+                            (LANG_MAP[self._lang]['Start'], url_start,
+                             LANG_MAP[self._lang]['End'], url_end))
+                        return
                 else:
-                    showerror('%s' % LANG_MAP[self._lang]['Error'],
-                        '%s(%d) > %s(%d)!' %
-                        (LANG_MAP[self._lang]['Start'], url_start,
-                         LANG_MAP[self._lang]['End'], url_end))
-                    return
-            else:
-                n = 1
+                    n = 1
+            except ValueError as e:
+                showerror('%s' % LANG_MAP[self._lang]['Error'],'\n%s!' % str(e))
+                return
             # config args
             if self._lang:
                 index = LANG_MAP[self._lang]['TypeList'].index(t_type)
@@ -405,6 +437,25 @@ class WebImageCrawlerUI(WindowUI):
         else:
             showwarning('%s' % LANG_MAP[self._lang]['Error'],
                         '\n%s!' % LANG_MAP[self._lang]['InvalidURL'])
+
+    def on_popmenu_open(self):
+        output = None
+        fs = self._wm['lbFs']
+        index = fs.curselection()
+        if not index:
+            return
+        data = fs.get(index)
+        data = re.compile('http.+Done\s+(.+)').findall(data)
+        if data:
+            output = data[0].strip()
+        if output:
+            for k, w in {' ' : '\ ', ':' : '\:'}.items():
+                output = re.sub(k, w, output)
+            cmd = 'nautilus %s' % output
+            subprocess.check_output(cmd, shell = True)
+        else:
+            showinfo(LANG_MAP[self._lang]['Notice'],
+                 LANG_MAP[self._lang]['NoOutput'])
 
     def update_type_widget_state(self, state):
         if int(state):
