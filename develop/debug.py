@@ -7,14 +7,15 @@ Created on Fri Jul  6 12:24:15 2018
 """
 import re
 
-class Debug(object):    
-    DBG  = (0x01 << 0)
+
+class Debug(object):
+    DBG = (0x01 << 0)
     INFO = (0x01 << 1)
     WARN = (0x01 << 2)
-    ERR  = (0x01 << 4)
+    ERR = (0x01 << 4)
 
     __PRINT_LEVEL = INFO | ERR
-    
+
     @staticmethod
     def dbg(fmt):
         if Debug.__PRINT_LEVEL & Debug.DBG:
@@ -37,21 +38,21 @@ class Debug(object):
 
     @staticmethod
     def set_debug_level(level):
-        t = type(level)        
+        t = type(level)
         if t == int:
             Debug.__PRINT_LEVEL = level
         elif t == str:
-            if re.search('dbg', level) != None:
+            if re.search('dbg', level):
                 Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL | Debug.DBG
             else:
                 Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL & (~Debug.DBG)
-    
-            if re.search('info', level) != None:
+
+            if re.search('info', level):
                 Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL | Debug.INFO
             else:
                 Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL & (~Debug.INFO)
-                
-            if re.search('err', level) != None:
+
+            if re.search('err', level):
                 Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL | Debug.ERR
             else:
                 Debug.__PRINT_LEVEL = Debug.__PRINT_LEVEL & (~Debug.ERR)
@@ -61,9 +62,9 @@ class Debug(object):
     @staticmethod
     def get_debug_level():
         return Debug.__PRINT_LEVEL
-   
-          
-if __name__ == '__main__':    
+
+
+if __name__ == '__main__':
     print('set level: %s' % 'dbg,info,err')
     Debug.set_debug_level('dbg,info,err')
     Debug.dbg('It is Debug dbg info')

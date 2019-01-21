@@ -12,10 +12,13 @@ from code import Code
 from debug import Debug as d
 from cmdprocessing import CmdProcessing
 
-class Cwp(Code):
-    URL = r'ssh://android.intel.com/h/hypervisor/manifests -b hypervisor/master'
 
-    def __init__(self,url=URL):
+class Cwp(Code):
+
+    URL = \
+        r'ssh://android.intel.com/h/hypervisor/manifests -b hypervisor/master'
+
+    def __init__(self, url=URL):
         super(Cwp, self).__init__(url)
         self._url = url
 
@@ -47,17 +50,17 @@ class Cwp(Code):
         d.dbg('_make_image: get input {}'.format(images))
         for image in images.values():
             d.dbg('_make_image: make {}'.format(image))
-            cmd=r'make {}'.format(image)
+            cmd = r'make {}'.format(image)
             subprocess.call(cmd, shell=True)
 
     def get_cmd_handlers(self, cmd=None):
         hdrs = {
             'make': self.make_image,
-            'flash' : self.make_image,
-            'url' : self.url_handler,
-            'help' : self.help,
+            'flash': self.make_image,
+            'url': self.url_handler,
+            'help': self.help,
         }
-        if cmd == None:
+        if not cmd:
             return hdrs
         else:
             if cmd in hdrs:
@@ -67,6 +70,6 @@ class Cwp(Code):
 
 
 if __name__ == '__main__':
-    #d.set_debug_level('dbg,info,err')
+    # d.set_debug_level('dbg,info,err')
     cwp = Cwp()
     cwp._cmdHdrs.run_sys_input()

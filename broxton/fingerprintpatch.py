@@ -12,18 +12,21 @@ import getopt
 import subprocess
 import shutil
 
+
 # print msg and exit
 def stop_and_exit(msg=None):
-    if msg != None:
+    if msg:
         print(msg)
     # stop runing and exit.
     exit()
 
+
 # get abs path.
 def get_abs_path(path):
     if path[0:1] == r'.':
-         path = path.replace(r'.', os.getcwd(), 1)
+        path = path.replace(r'.', os.getcwd(), 1)
     return path
+
 
 # get external name of file.
 def get_ext_name(f):
@@ -38,7 +41,7 @@ class FingerprintPatch(object):
 
     def print_help(self):
         help_menu = (
-        '======================================',
+            '======================================',
         '     For fingerprint Patch',
         '======================================'
         'option: -s xxx -p xxx -o am|ghal|gta',
@@ -48,10 +51,10 @@ class FingerprintPatch(object):
         '  -p xxx',
         '    set root path of patch.',
         '  -o am|ghal|gta',
-        '    am  : run git am to apply all of patch.',
+        '    am: run git am to apply all of patch.',
         '    ghal: get prebuild files of fingerprint HAL',
-        '    gta : get prebuild files of fingerprint TA',
-        '    grh : revert all of patches.',
+        '    gta: get prebuild files of fingerprint TA',
+        '    grh: revert all of patches.',
         )
         for help in help_menu:
             print(help)
@@ -78,7 +81,7 @@ class FingerprintPatch(object):
     def get_dirs_of_patch(self):
         dirs = list()
         for rt, ds, fs in os.walk(self._patch):
-            if len(fs) != 0 :
+            if len(fs) != 0:
                 for f in fs:
                     if get_ext_name(f) == r'.patch':
                         rt = rt.replace(self._patch, '')
@@ -88,7 +91,6 @@ class FingerprintPatch(object):
             return sorted(dirs)
         else:
             return None
-
 
     # run git am to apply all of .patch
     def apply_patch_of_dirs(self, dirs):
@@ -165,38 +167,38 @@ class FingerprintPatch(object):
     def revert_patches(self, source_path):
         patch_paths = {
             'device/intel/mixins': 8,
-            'device/intel/sepolicy' : 1,
-            'kernel/bxt' : 2,
-            'kernel/config-lts/v4.9' : 1,
-            'packages/services/Car' : 1,
-            'trusty/app/keymaster' : 1,
-            'trusty/app/sand' : 23,
-            'trusty/device/x86/sand' : 1,
-            'trusty/platform/sand' : 7,
-            'trusty/lk/trusty' : 1,
-            'vendor/intel/fw/evmm' : 2,
-            'vendor/intel/hardware/fingerprint' : 18,
-            'vendor/intel/hardware/storage' : 1,
+            'device/intel/sepolicy': 1,
+            'kernel/bxt': 2,
+            'kernel/config-lts/v4.9': 1,
+            'packages/services/Car': 1,
+            'trusty/app/keymaster': 1,
+            'trusty/app/sand': 23,
+            'trusty/device/x86/sand': 1,
+            'trusty/platform/sand': 7,
+            'trusty/lk/trusty': 1,
+            'vendor/intel/fw/evmm': 2,
+            'vendor/intel/hardware/fingerprint': 18,
+            'vendor/intel/hardware/storage': 1,
         }
         for path, num in patch_paths.items():
             for i in range(num):
-                cmd = 'cd %s/%s && git reset --hard HEAD~' % (source_path, path)
+                cmd = 'cd %s/%s && git reset --hard HEAD~' % (source_path,
+                                                              path)
                 print(cmd)
                 subprocess.call(cmd, shell=True)
-
 
     # enterance of app
     def main(self):
         # get user input
         self.get_user_input()
 
-        if self._source == None or self._patch == None or self._opt == None:
+        if any((not self._source, not self._patch, not self._opt)):
             stop_and_exit('Error, invalid input, run -h to get help!')
 
         if self._opt == r'am':
             # get dirs of patch.
             dirs = self.get_dirs_of_patch()
-            if dirs != None:
+            if dirs:
                 self.apply_patch_of_dirs(dirs)
             else:
                 print('No found .patch file!')

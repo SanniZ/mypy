@@ -27,9 +27,11 @@ help_menu = (
     '    clean all of .pyc at current path.'
 )
 
+
 def clean_pyc_shell():
     cmd = 'find . -name *.pyc -o -name __pycache__ | xargs rm -rf {}'
-    subprocess.call(cmd,shell = True)
+    subprocess.call(cmd, shell=True)
+
 
 def clean_pyc(path=os.getenv('MYPY'), show=False):
     for rt, dr, fs in os.walk(path):
@@ -63,5 +65,5 @@ if __name__ == '__main__':
         show = True
     else:
         show = False
-	# clean .pyc now.
+    # clean .pyc now.
     clean_pyc(path, show)

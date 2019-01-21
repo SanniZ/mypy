@@ -17,7 +17,7 @@ class Fpc(Broxton):
     OPT = 'userdebug'
     USR = 'yingbin'
 
-    def __init__(self,url=URL, pdt=PDT, opt=OPT, user=USR):
+    def __init__(self, url=URL, pdt=PDT, opt=OPT, user=USR):
         super(Fpc, self).__init__(url=url, pdt=pdt, opt=opt, user=user)
         self._cmdHdrs.register_cmd_handler(self.__get_cmd_handlers())
 
@@ -34,7 +34,8 @@ class Fpc(Broxton):
         for cmd in cmds:
             if cmd == 'make':
                 l = list()
-                l.append('vendor/intel/hardware/fingerprint/fingerprint_tac/normal')
+                l.append(
+                    'vendor/intel/hardware/fingerprint/fingerprint_tac/normal')
                 d = dict()
                 d['mmm'] = l
                 image = list()

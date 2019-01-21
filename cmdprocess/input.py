@@ -5,8 +5,10 @@ Created on Mon Jul  9 09:41:13 2018
 @author: Byng.Zeng
 """
 
-import re, sys
+import re
+import sys
 from debug import Debug as d
+
 
 class Parser(object):
     def __init__(self):
@@ -19,13 +21,13 @@ class Parser(object):
         output = dict()
 
         if len(cmds) == 0:
-            cmds=['help:help']
+            cmds = ['help:help']
 
         for cmd in cmds:
             dict_cmds = re_dict.match(cmd)
-            if dict_cmds != None: # dict type
+            if dict_cmds:  # dict type
                 k, v = dict_cmds.groups()
-                d.dbg((k,v))
+                d.dbg((k, v))
                 if k in output:
                     for x in re_args.findall(v):
                         output[k].append(x)
@@ -43,7 +45,7 @@ class Parser(object):
             list_argv = output[k]
             for index in range(len(list_argv)):
                 find_argv = re_argv.match(list_argv[index])
-                if find_argv != None:
+                if find_argv:
                     dict_argv = dict()
                     argv = find_argv.groups()
                     dict_argv[argv[0]] = list(argv[1:])
@@ -51,6 +53,7 @@ class Parser(object):
 
         d.dbg('parser_cmd_args(): %s' % output)
         return output
+
 
 class Input(Parser):
     def __init__(self):

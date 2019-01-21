@@ -12,6 +12,7 @@ from mypy.base import Base
 from mypy.path import Path
 from mypy.pr import Print
 
+
 class WebURLCrawler(object):
 
     HELP_MENU = (

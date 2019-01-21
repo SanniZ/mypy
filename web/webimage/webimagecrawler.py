@@ -10,12 +10,6 @@ import os
 import sys
 import re
 
-
-if sys.version_info[0] == 2:
-    import Queue as queue
-else:
-    import queue
-
 import threading
 
 from mypy.base import Base
@@ -30,25 +24,30 @@ from web.webimage.mzitu import Mzitu
 from web.webimage.webimage import WebImage, get_input
 from web.webimage.weibo import Weibo
 
+if sys.version_info[0] == 2:
+    import Queue as queue
+else:
+    import queue
+
 URL_BASE = {
-    # xval : { url_base : class}
-    'xgmn' : {'http://m.girlsky.cn/mntp/xgmn/URLID.html' : Girlsky('Girlsky')},  # 性感美女
-    'swmn' : {'http://m.girlsky.cn/mntp/swmn/URLID.html' : Girlsky('Girlsky')},  # 丝袜美女
-    'wgmn' : {'http://m.girlsky.cn/mntp/wgmn/URLID.html' : Girlsky('Girlsky')},  # 外国美女
-    'zpmn' : {'http://m.girlsky.cn/mntp/zpmn/URLID.html' : Girlsky('Girlsky')},  # 自拍美女
-    'mnxz' : {'http://m.girlsky.cn/mntp/mnxz/URLID.html' : Girlsky('Girlsky')},  # 美女写真
-    'rtys' : {'http://m.girlsky.cn/mntp/rtys/URLID.html' : Girlsky('Girlsky')},  # 人体艺术
-    'jpmn' : {'http://m.girlsky.cn/mntp/jpmn/URLID.html' : Girlsky('Girlsky')},  # 街拍美女
-    'gzmn' : {'http://m.girlsky.cn/mntp/gzmn/URLID.html' : Girlsky('Girlsky')},  # 古装美女
-    'nrtys' : {'http://m.girlsky.cn/mntpn/rtys/URLID.html' : Girlsky('Girlsky')},  # 人体艺术
+    # xval: { url_base: class}
+    'xgmn': {'http://m.girlsky.cn/mntp/xgmn/URLID.html': Girlsky('Girlsky')},
+    'swmn': {'http://m.girlsky.cn/mntp/swmn/URLID.html': Girlsky('Girlsky')},
+    'wgmn': {'http://m.girlsky.cn/mntp/wgmn/URLID.html': Girlsky('Girlsky')},
+    'zpmn': {'http://m.girlsky.cn/mntp/zpmn/URLID.html': Girlsky('Girlsky')},
+    'mnxz': {'http://m.girlsky.cn/mntp/mnxz/URLID.html': Girlsky('Girlsky')},
+    'rtys': {'http://m.girlsky.cn/mntp/rtys/URLID.html': Girlsky('Girlsky')},
+    'jpmn': {'http://m.girlsky.cn/mntp/jpmn/URLID.html': Girlsky('Girlsky')},
+    'gzmn': {'http://m.girlsky.cn/mntp/gzmn/URLID.html': Girlsky('Girlsky')},
+    'nrtys': {'http://m.girlsky.cn/mntpn/rtys/URLID.html': Girlsky('Girlsky')},
     # pstatp
-    'pstatp'   : {'https://www.toutiao.com/aURLID' : Pstatp('Pstatp')},
-    'pstatp_i' : {'https://www.toutiao.com/iURLID' : Pstatp('Pstatp')},
+    'pstatp': {'https://www.toutiao.com/aURLID': Pstatp('Pstatp')},
+    'pstatp_i': {'https://www.toutiao.com/iURLID': Pstatp('Pstatp')},
     # meizitu
-    'meizitu' : {'http://www.meizitu.com/a/URLID.html' : Meizitu('Meizitu')},
+    'meizitu': {'http://www.meizitu.com/a/URLID.html': Meizitu('Meizitu')},
     # mzitu
-    'mzitu'   : {'https://m.mzitu.com/URLID' : Mzitu('Mzitu')},
-    'weibo'   : {'https://m.weibo.cn/detail/URLID' : Weibo('Weibo')},
+    'mzitu': {'https://m.mzitu.com/URLID': Mzitu('Mzitu')},
+    'weibo': {'https://m.weibo.cn/detail/URLID': Weibo('Weibo')},
 }
 
 
@@ -135,10 +134,9 @@ class WebImageCrawler(WebContent):
         if all((not self._class, self._url_base)):
                 for dict_url_base in URL_BASE.values():
                     if self._url_base == list(dict_url_base)[0]:
-                        self._class =  dict_url_base[self._url_base]
+                        self._class = dict_url_base[self._url_base]
                         break
         return args
-
 
     def process_input(self, args=None, info=None):
         if self._class:
@@ -157,11 +155,10 @@ class WebImageCrawler(WebContent):
             total = info[1]
             self._pr.pr_info('process %d/%d input file done' % (index, total))
 
-
     def process_file_input(self, args=None):
         if self._url_file:
             with open(self._url_file, 'r') as fd:
-                lines =  set(fd.readlines())
+                lines = set(fd.readlines())
             self._thread_queue = queue.Queue(self._thread_max)
             total = len(lines)
             index = 1
@@ -172,21 +169,22 @@ class WebImageCrawler(WebContent):
             for url in lines:
                 self._class = None
                 # remove invalid chars.
-                for key, value in {'/$' : '', '\n$' : ''}.items():
+                for key, value in {'/$': '', '\n$': ''}.items():
                     url = re.sub(key, value, url)
                 # get base and num
                 base, num = self.get_url_base_and_num(url)
                 if base:
                     for dict_url_base in URL_BASE.values():
                         if base == list(dict_url_base)[0]:
-                            self._class =  dict_url_base[base]
+                            self._class = dict_url_base[base]
                             break
                 if self._class:
-                    url_args = {'-u' : url}
+                    url_args = {'-u': url}
                     url_args.update(args)
                     info = (index, total)
                     # create thread and put to queue.
-                    t = threading.Thread(target=self.process_input, args=(url_args, info))
+                    t = threading.Thread(target=self.process_input,
+                                         args=(url_args, info))
                     self._thread_queue.put(url)
                     t.start()
                 index = index + 1

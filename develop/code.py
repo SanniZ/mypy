@@ -10,6 +10,7 @@ import subprocess
 from linux import HwInfo
 from debug import Debug as d
 
+
 class Code(object):
     def __init__(self, url):
         self._url = url
@@ -36,7 +37,7 @@ class Code(object):
         if int(cpus) > 5:
             cpus = 5
 
-        if force == True:
+        if force:
             cmd = r'repo sync -c -j{n} -f'.format(n=cpus)
         else:
             cmd = r'repo sync -c -j{n}'.format(n=cpus)
@@ -56,10 +57,10 @@ class Code(object):
 
     def get_cmd_handlers(self, cmd=None):
         hdrs = {
-            'help' : self.help,
-            'repo' : self.repo_handler,
+            'help': self.help,
+            'repo': self.repo_handler,
         }
-        if cmd == None:
+        if not cmd:
             return hdrs
         else:
             if cmd in hdrs:
@@ -67,9 +68,11 @@ class Code(object):
             else:
                 return None
 
+
 if __name__ == '__main__':
-    #d.set_debug_level('dbg,info,err')
-    code = Code(r'ssh://android.intel.com/h/hypervisor/manifests -b hypervisor/master')
+    # d.set_debug_level('dbg,info,err')
+    code = Code(
+        r'ssh://android.intel.com/h/hypervisor/manifests -b hypervisor/master')
 
     from cmdprocessing import CmdProcessing
     cmdHdr = CmdProcessing()

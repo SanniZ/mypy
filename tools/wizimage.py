@@ -51,10 +51,10 @@ class WizImage(object):
             self._show = True
         # start to check args.
         # start id is must be set, otherwise return..
-        if self._src == None:
+        if not self._src:
             return False
         # next to start if _end is not set.
-        if self._dst == None:
+        if not self._dst:
             self._dst = Path.get_current_path()
             print('warnning: no found -t, output to: %s' % self._dst)
         return True
@@ -77,7 +77,8 @@ class WizImage(object):
 
     def unzip_wiz(self):
         for f in self._fs:
-            path = os.path.join(os.path.dirname(f).replace(self._src, self._dst), File.get_fname(f))
+            path = os.path.join(os.path.dirname(f).replace(
+                                self._src, self._dst), File.get_fname(f))
             path = os.path.splitext(path)[0]
             Path.make_path(path)
             self.unzip_file(f, path)
@@ -87,7 +88,8 @@ class WizImage(object):
             if os.path.exists('%s/index_files' % path):
                 for ff in os.listdir('%s/index_files' % path):
                     if Image.image_file('%s/index_files/%s' % (path, ff)):
-                        shutil.copyfile('%s/index_files/%s' % (path, ff), '%s/%s' % (path, ff))
+                        shutil.copyfile('%s/index_files/%s' % (path, ff),
+                                        '%s/%s' % (path, ff))
                 # remove invalid files and dirs.
                 shutil.rmtree('%s/index_files' % path)
             if os.path.exists('%s/index.html' % path):

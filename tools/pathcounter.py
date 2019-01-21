@@ -10,11 +10,12 @@ import sys
 import os
 import getopt
 
+
 class PathCounter(object):
     def __init__(self):
         self._path = None
         self._name = None
-        self._opt  = None
+        self._opt = None
 
     def print_help(self):
         print('option:')
@@ -71,7 +72,7 @@ class PathCounter(object):
             self.print_help()
             return False
         # process input
-        if len(opts) == 0 and len(args) != 0: # input error
+        if len(opts) == 0 and len(args) != 0:  # input error
             self.print_help()
             return False
         else:
@@ -93,7 +94,7 @@ class PathCounter(object):
             return True
 
     def main(self):
-        if self.get_user_input() == False:
+        if not self.get_user_input():
             print('Error, -h for help!')
         else:
             count = self.get_count()

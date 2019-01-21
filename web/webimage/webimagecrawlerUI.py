@@ -5,31 +5,31 @@ Created on: 2019-01-02
 
 @author: Zbyng Zeng
 """
+
 import os
 import re
 import sys
 import subprocess
+import threading
 
-if sys.version_info[0] == 2:
-    import Queue
-    from Tkinter import Tk, Frame, StringVar, IntVar, \
-        Menu, Label, Entry, Button, Listbox, Checkbutton, Scrollbar,\
-        X, Y, TOP, LEFT, RIGHT, NORMAL, DISABLED, HORIZONTAL, BOTH
-else:
-    from queue import Queue
-    from tkinter import Tk, Frame, StringVar, IntVar,\
-        Menu, Label, Entry, Button, Listbox, Checkbutton, Scrollbar,\
-        X, Y, TOP, LEFT, RIGHT, NORMAL, DISABLED, HORIZONTAL, BOTH
-
-from tkinter.filedialog import askopenfilename #askdirectory
+from tkinter.filedialog import askopenfilename  # askdirectory
 from tkinter import ttk
 from tkinter.messagebox import showinfo, showerror, showwarning
-
-import threading
 
 from web.webbase import WebBase
 from web.webimage.webimagecrawler import URL_BASE
 from web.webimage.webimage import WebImage
+
+if sys.version_info[0] == 2:
+    import Queue
+    from Tkinter import Tk, Frame, StringVar, IntVar, \
+        Menu, Label, Entry, Button, Listbox, Checkbutton, Scrollbar, \
+        X, Y, TOP, LEFT, RIGHT, NORMAL, DISABLED, HORIZONTAL, BOTH
+else:
+    from queue import Queue
+    from tkinter import Tk, Frame, StringVar, IntVar, \
+        Menu, Label, Entry, Button, Listbox, Checkbutton, Scrollbar, \
+        X, Y, TOP, LEFT, RIGHT, NORMAL, DISABLED, HORIZONTAL, BOTH
 
 STAT_WAITTING = 'Waitting'
 STAT_DOWNLOADING = 'Downloading'
@@ -38,36 +38,29 @@ STAT_FAIL = 'Failed'
 STAT_NOT_SUPPORT = 'Not Support'
 
 LANG_MAP = (
-    {'Title' : 'WebImageCrawler', 'File' : 'File', 'Open' : 'Open',
-     'Exit' : 'Exit', 'Help' : 'Help', 'About' : 'About', 'URL': 'URL' ,
-     'Run' : 'Run', 'Type' : 'Type', 'Start' : 'Start', 'End' : 'End',
-     'OK' : 'OK', 'State' : 'State', 'Output' : 'Output', 'Lang' : 'Language',
-     'Warnning' : 'Warnning', 'Error' : 'Error', 'About' : 'About',
-     'Cancel': 'Cancel', 'NoOutput' : '\nNo Output', 'Notice' : 'Notice',
-     'InvalidType' : 'Type/Start is invalid', 'InvalidURL' : 'URL is invalid',
-     'TypeList' : ('xgmn', 'swmn', 'wgmn', 'zpmn', 'mnxz', 'rtys',
-     'jpmn', 'gzmn', 'nrtys', 'meizitu', 'mzitu'),
-     'AboutVersion' :  'WebImage Crawler 1.0\n'
-                       '\n'
-                       'Auther@Zbyng.Zeng\n'
-                       '\n'
-                       'Copyright(c)Zbyng.Zeng\n',
-    },
-    {'Title' : '网页图片爬虫', 'File' : '文件', 'Open' : '打开',
-     'Exit' : '退出', 'Help' : '帮助', 'About' : '关于', 'URL': '地址',
-     'Run' : '运行', 'Type' : '分类', 'Start' : '开始', 'End' : '结束',
-     'OK' : '确定', 'State' : '状态', 'Output' : '输出', 'Lang' : '语言',
-     'Warnning' : '警告', 'Error' : '错误', 'About' : '关于',
-     'Cancel': '取消', 'NoOutput' : '\n没有输出文件', 'Notice' : '提示',
-     'InvalidType' : '分类/开始值无效', 'InvalidURL' : '地址值无效',
-     'TypeList' : ('性感美女', '丝袜美女', '外国美女', '自拍美女', '美女写真',
-     '人体艺术', '街拍美女', '古装美女', '人体艺术n', '妺子图', '妺子图Mz'),
-     'AboutVersion' : '网页图片爬虫 1.0\n'
-                      '\n'
-                      '作者@Zbyng.Zeng\n'
-                      '\n'
-                      '版权所有(c)Zbyng.Zeng\n',
-    }
+    {'Title': 'WebImageCrawler', 'File': 'File', 'Open': 'Open',
+     'Exit': 'Exit', 'Help': 'Help', 'About': 'About', 'URL': 'URL',
+     'Run': 'Run', 'Type': 'Type', 'Start': 'Start', 'End': 'End',
+     'OK': 'OK', 'State': 'State', 'Output': 'Output', 'Lang': 'Language',
+     'Warnning': 'Warnning', 'Error': 'Error', 'About': 'About',
+     'Cancel': 'Cancel', 'NoOutput': '\nNo Output', 'Notice': 'Notice',
+     'InvalidType': 'Type/Start is invalid', 'InvalidURL': 'URL is invalid',
+     'TypeList': ('xgmn', 'swmn', 'wgmn', 'zpmn', 'mnxz', 'rtys',
+                  'jpmn', 'gzmn', 'nrtys', 'meizitu', 'mzitu'),
+     'AboutVersion':  'WebImage Crawler 1.0\n\nAuther@Zbyng.Zeng\n\n'
+                      'Copyright(c)Zbyng.Zeng\n'},
+    {'Title': '网页图片爬虫', 'File': '文件', 'Open': '打开',
+     'Exit': '退出', 'Help': '帮助', 'About': '关于', 'URL': '地址',
+     'Run': '运行', 'Type': '分类', 'Start': '开始', 'End': '结束',
+     'OK': '确定', 'State': '状态', 'Output': '输出', 'Lang': '语言',
+     'Warnning': '警告', 'Error': '错误', 'About': '关于',
+     'Cancel': '取消', 'NoOutput': '\n没有输出文件', 'Notice': '提示',
+     'InvalidType': '分类/开始值无效', 'InvalidURL': '地址值无效',
+     'TypeList': ('性感美女', '丝袜美女', '外国美女', '自拍美女',
+                  '美女写真', '人体艺术', '街拍美女', '古装美女',
+                  '人体艺术n', '妺子图', '妺子图Mz'),
+     'AboutVersion': '网页图片爬虫 1.0\n\n作者@Zbyng.Zeng\n\n'
+                     '版权所有(c)Zbyng.Zeng\n'}
 )
 
 
@@ -148,34 +141,42 @@ class WindowUI(object):
         menubar = Menu(root)
 
         # create file menu and add commands
-        menu_file = Menu(menubar, tearoff = 0)
-        menu_open = menu_file.add_command(command=self.menu_file_open,
-                      label = '%s' % LANG_MAP[self._lang]['Open'].center(10))
-        #menu_file.add_separator()
-        menu_exit = menu_file.add_command(command=self.menu_file_exit,
-                      label = '%s' % LANG_MAP[self._lang]['Exit'].center(10))
+        menu_file = Menu(menubar, tearoff=0)
+        menu_open = menu_file.add_command(
+                        command=self.menu_file_open,
+                        label='%s' % LANG_MAP[self._lang]['Open'].center(10))
+        # menu_file.add_separator()
+        menu_exit = menu_file.add_command(
+                        command=self.menu_file_exit,
+                        label='%s' % LANG_MAP[self._lang]['Exit'].center(10))
 
         # create help menu
-        menu_help = Menu(menubar, tearoff = 0)
+        menu_help = Menu(menubar, tearoff=0)
         # create language nemu and add cascade
-        menu_lang = Menu(menu_help, tearoff = 0)
-        mbar_lang = menu_help.add_cascade(menu = menu_lang,
-                              label = '%s' % LANG_MAP[self._lang]['Lang'])
+        menu_lang = Menu(menu_help, tearoff=0)
+        mbar_lang = menu_help.add_cascade(
+                            menu=menu_lang,
+                            label='%s' % LANG_MAP[self._lang]['Lang'])
         self._lang_set = IntVar()
-        menu_lang.add_radiobutton(label = 'English', variable = self._lang_set,
-                              command=self.menu_help_lang, value=0)
-        menu_lang.add_radiobutton(label = '中文', variable = self._lang_set,
-                              command=self.menu_help_lang, value=1)
+        menu_lang.add_radiobutton(
+                label='English', command=self.menu_help_lang,
+                variable=self._lang_set, value=0)
+        menu_lang.add_radiobutton(
+                label='中文', command=self.menu_help_lang,
+                variable=self._lang_set, value=1)
         self._lang_set.set(self._lang)
         # add about to help menu.
-        menu_about = menu_help.add_command(command=self.menu_help_about,
-                            label = '%s' % LANG_MAP[self._lang]['About'])
+        menu_about = menu_help.add_command(
+                            command=self.menu_help_about,
+                            label='%s' % LANG_MAP[self._lang]['About'])
 
         # add cascade to menu bar.
-        mbar_file = menubar.add_cascade(menu = menu_file,
-                                label = '%s' % LANG_MAP[self._lang]['File'])
-        mbar_help = menubar.add_cascade(menu = menu_help,
-                              label = '%s' % LANG_MAP[self._lang]['Help'])
+        mbar_file = menubar.add_cascade(
+                                menu=menu_file,
+                                label='%s' % LANG_MAP[self._lang]['File'])
+        mbar_help = menubar.add_cascade(
+                                menu=menu_help,
+                                label='%s' % LANG_MAP[self._lang]['Help'])
 
         root['menu'] = menubar
 
@@ -188,37 +189,36 @@ class WindowUI(object):
         self._wm['menu_exit'] = menu_exit
         self._wm['menu_about'] = menu_about
 
-
     def create_main_window_frames(self, root):
         Args = Frame(root)
-        Args.pack(side = TOP, fill = X)
-        Args = Listbox(Args, bg = 'LightGrey')
-        Args.pack(side = TOP, expand = 1, fill = X, padx = 1, pady = 1)
+        Args.pack(side=TOP, fill=X)
+        Args = Listbox(Args, bg='LightGrey')
+        Args.pack(side=TOP, expand=1, fill=X, padx=1, pady=1)
 
         Path = Frame(Args)
-        Path.pack(side = TOP, expand = 1, fill = X)
+        Path.pack(side=TOP, expand=1, fill=X)
 
         Type = Frame(Args)
-        Type.pack(side = TOP, expand = 1, fill = X, pady = 2)
+        Type.pack(side=TOP, expand=1, fill=X, pady=2)
 
         FsInfo = Frame(root)
-        FsInfo.pack(side = TOP, expand = 1, fill = BOTH)
-        FsInfo = Listbox(FsInfo, bg = 'LightGrey')
-        FsInfo.pack(side = TOP, expand = 1, fill = BOTH, padx = 1, pady = 1)
+        FsInfo.pack(side=TOP, expand=1, fill=BOTH)
+        FsInfo = Listbox(FsInfo, bg='LightGrey')
+        FsInfo.pack(side=TOP, expand=1, fill=BOTH, padx=1, pady=1)
 
         Hdr = Frame(FsInfo)
-        Hdr.pack(side = TOP, fill = X)
+        Hdr.pack(side=TOP, fill=X)
 
         Fs = Frame(FsInfo)
-        Fs.pack(side = TOP, expand = 1, fill = BOTH, padx = 4, pady = 4)
+        Fs.pack(side=TOP, expand=1, fill=BOTH, padx=4, pady=4)
 
         FsList = Frame(Fs)
-        FsList.pack(side = LEFT, expand = 1, fill = BOTH)
+        FsList.pack(side=LEFT, expand=1, fill=BOTH)
         SbY = Frame(Fs)
-        SbY.pack(side = RIGHT, fill=Y)
+        SbY.pack(side=RIGHT, fill=Y)
 
         SbX = Frame(FsInfo)
-        SbX.pack(side = TOP, fill = X)
+        SbX.pack(side=TOP, fill=X)
 
         self._wm['frmPath'] = Path
         self._wm['frmType'] = Type
@@ -233,14 +233,14 @@ class WindowUI(object):
 
     def create_path_widgets(self):
         frm = self._wm['frmPath']
-        lbPath = Label(frm, text = '%s:' % LANG_MAP[self._lang]['URL'])
-        lbPath.pack(side = LEFT)
+        lbPath = Label(frm, text='%s:' % LANG_MAP[self._lang]['URL'])
+        lbPath.pack(side=LEFT)
         self._path_var = StringVar()
-        enPath = Entry(frm, textvariable = self._path_var)
-        enPath.pack(side = LEFT, expand=1, fill=X)
-        bnPath = Button(frm, text = '%s' % LANG_MAP[self._lang]['Run'],
-                        command = self.on_run_click)
-        bnPath.pack(side = RIGHT, padx = 4, pady = 2)
+        enPath = Entry(frm, textvariable=self._path_var)
+        enPath.pack(side=LEFT, expand=1, fill=X)
+        bnPath = Button(frm, text='%s' % LANG_MAP[self._lang]['Run'],
+                        command=self.on_run_click)
+        bnPath.pack(side=RIGHT, padx=4, pady=2)
 
         self._wm['lbPath'] = lbPath
         self._wm['enPath'] = enPath
@@ -255,30 +255,30 @@ class WindowUI(object):
     def create_type_widgets(self):
         frm = self._wm['frmType']
         self._type_chk = StringVar()
-        chkType = Checkbutton(frm, text = '', onvalue = 1, offvalue = 0,
-                              state = NORMAL, variable = self._type_chk,
-                              command = self.on_chk_type_click)
+        chkType = Checkbutton(frm, text='', onvalue=1, offvalue=0,
+                              state=NORMAL, variable=self._type_chk,
+                              command=self.on_chk_type_click)
         self._type_chk.set(0)
-        chkType.pack(side = LEFT, padx = 8)
-        lbType = Label(frm, text = '%s' % LANG_MAP[self._lang]['Type'])
-        lbType.pack(side = LEFT)
+        chkType.pack(side=LEFT, padx=8)
+        lbType = Label(frm, text='%s' % LANG_MAP[self._lang]['Type'])
+        lbType.pack(side=LEFT)
         self._type_var = StringVar()
-        cmbType = ttk.Combobox(frm, width = 8, textvariable = self._type_var)
-        cmbType.pack(side = LEFT, padx = 4)
+        cmbType = ttk.Combobox(frm, width=8, textvariable=self._type_var)
+        cmbType.pack(side=LEFT, padx=4)
         cmbType['value'] = LANG_MAP[self._lang]['TypeList']
-        lbStart = Label(frm, text = '%s:' % LANG_MAP[self._lang]['Start'])
-        lbStart.pack(side = LEFT, padx = 4)
+        lbStart = Label(frm, text='%s:' % LANG_MAP[self._lang]['Start'])
+        lbStart.pack(side=LEFT, padx=4)
         self._type_start = StringVar()
-        enStart = Entry(frm, width = 8, textvariable = self._type_start)
-        enStart.pack(side = LEFT)
-        lbEnd = Label(frm, text = '%s:' % LANG_MAP[self._lang]['End'])
-        lbEnd.pack(side = LEFT, padx = 4)
+        enStart = Entry(frm, width=8, textvariable=self._type_start)
+        enStart.pack(side=LEFT)
+        lbEnd = Label(frm, text='%s:' % LANG_MAP[self._lang]['End'])
+        lbEnd.pack(side=LEFT, padx=4)
         self._type_end = StringVar()
-        enEnd = Entry(frm, width = 8, textvariable = self._type_end)
-        enEnd.pack(side = LEFT)
-        bnType = Button(frm, text = '%s' % LANG_MAP[self._lang]['OK'],
-                        width = 4, command = self.on_bn_type_click)
-        bnType.pack(side = LEFT, padx = 36)
+        enEnd = Entry(frm, width=8, textvariable=self._type_end)
+        enEnd.pack(side=LEFT)
+        bnType = Button(frm, text='%s' % LANG_MAP[self._lang]['OK'],
+                        width=4, command=self.on_bn_type_click)
+        bnType.pack(side=LEFT, padx=36)
 
         cmbType['state'] = DISABLED
         enStart['state'] = DISABLED
@@ -296,16 +296,16 @@ class WindowUI(object):
 
     def create_header_widgets(self):
         frm = self._wm['frmHdr']
-        lbURL = Label(frm, text = '%s' % LANG_MAP[self._lang]['URL'],
-                             width = 32)
-        lbState = Label(frm, text = '%s' % LANG_MAP[self._lang]['State'],
-                               width = 8)
-        lbOutput = Label(frm, text = '%s' % LANG_MAP[self._lang]['Output'],
-                                width = 32)
-        #self.chkFsSelAll.pack(side = LEFT, expand =1, fill = X)
-        lbURL.pack(side = LEFT, expand =1, fill=X)
-        lbState.pack(side = LEFT, expand =1, fill=X)
-        lbOutput.pack(side = LEFT, expand =1, fill=X)
+        lbURL = Label(frm, text='%s' % LANG_MAP[self._lang]['URL'],
+                      width=32)
+        lbState = Label(frm, text='%s' % LANG_MAP[self._lang]['State'],
+                        width=8)
+        lbOutput = Label(frm, text='%s' % LANG_MAP[self._lang]['Output'],
+                         width=32)
+        # self.chkFsSelAll.pack(side=LEFT, expand=1, fill=X)
+        lbURL.pack(side=LEFT, expand=1, fill=X)
+        lbState.pack(side=LEFT, expand=1, fill=X)
+        lbOutput.pack(side=LEFT, expand=1, fill=X)
 
         self._wm['lbURL'] = lbURL
         self._wm['lbState'] = lbState
@@ -319,9 +319,9 @@ class WindowUI(object):
         fs_popmenu.unpost()
 
     def create_file_list_popmenu(self):
-        fs_popmenu = Menu(self._wm['top'], tearoff = 0)
-        fs_popmenu.add_command(command = self.on_popmenu_open,
-                               label = '%s' % LANG_MAP[self._lang]['Open'])
+        fs_popmenu = Menu(self._wm['top'], tearoff=0)
+        fs_popmenu.add_command(command=self.on_popmenu_open,
+                               label='%s' % LANG_MAP[self._lang]['Open'])
         # bind leave event
         fs_popmenu.bind("<Leave>", self.on_popmenu_leave)
 
@@ -334,14 +334,14 @@ class WindowUI(object):
     def create_file_list_widgets(self):
         frmFsList = self._wm['frmFsList']
         self._lbfs_var = StringVar()
-        lbFs = Listbox(frmFsList, listvariable = self._lbfs_var)
-        lbFs.pack(side = LEFT, expand = 1, fill = BOTH)
+        lbFs = Listbox(frmFsList, listvariable=self._lbfs_var)
+        lbFs.pack(side=LEFT, expand=1, fill=BOTH)
         frmSbY = self._wm['frmSbY']
         sbY = Scrollbar(frmSbY)
-        sbY.pack(side = TOP, expand = 1, fill=Y)
+        sbY.pack(side=TOP, expand=1, fill=Y)
         frmSbX = self._wm['frmSbX']
-        sbX = Scrollbar(frmSbX, orient = HORIZONTAL)
-        sbX.pack(side = TOP, expand = 1, fill=X)
+        sbX = Scrollbar(frmSbX, orient=HORIZONTAL)
+        sbX.pack(side=TOP, expand=1, fill=X)
 
         lbFs['yscrollcommand'] = sbY.set
         sbY['command'] = lbFs.yview
@@ -359,6 +359,7 @@ class WindowUI(object):
 #               WebImageCrawlerUI Class
 ############################################################################
 
+
 class WebImageCrawlerUI(WindowUI):
 
     def __init__(self, name=None):
@@ -373,7 +374,6 @@ class WebImageCrawlerUI(WindowUI):
         self._download_thread_max = 5
         self._download_thread_queue = Queue(self._download_thread_max)
         self._download_threads = None
-
 
     def menu_file_open(self):
         f = askopenfilename()
@@ -390,9 +390,9 @@ class WebImageCrawlerUI(WindowUI):
         self.update_type_widget_state(self._type_chk.get())
 
     def on_bn_type_click(self):
-        t_type  = self._type_var.get()
+        t_type = self._type_var.get()
         t_start = self._type_start.get()
-        t_end   = self._type_end.get()
+        t_end = self._type_end.get()
         if all((t_type, t_start)):
             try:
                 url_start = int(t_start)
@@ -402,20 +402,21 @@ class WebImageCrawlerUI(WindowUI):
                         n = url_end - url_start + 1
                     else:
                         showerror('%s' % LANG_MAP[self._lang]['Error'],
-                            '%s(%d) > %s(%d)!' %
-                            (LANG_MAP[self._lang]['Start'], url_start,
-                             LANG_MAP[self._lang]['End'], url_end))
+                                  '%s(%d) > %s(%d)!' %
+                                  (LANG_MAP[self._lang]['Start'], url_start,
+                                   LANG_MAP[self._lang]['End'], url_end))
                         return
                 else:
                     n = 1
             except ValueError as e:
-                showerror('%s' % LANG_MAP[self._lang]['Error'],'\n%s!' % str(e))
+                showerror('%s' % LANG_MAP[self._lang]['Error'],
+                          '\n%s!' % str(e))
                 return
             # config args
             if self._lang:
                 index = LANG_MAP[self._lang]['TypeList'].index(t_type)
                 t_type = LANG_MAP[0]['TypeList'][index]
-            args = {'-x': t_type, '-u' : t_start, '-n' : n}
+            args = {'-x': t_type, '-u': t_start, '-n': n}
             self._path_var.set(args)
 
             # update file list and info.
@@ -423,7 +424,7 @@ class WebImageCrawlerUI(WindowUI):
             self.update_list_info()
         else:
             showerror('%s' % LANG_MAP[self._lang]['Error'],
-                    '\n%s!' % LANG_MAP[self._lang]['InvalidType'])
+                      '\n%s!' % LANG_MAP[self._lang]['InvalidType'])
 
     def on_run_click(self):
         fp = self._wm['enPath'].get()
@@ -449,13 +450,13 @@ class WebImageCrawlerUI(WindowUI):
         if data:
             output = data[0].strip()
         if output:
-            for k, w in {' ' : '\ ', ':' : '\:'}.items():
+            for k, w in {' ': '\ ', ':': '\:'}.items():
                 output = re.sub(k, w, output)
             cmd = 'nautilus %s' % output
-            subprocess.check_output(cmd, shell = True)
+            subprocess.check_output(cmd, shell=True)
         else:
             showinfo(LANG_MAP[self._lang]['Notice'],
-                 LANG_MAP[self._lang]['NoOutput'])
+                     LANG_MAP[self._lang]['NoOutput'])
 
     def update_type_widget_state(self, state):
         if int(state):
@@ -473,10 +474,10 @@ class WebImageCrawlerUI(WindowUI):
         menu_file = self._wm['menu_file']
         if int(state):
             menu_file.entryconfigure(
-              '%s' % LANG_MAP[self._lang]['Open'].center(10), state = NORMAL)
+                '%s' % LANG_MAP[self._lang]['Open'].center(10), state=NORMAL)
         else:
             menu_file.entryconfigure(
-              '%s' % LANG_MAP[self._lang]['Open'].center(10), state = DISABLED)
+              '%s' % LANG_MAP[self._lang]['Open'].center(10), state=DISABLED)
 
     def update_widget_state(self, state):
         # update state of menu
@@ -493,8 +494,7 @@ class WebImageCrawlerUI(WindowUI):
             self._wm['enPath']['state'] = DISABLED
             self.update_type_widget_state(0)
 
-
-    def add_url_info_to_list(self, url, state = None, output = None):
+    def add_url_info_to_list(self, url, state=None, output=None):
         info = FileInfo()
         info._url = url
         if state:
@@ -504,7 +504,7 @@ class WebImageCrawlerUI(WindowUI):
         self._fs_list.append(info)
         self._fs_list_cnt += 1
 
-    def update_list_info(self, url = None, state = None, output = None):
+    def update_list_info(self, url=None, state=None, output=None):
         with self._fs_list_lock:
             fs = list()
             for i, info in enumerate(self._fs_list):
@@ -513,7 +513,7 @@ class WebImageCrawlerUI(WindowUI):
                         info._state = state
                     if output:
                         info._output = output
-                #print(info._url, info._state, info._output)
+                # print(info._url, info._state, info._output)
                 fs.append('%s%s%s' % (info._url.ljust(64),
                                       info._state.ljust(16),
                                       info._output.ljust(64)))
@@ -547,7 +547,7 @@ class WebImageCrawlerUI(WindowUI):
             if url:
                 self.add_url_info_to_list(url)
         # sort of file list.
-        self._fs_list.sort(key = lambda info: info._url, reverse=False)
+        self._fs_list.sort(key=lambda info: info._url, reverse=False)
 
     def download_url(self, args=None):
         url = args['-u']
@@ -585,25 +585,24 @@ class WebImageCrawlerUI(WindowUI):
                 if base:
                     for dict_url_base in URL_BASE.values():
                         if base == list(dict_url_base)[0]:
-                            self._class =  dict_url_base[base]
+                            self._class = dict_url_base[base]
                             break
                 if self._class:
-                    url = {'-u' : url}
+                    url = {'-u': url}
                     # create thread and put to queue.
                     t = threading.Thread(target=self.download_url, args=(url,))
                     self._download_thread_queue.put(url)
                     self._download_threads.append(t)
                     t.start()
                 else:
-                    self.update_list_info(url = url, state = STAT_NOT_SUPPORT)
+                    self.update_list_info(url=url, state=STAT_NOT_SUPPORT)
             for t in self._download_threads:
                 t.join()
             self.update_widget_state(1)
-            #print('All of url are done!')
+            # print('All of url are done!')
 
     def download_url_list(self):
-        threading.Thread(target = self.crawler_download_url).start()
-
+        threading.Thread(target=self.crawler_download_url).start()
 
     def main(self, args=None):
         self.run()

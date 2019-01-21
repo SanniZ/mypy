@@ -6,12 +6,13 @@ Created on 2018-12-05
 @author: Byng Zeng
 """
 
-import re
-import os
-import sys
-import getopt
+# import re
+# import os
+# import sys
+# import getopt
 
 from mypy.base import Base
+
 
 def print_help():
     help_menu = (
@@ -26,10 +27,12 @@ def print_help():
         print(txt)
     Base.print_exit()
 
+
 def main():
     args = Base.get_user_input('h')
     if '-h' in args:
         print_help()
+
 
 if __name__ == '__main__':
     main()

@@ -27,6 +27,7 @@ help_menu = (
     '    path: path of the second image',
 )
 
+
 def get_face_image():
     fid = None
     sid = None
@@ -39,9 +40,10 @@ def get_face_image():
         sid = Path.get_abs_path(args['-s'])
     return fid, sid
 
+
 def main():
     fid, sid = get_face_image()
-    if fid == None or sid == None:
+    if any((not fid, not sid)):
         Base.print_exit('Error, no found id image.')
 
     x_appid = 'wsr00030d4d@ch407c0f6177e2477400'
@@ -78,4 +80,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

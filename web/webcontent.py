@@ -7,12 +7,6 @@ Created on 2018-12-03
 """
 
 import sys
-
-if sys.version_info[0] == 2:
-    from urllib2 import Request, urlopen, URLError, HTTPError
-else:
-    from urllib.request import Request, urlopen, URLError, HTTPError
-
 import re
 import urllib
 import os
@@ -27,25 +21,42 @@ from mypy.path import Path
 from mypy.file import File
 from mypy.pr import Print
 
+if sys.version_info[0] == 2:
+    from urllib2 import Request, urlopen, URLError, HTTPError
+else:
+    from urllib.request import Request, urlopen, URLError, HTTPError
+
 USER_AGENTS = {
-    'AppleWebKit/537.36' : 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36 LBBROWSER',
-    'Gecko/20071127'     : 'Mozilla/5.0 (Windows NT 6.2; rv:16.0) Gecko/20100101 Firefox/16.0',
-    'Gecko/20070731'     : 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.0.12) Gecko/20070731 Ubuntu/dapper-security Firefox/1.5.0.12',
-    'Gecko/20100101'     : 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0',
-    'Lynx/2.8.5rel.1'    : 'Lynx/2.8.5rel.1 libwww-FM/2.14 SSL-MM/1.4.1 GNUTLS/1.2.9',
-    'AppleWebKit/535.7'  : 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.7 (KHTML, like Gecko) Ubuntu/11.04 Chromium/16.0.912.77 Chrome/16.0.912.77 Safari/535.7',
-    'Kubuntu'            : 'Mozilla/5.0 (compatible; Konqueror/3.5; Linux) KHTML/3.5.5 (like Gecko) (Kubuntu)',
+    'AppleWebKit/537.36': 'Mozilla/5.0 (Windows NT 6.1; WOW64) '
+                          'AppleWebKit/537.36 (KHTML, like Gecko) '
+                          'Chrome/34.0.1847.137 Safari/537.36 LBBROWSER',
+    'Gecko/20071127': 'Mozilla/5.0 (Windows NT 6.2; rv:16.0) '
+                      'Gecko/20100101 Firefox/16.0',
+    'Gecko/20070731': 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.0.12) '
+                      'Gecko/20070731 Ubuntu/dapper-security Firefox/1.5.0.12',
+    'Gecko/20100101': 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:10.0) '
+                      'Gecko/20100101 Firefox/10.0',
+    'Lynx/2.8.5rel.1': 'Lynx/2.8.5rel.1 libwww-FM/2.14 SSL-MM/1.4.1 '
+                       'GNUTLS/1.2.9',
+    'AppleWebKit/535.7': 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.7 '
+                         '(KHTML, like Gecko) Ubuntu/11.04 '
+                         'Chromium/16.0.912.77 '
+                         'Chrome/16.0.912.77 Safari/535.7',
+    'Kubuntu': 'Mozilla/5.0 (compatible; Konqueror/3.5; Linux) KHTML/3.5.5 '
+               '(like Gecko) (Kubuntu)',
 }
 
 URL_HEADER = {
     'User-Agent': '%s' % USER_AGENTS['AppleWebKit/537.36'],
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;'
+              'q=0.9,*/*;q=0.8',
     'Connection': 'keep-alive',
 }
 
 DEFAULT_CHARSET = r'GB2312'
 
 CHARSETS = ('UTF-8', 'GB2312', 'GBK')
+
 
 class WebContent (object):
 
@@ -68,9 +79,11 @@ class WebContent (object):
         charset = None
         pattern = re.compile('charset=[a-z0-8-]*', flags=re.I)
         if content_type:
-            charset = pattern.search(re.sub('charset=(\"|\')', 'charset=', content_type))
+            charset = pattern.search(
+                        re.sub('charset=(\"|\')', 'charset=', content_type))
         if all((html, not charset)):
-            charset = pattern.search(re.sub('charset=(\"|\')', 'charset=', str(html)))
+            charset = pattern.search(
+                        re.sub('charset=(\"|\')', 'charset=', str(html)))
         # get data
         if charset:
             charset = charset.group()
@@ -94,18 +107,22 @@ class WebContent (object):
             else:
                 content_type = html.getheader('Content-Type')
                 if content_type:
-                    url_charset = cls.get_url_charset(content_type=content_type)
+                    url_charset = \
+                        cls.get_url_charset(content_type=content_type)
                 data = html.read()
                 encoding = html.getheader('Content-Encoding')
                 if encoding == 'gzip':
-                     data = gzip.GzipFile(fileobj=io.StringIO(data)).read()
+                    data = gzip.GzipFile(fileobj=io.StringIO(data)).read()
                 if data:
                     for charset in CHARSETS:
                         if url_charset:
-                            html_content = data.decode(url_charset, 'ignore').encode('utf-8')
+                            html_content = \
+                                data.decode(url_charset,
+                                            'ignore').encode('utf-8')
                             break
                         else:
-                            html_content = data.decode(charset, 'ignore').encode('utf-8')
+                            html_content = \
+                                data.decode(charset, 'ignore').encode('utf-8')
                             if html_content:
                                 url_charset = cls.get_url_charset(html_content)
                                 if not url_charset:
@@ -113,17 +130,17 @@ class WebContent (object):
                                 elif charset == url_charset:
                                     break
                 else:
-                    #cls.pr.pr_err('Error: fail to get data from html')
+                    # cls.pr.pr_err('Error: fail to get data from html')
                     html_content = None
         return html_content
 
     @classmethod
     def get_url_content(cls, url, retry_times=3, view=True, path=None):
         if cls.url_is_https(url):
-            content = cls.get_html(url = url, context = cls.CONTEXT_UNVERIFIED,
-                                   retry_times = retry_times,view = view)
+            content = cls.get_html(url=url, context=cls.CONTEXT_UNVERIFIED,
+                                   retry_times=retry_times, view=view)
         else:
-            content = cls.get_html(url = url, retry_times = retry_times, view = view)
+            content = cls.get_html(url=url, retry_times=retry_times, view=view)
         # save content to path.
         if all((content, path)):
             Path.make_path(path)
@@ -160,7 +177,8 @@ class WebContent (object):
                     cls.pr.pr_warn('%s, retrieve %s failed.' % (str(e), url))
 
     @classmethod
-    def urlopen_get_url_file(cls, url, path, ssl=False, headers=None, view=False):
+    def urlopen_get_url_file(cls, url, path,
+                             ssl=False, headers=None, view=False):
         fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])
         if not os.path.exists(fname):
             req = Request(url=url)
@@ -172,7 +190,7 @@ class WebContent (object):
             else:
                 context = None
             try:
-                r = urlopen(req, context = context)
+                r = urlopen(req, context=context)
             except (URLError, HTTPError) as e:
                 cls.pr.pr_warn('%s, uget %s failed.' % (str(e), url))
             else:
@@ -197,13 +215,13 @@ class WebContent (object):
                 f.write(r.content)
 
     @classmethod
-    def wget_url_file(cls, url, path,
-                      config='-c -t 3 -T 10 -U \'%s\'' % USER_AGENTS['Kubuntu'],
-                      view=False):
+    def wget_url_file(
+            cls, url, path, view=False,
+            config='-c -t 3 -T 10 -U \'%s\'' % USER_AGENTS['Kubuntu']):
         if view:
             cmd = 'wget %s -P %s %s -nv' % (config, path, url)
         else:
-            cmd = 'wget %s -P %s %s -q'  % (config, path, url)
+            cmd = 'wget %s -P %s %s -q' % (config, path, url)
         try:
             cls.pr.pr_dbg('wget cmd: %s' % cmd)
             return subprocess.check_output(cmd, shell=True)
@@ -213,11 +231,11 @@ class WebContent (object):
     @classmethod
     def get_url_title(cls, html_content, pattern=None):
         if not pattern:
-            pattern=re.compile(b'<title>.+</title>')
+            pattern = re.compile(b'<title>.+</title>')
         data = pattern.search(html_content)
         if data:
             data = data.group()
-            return data[len('<title>') : len(data) - len('</title>')]
+            return data[len('<title>'): len(data) - len('</title>')]
         else:
             return None
 
@@ -268,6 +286,7 @@ class WebContent (object):
     def convert_url_to_title(cls, url):
         return File.reclaim_name(re.sub('/$', '', url))
 
+
 if __name__ == '__main__':
 
     from mypy.base import Base
@@ -312,10 +331,10 @@ if __name__ == '__main__':
     if '-d' in args:
         df_funcs = {
             'wget': wc.wget_url_file,
-            'rtrv' : wc.retrieve_url_file,
-            'rget' : wc.requests_get_url_file,
-            'uget' : wc.urlopen_get_url_file,
-            'html' : wc.get_url_content,
+            'rtrv': wc.retrieve_url_file,
+            'rget': wc.requests_get_url_file,
+            'uget': wc.urlopen_get_url_file,
+            'html': wc.get_url_content,
         }
         if all((args['-d'] in df_funcs.keys(), url)):
             df = df_funcs[args['-d']]

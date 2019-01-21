@@ -8,6 +8,7 @@ Created on: 2018-12-11
 
 from web.webimage.webimage import WebImage
 
+
 class Meizitu(WebImage):
 
     def __init__(self, name=None):

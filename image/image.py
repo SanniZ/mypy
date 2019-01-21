@@ -15,7 +15,8 @@ from mypy.file import File
 IMG_W_MIN = 240
 IMG_H_MIN = 240
 
-SMALL_IMG_SIZE = 1024 * 8 # 8K
+SMALL_IMG_SIZE = 1024 * 8  # 8K
+
 
 class Image (object):
 
@@ -54,7 +55,7 @@ class Image (object):
     def image_file(cls, f):
         try:
             img = PILImg.open(f)
-        except IOError: # it is bad if open failed.
+        except IOError:  # it is bad if open failed.
             return None
         else:
             if img.format in ['PNG', 'JPEG', 'GIF']:
@@ -84,7 +85,7 @@ class Image (object):
                            obj=None, remove_small_size_image=False):
         imgs_dict = dict()
         if obj:
-            imgs_dict[path]=obj
+            imgs_dict[path] = obj
         elif os.path.isfile(path):
             img = cls.image_file(path)
             if img:
@@ -129,7 +130,7 @@ class Image (object):
             if fmt == 'jpeg':
                 fmt = 'jpg'
             ftype = File.get_filetype(f)
-            if not ftype: # no ext name
+            if not ftype:  # no ext name
                 fname = '%s.%s' % (f, fmt)
             elif fmt != ftype:
                 fname = re.sub(ftype, fmt, f)
@@ -139,7 +140,7 @@ class Image (object):
                 print('%s, failed to rename %s.' % (str(e), f))
             # remove small image.
             if remove_small_image:
-                cls.remove_small_image(fname, obj = img)
+                cls.remove_small_image(fname, obj=img)
 
     @classmethod
     def reclaim_path_images(cls, path, remove_small_image=False):
@@ -165,24 +166,32 @@ class Image (object):
                         fmt = cls.get_image_format(obj=img)
                         if non_zero:
                             if rename:
-                                fname = os.path.join(rt, '%s_%d.%s' % (rename, index, fmt))
+                                fname = os.path.join(
+                                    rt, '%s_%d.%s' % (rename, index, fmt))
                             else:
-                                fname = os.path.join(rt, '%d.%s' % (index, fmt))
+                                fname = os.path.join(
+                                    rt, '%d.%s' % (index, fmt))
                         else:
                             if rename:
                                 if num == 2:
-                                    fname = os.path.join(rt, '%s_%02d.%s' % (rename, index, fmt))
+                                    fname = os.path.join(
+                                      rt, '%s_%02d.%s' % (rename, index, fmt))
                                 elif num == 3:
-                                    fname = os.path.join(rt, '%s_%03d.%s' % (rename, index, fmt))
+                                    fname = os.path.join(
+                                      rt, '%s_%03d.%s' % (rename, index, fmt))
                                 else:
-                                    fname = os.path.join(rt, '%s_%0d.%s' % (rename, index, fmt))
+                                    fname = os.path.join(
+                                      rt, '%s_%0d.%s' % (rename, index, fmt))
                             else:
                                 if num == 2:
-                                    fname = os.path.join(rt, '%02d.%s' % (index, fmt))
+                                    fname = os.path.join(
+                                      rt, '%02d.%s' % (index, fmt))
                                 elif num == 3:
-                                    fname = os.path.join(rt, '%03d.%s' % (index, fmt))
+                                    fname = os.path.join(
+                                      rt, '%03d.%s' % (index, fmt))
                                 else:
-                                    fname = os.path.join(rt, '%0d.%s' % (index, fmt))
+                                    fname = os.path.join(
+                                      rt, '%0d.%s' % (index, fmt))
                         fdict[f] = fname
                         index = index + 1
                 # rename all of image under this dr
@@ -237,7 +246,7 @@ if __name__ == '__main__':
     if '-r' in args:
         data = args['-r'].split(',')
         path = data[0]
-        if len(data) >=2:
+        if len(data) >= 2:
             w = data[1]
             h = data[2]
             Img.remove_small_image(path, int(w), int(h))

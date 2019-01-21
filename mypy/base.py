@@ -31,7 +31,7 @@ class Base (object):
 
     @classmethod
     def get_user_input(cls, opts):
-        result=dict()
+        result = dict()
         try:
             opts, args = getopt.getopt(sys.argv[1:], opts)
         except getopt.GetoptError as e:

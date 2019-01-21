@@ -8,22 +8,18 @@ Created on Thu Jul  5 11:17:08 2018
 from debug import Debug as d
 from input import Input
 
+
 class CmdProcessing(object):
     def __init__(self):
         self._cmd_dict = dict()
 
     def register_cmd_handler(self, handlers):
-        if handlers != None and type(handlers) == dict:
+        if all((handlers, type(handlers) == dict)):
             for key in handlers.keys():
                 if key in self._cmd_dict:
-                    hdrs = list()
-                    if type(self._cmd_dict[key]) == list:
-                        for hdr in self._cmd_dict[key]:
-                            hdrs.append(hdr)
-                    hdrs.append(handlers[key])
-                    self._cmd_dict[key] = hdrs
+                    self._cmd_dict[key].append(handlers[key])
                 else:
-                    self._cmd_dict[key] = handlers[key]
+                    self._cmd_dict[key] = [handlers[key]]
 
     # run input commands
     def run(self, cmds):
@@ -32,7 +28,7 @@ class CmdProcessing(object):
             # check help.
             if key == 'help':
                 for sub_cmd in cmds[key]:
-                    if sub_cmd != 'cfg': # no show while cfg.
+                    if sub_cmd != 'cfg':  # no show while cfg.
                         d.info('help:[help][,cfg]')
                         d.info('  help: show help')
                         d.info('  cfg : show config info')

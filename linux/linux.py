@@ -12,6 +12,7 @@ import re
 
 from debug import Debug as d
 
+
 class HwInfo(object):
     def __init__(self):
         d.dbg('HwInfo init done!')
@@ -45,6 +46,29 @@ class HwInfo(object):
             elif cmd == 'ip':
                 d.info(self.get_host_ip())
 
+    def get_cmd_handlers(self, cmd=None):
+        hdrs = {
+            'help': self.help,
+            'hwinfo': self.hwif_handler,
+        }
+        if not cmd:
+            return hdrs
+        else:
+            if cmd in hdrs:
+                return hdrs[cmd]
+            else:
+                return None
+
+
+class PSTool(object):
+
+    def help(self, cmds):
+        for cmd in cmds:
+            if cmd == 'help':
+                d.info('ps:kw[,list/kill]')
+                d.info('  kw: the keyword will be search.')
+                d.info('  list/kill: list/kill the ps.')
+
     def ps_handler(self, cmds):
         l = len(cmds)
         if l >= 2:
@@ -58,7 +82,7 @@ class HwInfo(object):
         pattern_ps = re.compile('(\d+) (pts|\?)')
         # get ps
         while 1:
-            output = subprocess.check_output(grep_kw_cmd, shell = True)
+            output = subprocess.check_output(grep_kw_cmd, shell=True)
             output = output.decode()
             # show pids of keyword.
             if opt in ['list', 'kill']:
@@ -72,14 +96,14 @@ class HwInfo(object):
                 print('*****************************************************')
                 print(pids)
                 opt_k = input('Kill all of Ps(Y/N/O/L):').upper()
-                if opt_k == 'Y': # kill all of pids
+                if opt_k == 'Y':  # kill all of pids
                     ps = ''
                     for p in pids:
                         ps += ' %s' % p
                     cmd = 'sudo kill -9 %s' % ps
-                    #print(cmd)
-                    subprocess.call(cmd, shell = True)
-                elif opt_k == 'O': # options of pids.
+                    # print(cmd)
+                    subprocess.call(cmd, shell=True)
+                elif opt_k == 'O':  # options of pids.
                     opt_pids = input('You want to kill(xxx,xxx):')
                     opt_pids = opt_pids.split(',')
                     ps = ''
@@ -87,24 +111,24 @@ class HwInfo(object):
                         if p in pids:
                             ps += ' %s' % p
                     cmd = 'sudo kill -9 %s' % ps
-                    #print(cmd)
-                    subprocess.call(cmd, shell = True)
-                elif opt_k == 'N': # cancel.
+                    # print(cmd)
+                    subprocess.call(cmd, shell=True)
+                elif opt_k == 'N':  # cancel.
                     break
 
     def get_cmd_handlers(self, cmd=None):
         hdrs = {
-            'help' : self.help,
-            'hwinfo' : self.hwif_handler,
-            'ps' : self.ps_handler,
+            'help': self.help,
+            'ps': self.ps_handler,
         }
-        if cmd == None:
+        if not cmd:
             return hdrs
         else:
             if cmd in hdrs:
                 return hdrs[cmd]
             else:
                 return None
+
 
 class FileOps(object):
     def __init__(self):
@@ -165,12 +189,12 @@ class FileOps(object):
 
     def get_cmd_handlers(self, cmd=None):
         hdrs = {
-            'help' : self.help,
-            'del'  : self.del_handler,
-            'fdel' : self.fdel_handler,
-            'find' : self.find_handler,
+            'help': self.help,
+            'del': self.del_handler,
+            'fdel': self.fdel_handler,
+            'find': self.find_handler,
         }
-        if cmd == None:
+        if not cmd:
             return hdrs
         else:
             if cmd in hdrs:
@@ -181,10 +205,12 @@ class FileOps(object):
 if __name__ == '__main__':
     from cmdprocessing import CmdProcessing
 
-    #d.set_debug_level('dbg,info,err')
+    # d.set_debug_level('dbg,info,err')
     hwif = HwInfo()
     fops = FileOps()
+    ps = PSTool()
     cmdHdr = CmdProcessing()
     cmdHdr.register_cmd_handler(hwif.get_cmd_handlers())
     cmdHdr.register_cmd_handler(fops.get_cmd_handlers())
+    cmdHdr.register_cmd_handler(ps.get_cmd_handlers())
     cmdHdr.run_sys_input()

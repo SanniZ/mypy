@@ -6,10 +6,10 @@ Created on 2018-12-05
 @author: Byng Zeng
 """
 
-import re
-import os
-import sys
-import getopt
+# import re
+# import os
+# import sys
+# import getopt
 
 from mypy.base import Base
 
@@ -34,6 +34,7 @@ class Template(object):
         args = Base.get_user_input('h')
         if '-h' in args:
             self.print_help()
+
 
 if __name__ == '__main__':
     template = Template()

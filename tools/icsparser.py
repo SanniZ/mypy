@@ -50,9 +50,9 @@ class _ICSCalendarRe(object):
         self._date = re.compile(RE_DATE)
         self._filter_time = re.compile(RE_TIME_FILTER)
         self._time = re.compile(RE_TIME)
-        self._location=re.compile(RE_LOCATION)
+        self._location = re.compile(RE_LOCATION)
         self._summary = re.compile(RE_SUMMARY)
-        self._description=re.compile(RE_DESCRIPTION)
+        self._description = re.compile(RE_DESCRIPTION)
         self._end_event = re.compile(RE_END_VEVENT)
         self._cal_name = re.compile(RE_CALNAME)
 
@@ -74,7 +74,7 @@ class _ICSCalendarRe(object):
     def get_time(self, txt):
         time = None
         ftime = self._filter_time.search(txt)
-        if ftime !=  None:
+        if ftime:
             time = self._time.search(ftime.group())
         return time
 
@@ -115,7 +115,7 @@ class ICSCalendar(object):
             if len(files) != 0:
                 for f in files:
                     if File.get_filetype(f) == TYPE_ICS:
-                        if fs == None:
+                        if fs is None:
                             fs = list()
                         fs.append(os.path.join(root, f))
         # return all of files.
@@ -126,7 +126,7 @@ class ICSCalendar(object):
     def get_ics_files2(cls, path):
         cmd = 'find %s -name *.ics' % path
         try:
-            fs = subprocess.check_output(cmd, shell = True)
+            fs = subprocess.check_output(cmd, shell=True)
             fs = list(fs.split())
         except subprocess.CalledProcessError:
             print('No found .ics at %s' % path)
@@ -137,11 +137,12 @@ class ICSCalendar(object):
     @classmethod
     def get_src_files(cls, path):
         fs = None
-        if os.path.exists(path) == True:
-            if os.path.isfile(path) == True and File.get_filetype(path) == TYPE_ICS:
+        if os.path.exists(path):
+            if all((os.path.isfile(path),
+                    File.get_filetype(path) == TYPE_ICS)):
                 fs = list()
                 fs.append(path)
-            elif os.path.isdir(path) == True:
+            elif os.path.isdir(path):
                 fs = ICSCalendar.get_ics_files(path)
         # return result.
         return fs
@@ -151,10 +152,10 @@ class ICSCalendar(object):
     def make_output_path(cls, name):
         path = os.path.split(name)[0]
         # make dir for output
-        if os.path.exists(path) == False:
+        if not os.path.exists(path):
             os.makedirs(path)
         # remove old file.
-        if os.path.exists(name) == True:
+        if os.path.exists(name):
             os.remove(name)
 
     # init ICSCalendar
@@ -167,7 +168,7 @@ class ICSCalendar(object):
         self._events = list()
         self._event_cnt = 0
         self._event = _ICSCalendarEvent()
-        #self._sortKey = 'DTSTART'
+        # self._sortKey = 'DTSTART'
         self._sort_reverse = False
         self._combine_files = False
         self._re = None
@@ -191,14 +192,14 @@ class ICSCalendar(object):
                 self._sort_reverse = False
         if r'-s' in args:
             # set _src to list
-            if self._src == None:
+            if self._src is None:
                 self._src = list()
             # get src files
             fs = self.get_src_files(os.path.abspath(args['-s']))
             if fs:
-               # add fs to _src
-               for f in fs:
-                   self._src.append(f)
+                # add fs to _src
+                for f in fs:
+                    self._src.append(f)
         if r'-t' in args:
             ftype = File.get_filetype(os.path.abspath(args['-t']))
             if ftype in [TYPE_TXT, TYPE_CSV]:
@@ -211,29 +212,29 @@ class ICSCalendar(object):
     # check input args
     def check_opt_args(self):
         # check src.
-        if self._src == None:
+        if self._src is None:
             # check current path.
             fs = ICSCalendar.get_ics_files(os.getcwd())
             if fs:
                 # set _src to list
-                if self._src == None:
+                if self._src is None:
                     self._src = list()
                 # add fs to _src
                 for f in fs:
                     self._src.append(f)
 
         # check tgt.
-        if self._tgt == None:
+        if self._tgt is None:
             self._tgt = os.getcwd()
 
     # get name of output
     def get_output_name(self, fmt):
         if File.get_filetype(self._tgt) == fmt:
             name = self._tgt
-        elif self._combine_files == True:
-	        name = r'%s/%s.%s' % (self._tgt, u'日历', fmt.lower())
+        elif self._combine_files:
+            name = r'%s/%s.%s' % (self._tgt, u'日历', fmt.lower())
         else:
-	        name = r'%s/%s.%s' % (self._tgt, self._cal_name, fmt.lower())
+            name = r'%s/%s.%s' % (self._tgt, self._cal_name, fmt.lower())
         # return name of file.
         return name
 
@@ -250,34 +251,42 @@ class ICSCalendar(object):
             # start to write events.
             for event in self._events:
                 # start of date.
-                f.write('%s-%s-%s,' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8]))
+                f.write('%s-%s-%s,' % (event._date_s[0:4], event._date_s[4:6],
+                                       event._date_s[6:8]))
                 # start of time
-                if event._time_s == None:
+                if event._time_s is None:
                     f.write(',')
                 else:
-                    f.write('%s:%s,' % (event._time_s[0:2], event._time_s[2:4]))
+                    f.write('%s:%s,' % (event._time_s[0:2],
+                                        event._time_s[2:4]))
                 # end of date
                 if event._date_e == event._date_s:
                     f.write(',')
                 else:
-                    f.write('%s-%s-%s,' % (event._date_e[0:4], event._date_e[4:6], event._date_e[6:8]))
+                    f.write('%s-%s-%s,' % (event._date_e[0:4],
+                                           event._date_e[4:6],
+                                           event._date_e[6:8]))
                 # end of time
-                if event._time_e == None:
+                if event._time_e is None:
                     f.write(',')
                 else:
-                    f.write('%s:%s,' % (event._time_e[0:2], event._time_e[2:4]))
+                    f.write('%s:%s,' % (event._time_e[0:2],
+                                        event._time_e[2:4]))
                 # write location.
-                if event._location == None:
+                if event._location is None:
                     f.write(',')
                 else:
-                    f.write('%s,' % event._location[len('LOCATION:'):len(event._location)-1])
+                    f.write('%s,' % event._location[
+                            len('LOCATION:'): len(event._location)-1])
                 # write summary.
-                f.write('%s,' % event._summary[len('SUMMARY:'):len(event._summary)-1])
+                f.write('%s,' % event._summary[
+                                len('SUMMARY:'):len(event._summary)-1])
                 # write description.
-                if event._description == None:
+                if event._description is None:
                     f.write(',')
                 else:
-                    f.write('%s,' % event._description[len('DESCRIPTION:'):len(event._description)-1])
+                    f.write('%s,' % event._description[
+                            len('DESCRIPTION:'):len(event._description)-1])
                 # write type of data.
                 f.write('%s\n' % event._type)
         print('output: %s' % name)
@@ -293,31 +302,48 @@ class ICSCalendar(object):
             for event in self._events:
                 f.write('----------------------------------------------\n')
                 # date and time.
-                if event._date_e == event._date_s: # at the same day.
-                    if event._time_s == None or event._time_e == None: # days event: xxxx/xx/xx
-                        f.write('%s/%s/%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8], event._type))
-                    else: # day event: xxxx/xx/xx xx:xx-xx:xx
-                        f.write('%s/%s/%s %s:%s-%s:%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8],
-                                                               event._time_s[0:2], event._time_s[2:4], event._time_e[0:2], event._time_e[2:4], event._type))
+                if event._date_e == event._date_s:  # at the same day.
+                    if event._time_s is None or event._time_e is None:
+                        f.write('%s/%s/%s %s\n' % (
+                            event._date_s[0:4], event._date_s[4:6],
+                            event._date_s[6:8], event._type))
+                    else:  # day event: xxxx/xx/xx xx:xx-xx:xx
+                        f.write('%s/%s/%s %s:%s-%s:%s %s\n' % (
+                            event._date_s[0:4], event._date_s[4:6],
+                            event._date_s[6:8],
+                            event._time_s[0:2], event._time_s[2:4],
+                            event._time_e[0:2], event._time_e[2:4],
+                            event._type))
                 else:
-                    if event._time_s == None or event._time_e == None: # days event: xxxx/xx/xx-xxxx/xx/xx
-                        f.write('%s/%s/%s-%s/%s/%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8],
-                                                            event._date_e[0:4], event._date_e[4:6], event._date_e[6:8], event._type))
-                    else: # day event: xxxx/xx/xx xx:xx-xx:xx
-                        f.write('%s/%s/%s %s:%s-%s/%s/%s %s:%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8], event._time_s[0:2], event._time_s[2:4],
-                                                                        event._date_e[0:4], event._date_e[4:6], event._date_e[6:8], event._time_e[0:2], event._time_e[2:4], event._type))
+                    if event._time_s is None or event._time_e is None:
+                        f.write('%s/%s/%s-%s/%s/%s %s\n' % (
+                            event._date_s[0:4], event._date_s[4:6],
+                            event._date_s[6:8], event._date_e[0:4],
+                            event._date_e[4:6], event._date_e[6:8],
+                            event._type))
+                    else:  # day event: xxxx/xx/xx xx:xx-xx:xx
+                        f.write('%s/%s/%s %s:%s-%s/%s/%s %s:%s %s\n' % (
+                            event._date_s[0:4], event._date_s[4:6],
+                            event._date_s[6:8], event._time_s[0:2],
+                            event._time_s[2:4], event._date_e[0:4],
+                            event._date_e[4:6], event._date_e[6:8],
+                            event._time_e[0:2], event._time_e[2:4],
+                            event._type))
                 # location
-                if event._location == None:
+                if event._location is None:
                     f.write('LOCATION   : \n')
                 else:
-                    f.write('LOCATION   : %s\n' % event._location[len('LOCATION:'):len(event._location)-1])
+                    f.write('LOCATION   : %s\n' % event._location[
+                        len('LOCATION:'):len(event._location)-1])
                 # summary
-                f.write('SUMMARY    : %s\n' % event._summary[len('SUMMARY:'):len(event._summary)-1])
+                f.write('SUMMARY    : %s\n' % event._summary[
+                    len('SUMMARY:'):len(event._summary)-1])
                 # description
-                if event._description == None:
+                if event._description is None:
                     f.write('DESCRIPTION:\n')
                 else:
-                    f.write('DESCRIPTION: %s\n' % event._description[len('DESCRIPTION:'):len(event._description) - 1])
+                    f.write('DESCRIPTION: %s\n' % event._description[
+                        len('DESCRIPTION:'):len(event._description) - 1])
         print('output: %s' % name)
 
     # print all of data.
@@ -325,50 +351,61 @@ class ICSCalendar(object):
         for event in self._events:
             print('----------------------------------------------\n')
             # date and time.
-            if event._date_e == event._date_s: # at the same day.
-                if event._time_s == None or event._time_e == None: # days event: xxxx/xx/xx
-                    print('%s/%s/%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8], event._type))
-                else: # day event: xxxx/xx/xx xx:xx-xx:xx
-                    print('%s/%s/%s %s:%s-%s:%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8],
-                                                         event._time_s[0:2], event._time_s[2:4],
-                                                         event._time_e[0:2], event._time_e[2:4],
-                                                         event._type))
+            if event._date_e == event._date_s:  # at the same day.
+                if event._time_s is None or event._time_e is None:
+                    print('%s/%s/%s %s\n' % (
+                        event._date_s[0:4], event._date_s[4:6],
+                        event._date_s[6:8], event._type))
+                else:  # day event: xxxx/xx/xx xx:xx-xx:xx
+                    print('%s/%s/%s %s:%s-%s:%s %s\n' % (
+                        event._date_s[0:4], event._date_s[4:6],
+                        event._date_s[6:8], event._time_s[0:2],
+                        event._time_s[2:4], event._time_e[0:2],
+                        event._time_e[2:4], event._type))
             else:
-                if event._time_s == None or event._time_e == None: # days event: xxxx/xx/xx-xxxx/xx/xx
-                    print('%s/%s/%s-%s/%s/%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8],
-                                                      event._date_e[0:4], event._date_e[4:6], event._date_e[6:8],
-                                                      event._type))
-                else: # day event: xxxx/xx/xx xx:xx-xx:xx
-                    print('%s/%s/%s %s:%s-%s/%s/%s %s:%s %s\n' % (event._date_s[0:4], event._date_s[4:6], event._date_s[6:8],
-                                                                  event._time_s[0:2], event._time_s[2:4],
-                                                                  event._date_e[0:4], event._date_e[4:6], event._date_e[6:8],
-                                                                  event._time_e[0:2], event._time_e[2:4],
-                                                                  event._type))
+                if event._time_s is None or event._time_e is None:
+                    print('%s/%s/%s-%s/%s/%s %s\n' % (
+                        event._date_s[0:4], event._date_s[4:6],
+                        event._date_s[6:8], event._date_e[0:4],
+                        event._date_e[4:6], event._date_e[6:8],
+                        event._type))
+                else:  # day event: xxxx/xx/xx xx:xx-xx:xx
+                    print('%s/%s/%s %s:%s-%s/%s/%s %s:%s %s\n' % (
+                        event._date_s[0:4], event._date_s[4:6],
+                        event._date_s[6:8], event._time_s[0:2],
+                        event._time_s[2:4], event._date_e[0:4],
+                        event._date_e[4:6], event._date_e[6:8],
+                        event._time_e[0:2], event._time_e[2:4],
+                        event._type))
             # location
-            if event._location == None:
+            if event._location is None:
                 print('LOCATION   : \n')
             else:
-                print('LOCATION   : %s\n' % event._location[len('LOCATION:'):len(event._location)-1])
+                print('LOCATION   : %s\n' % event._location[
+                        len('LOCATION:'):len(event._location)-1])
             # summary
-            print('SUMMARY    : %s\n' % event._summary[len('SUMMARY:'):len(event._summary)-1])
+            print('SUMMARY    : %s\n' % event._summary[
+                        len('SUMMARY:'):len(event._summary)-1])
             # description
-            if event._description == None:
+            if event._description is None:
                 print('DESCRIPTION:\n')
             else:
-                print('DESCRIPTION: %s\n' % event._description[len('DESCRIPTION:'):len(event._description) - 1])
+                print('DESCRIPTION: %s\n' % event._description[
+                        len('DESCRIPTION:'):len(event._description) - 1])
 
     # call function to output data.
     def format_output(self):
         if len(self._events) == 0:
             return
         # sort all of events.
-        self._events.sort(key = lambda event: event._date_s, reverse=self._sort_reverse)
+        self._events.sort(key=lambda event: event._date_s,
+                          reverse=self._sort_reverse)
         # output
         if self._fmt == TYPE_TXT:
             self.save_to_txt()
         elif self._fmt == TYPE_CSV:
             self.save_to_csv()
-        elif self._fmt == None:
+        elif self._fmt is None:
             self.print_ics_contents()
         else:
             print('Error, use -f txt/csv to set format output\n')
@@ -385,7 +422,7 @@ class ICSCalendar(object):
 
     # process ics file data.
     def process_ics(self, ics):
-        if os.path.isfile(ics) != True:
+        if not os.path.isfile(ics):
             print('Error, no found %s' % ics)
             return False
 
@@ -395,7 +432,7 @@ class ICSCalendar(object):
                 if len(buf) == 0:
                     break
                 # create _ICSCalendarRe
-                if self._re == None:
+                if self._re is None:
                     self._re = _ICSCalendarRe()
                 # get ICSCalendar Name
                 calName = self._re.get_cal_name(buf)
@@ -466,9 +503,9 @@ class ICSCalendar(object):
         # check args.
         self.check_opt_args()
         # start to process data.
-        if self._src == None or len(self._src) == 0:
+        if self._src is None or len(self._src) == 0:
             Base.print_exit('No found .ics, do nothing.')
-        elif self._combine_files == True:
+        elif self._combine_files:
             self.combine_fs_handler()
         else:
             self.fs_handler()

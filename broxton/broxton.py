@@ -17,8 +17,9 @@ from android import Android
 class AvbImage(object):
     def avb_make_image(self, image, broxton):
         # copy image to flashfiles folder
-        cmd = r'cp {out}/{src}.img {flashfiles}/{tar}.img'.format(\
-            out=broxton._out, src=image, flashfiles=broxton._flashfiles, tar=image)
+        cmd = r'cp {out}/{src}.img {flashfiles}/{tar}.img'.format(
+                out=broxton._out, src=image, flashfiles=broxton._flashfiles,
+                tar=image)
         d.dbg(cmd)
         subprocess.call(cmd, shell=True)
 
@@ -39,26 +40,27 @@ class AvbImage(object):
         d.dbg(cmd)
         subprocess.call(cmd, shell=True)
 
+
 class Broxton(object):
     make_map = {
-        'clean' : 'clean',
-        'boot' : 'bootimage',
-        'system' : 'systemimage',
-        'tos' : 'tosimage',
-        'vendor' : 'vendorimage',
-        'bootimage' : 'bootimage',
-        'systemimage' : 'systemimage',
-        'tosimage' : 'tosimage',
-        'vendorimage' : 'vendorimage',
-        'flashfiles' : 'flashfiles',
-        'all' : 'flashfiles',
+        'clean': 'clean',
+        'boot': 'bootimage',
+        'system': 'systemimage',
+        'tos': 'tosimage',
+        'vendor': 'vendorimage',
+        'bootimage': 'bootimage',
+        'systemimage': 'systemimage',
+        'tosimage': 'tosimage',
+        'vendorimage': 'vendorimage',
+        'flashfiles': 'flashfiles',
+        'all': 'flashfiles',
     }
 
     rmdir_map = {
-        'bootimage' : 'out/target/product/gordon_peak/obj/kernel',
-        'tosimage' : 'out/target/product/gordon_peak/obj/trusty',
-        'vendorimage' : 'out/target/product/gordon_peak/vendor',
-        'systemimage' : 'out/target/product/gordon_peak/system',
+        'bootimage': 'out/target/product/gordon_peak/obj/kernel',
+        'tosimage': 'out/target/product/gordon_peak/obj/trusty',
+        'vendorimage': 'out/target/product/gordon_peak/vendor',
+        'systemimage': 'out/target/product/gordon_peak/system',
     }
 
     def __init__(self,
@@ -70,9 +72,9 @@ class Broxton(object):
         self._user = user
         self._fw = r'ifwi_gr_mrb_b1.bin'
         self._ioc = r'ioc_firmware_gp_mrb_fab_e_slcan.ias_ioc'
-        if self._pdt != None and self._opt != None and self._user!= None:
+        if all((self._pdt, self._opt, self._user)):
             self._out = r'out/target/product/{pdt}'.format(pdt=self._pdt)
-            self._flashfiles = r'{out}/{pdt}-flashfiles-eng.{user}'.format(\
+            self._flashfiles = r'{out}/{pdt}-flashfiles-eng.{user}'.format(
                                 out=self._out, pdt=self._pdt, user=self._user)
         else:
             self._out = None
@@ -120,7 +122,8 @@ class Broxton(object):
             f.write("device/intel/mixins/mixin-update\n")
             f.write(". build/envsetup.sh\n")
             f.write("lunch {pdt}-{opt}\n".format(pdt=self._pdt, opt=self._opt))
-            f.write("make {tgt} -j{n}\n".format(tgt=self.make_map[image], n=HwInfo().get_cups()))
+            f.write("make {tgt} -j{n}\n".format(
+                        tgt=self.make_map[image], n=HwInfo().get_cups()))
 
         return make_sh
 
@@ -128,7 +131,7 @@ class Broxton(object):
         # convert to string
         t = type(target)
         if t == list:
-            tgt = str(target[0]) # only support first arg.
+            tgt = str(target[0])  # only support first arg.
         else:
             tgt = target
 
@@ -174,13 +177,15 @@ class Broxton(object):
         avb = None
         for image in images:
             if image == 'fw':
-                self.flash_firmware('{path}/{fw}'.format(path=self._flashfiles, fw=self._fw))
+                self.flash_firmware(
+                    '{path}/{fw}'.format(path=self._flashfiles, fw=self._fw))
             elif image == 'ioc':
-                self.flash_ioc('{path}/{fw}'.format(path=self._flashfiles, fw=self._ioc))
+                self.flash_ioc('{path}/{fw}'.format(
+                                path=self._flashfiles, fw=self._ioc))
             else:
                 # avb make images.
                 d.info('update %s image' % image)
-                if avb == None:
+                if not avb:
                     avb = AvbImage()
                 avb.avb_make_image(image, self)
                 fimgs.append(image)
@@ -189,7 +194,7 @@ class Broxton(object):
             fimgs.append('vbmeta')
             # setup flash env
             ad = Android()
-            #ad.adb_wait()
+            # ad.adb_wait()
             # enter bootloader mode.
             ad.run_cmd_handler(['rebootloader'])
             # unlock
@@ -205,7 +210,8 @@ class Broxton(object):
             ad.run_cmd_handler(['fastreboot'])
 
     def flash_firmware(self, fw):
-        cmd = r'sudo /opt/intel/platformflashtool/bin/ias-spi-programmer --write {}'.format(fw)
+        cmd = \
+            r'sudo /opt/intel/platformflashtool/bin/ias-spi-programmer --write %s'.format(fw)
         d.info(cmd)
         subprocess.call(cmd, shell=True)
 
@@ -218,10 +224,10 @@ class Broxton(object):
         hdrs = {
             'help': self.help,
             'make': self.make_image,
-            'flash' : self.flash_images,
+            'flash': self.flash_images,
         }
 
-        if cmd == None:
+        if not cmd:
             return hdrs
         else:
             if cmd in hdrs:

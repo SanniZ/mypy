@@ -45,7 +45,7 @@ class File(object):
     @classmethod
     def reclaim_name(cls, name, name_dict=None):
         if not name_dict:
-            name_dict = {'/': '%', '\s' : '_'}
+            name_dict = {'/': '%', '\s': '_'}
         for key, value in name_dict.items():
             name = re.sub(key, value, name)
         return name

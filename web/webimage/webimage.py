@@ -9,11 +9,6 @@ import os
 import re
 import sys
 
-if sys.version_info[0] == 2:
-    import Queue
-else:
-    from queue import Queue
-
 import threading
 
 from mypy.base import Base
@@ -23,6 +18,10 @@ from mypy.pr import Print
 from web.webcontent import WebContent, USER_AGENTS
 from image.image import Image
 
+if sys.version_info[0] == 2:
+    import Queue
+else:
+    from queue import Queue
 
 
 def get_input(args=None, exopt=None):
@@ -32,6 +31,7 @@ def get_input(args=None, exopt=None):
             opt += exopt
         args = Base.get_user_input(opt)
     return args
+
 
 class WebImage(object):
 
@@ -69,12 +69,16 @@ class WebImage(object):
         self._url_base = None
         self._url = None
         self._num = 1
-        self._path = '%s/%s' %  (Base.DEFAULT_DWN_PATH, self.__class__.__name__)
+        self._path = '%s/%s' % (Base.DEFAULT_DWN_PATH, self.__class__.__name__)
         self._re_image_url = [
-            #re.compile('src=[\'|\"]?(http[s]?://.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
-            #re.compile('src=[\'|\"]?(/.+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
-            re.compile('src=[\'|\"]?(http[s]?://[a-z0-9\./-]+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
-            re.compile('src=[\'|\"]?(/[a-z0-9\./-]+\.(?:jpg|png|gif|bmp|jpeg))[\'|\"]?', re.I),
+            re.compile(
+                'src=[\'|\"]?(http[s]?://[a-z0-9\./-]+\.'
+                '(?:jpg|png|gif|bmp|jpeg))[\'|\"]?',
+                re.I),
+            re.compile(
+                'src=[\'|\"]?(/[a-z0-9\./-]+\.'
+                '(?:jpg|png|gif|bmp|jpeg))[\'|\"]?',
+                re.I),
         ]
         self._ex_re_image_url = None
         self._title = None
@@ -87,7 +91,6 @@ class WebImage(object):
         self._thread_max = 5
         self._thread_queue = None
 
-
     def get_image_url(self, html):
         pattern = self._re_image_url
         imgs = list()
@@ -98,9 +101,8 @@ class WebImage(object):
                     imgs = imgs + pt.findall(str(html))
             else:
                 imgs = pattern.findall(str(html))
-            #self.pr.pr_dbg('%s' % imgs)
         except TypeError as e:
-           self.pr.pr_err('%s: failed to findall image url' % str(e))
+            self.pr.pr_err('%s: failed to findall image url' % str(e))
         return imgs
 
     def get_image_url_of_pages(self, pages, header_content=None):
@@ -112,7 +114,8 @@ class WebImage(object):
             else:
                 url_content = self.get_url_content(url_pages[index])
             if not url_content:
-                self.pr.pr_err('failed to download %s sub web' % url_pages[index])
+                self.pr.pr_err(
+                    'failed to download %s sub web' % url_pages[index])
                 continue
             imgs = self.get_image_url(url_content)
             for img in imgs:
@@ -128,24 +131,24 @@ class WebImage(object):
         return WebContent.retrieve_url_file(url, path, view=view)
 
     def wget_url_image(self, url, path, view=False):
-        return WebContent.wget_url_file(url, path,
-                                        config="-c -t 3 -T 10 -U \'%s\'" % USER_AGENTS['AppleWebKit/537.36'],
-                                        view=view)
+        return WebContent.wget_url_file(
+            url, path, view=view,
+            config="-c -t 3 -T 10 -U \'%s\'"
+            % USER_AGENTS['AppleWebKit/537.36'])
 
     def requests_get_url_image(self, url, path, view=False):
         return WebContent.requests_get_url_file(url, path, view=view)
 
-
-
     def urlopen_get_url_image(self, url, path, view=False):
         headers = {
             'User-Agent': '%s' % USER_AGENTS['AppleWebKit/537.36'],
-            'GET' : url,
-            'Referer' : self._com,
+            'GET': url,
+            'Referer': self._com,
         }
-        return WebContent.urlopen_get_url_file(url, path,
-                                               ssl=WebContent.url_is_https(url),
-                                               headers=headers, view=view)
+        return WebContent.urlopen_get_url_file(
+                                url, path,
+                                ssl=WebContent.url_is_https(url),
+                                headers=headers, view=view)
 
     # download image of url.
     def download_image(self, url, path):
@@ -171,10 +174,10 @@ class WebImage(object):
             self.download_image(self.get_image_raw_url(img), path)
 
     def get_url_of_pages(self, num):
-        url = map(lambda x: WebContent.set_url_base_and_num(self._url_base,
-                                                            '%s/%d' % (int(self._url), x)),
-                                                            range(2, num + 1))
-        url.insert(0, WebContent.set_url_base_and_num(self._url_base, self._url))
+        url = map(lambda x: WebContent.set_url_base_and_num(
+            self._url_base, '%s/%d' % (int(self._url), x)), range(2, num+1))
+        url.insert(0,
+                   WebContent.set_url_base_and_num(self._url_base, self._url))
         return url
 
     def get_url_address(self, url_base, url):
@@ -223,7 +226,8 @@ class WebImage(object):
                 # update re_image_url
                 self._re_image_url = relist
             except IOError as e:
-                self.pr.pr_err('%s, failed to open %s' % (str(e), self._ex_re_image_url))
+                self.pr.pr_err(
+                    '%s, failed to open %s' % (str(e), self._ex_re_image_url))
 
     # process url web images.
     def process_url_web(self, url, data=None):
@@ -273,7 +277,8 @@ class WebImage(object):
         if self._thread_queue:
             self._thread_queue.get()
         if data:
-            self.pr.pr_info('%d/%d: process %s done!' % (data[0], data[1], url))
+            self.pr.pr_info(
+                '%d/%d: process %s done!' % (data[0], data[1], url))
         return subpath
 
     def get_user_input(self, args=None):
@@ -304,15 +309,15 @@ class WebImage(object):
         if '-m' in args:
             dl_image_funcs = {
                 'wget': self.wget_url_image,
-                'rtrv' : self.retrieve_url_image,
-                'rget' : self.requests_get_url_image,
-                'uget' : self.urlopen_get_url_image,
+                'rtrv': self.retrieve_url_image,
+                'rget': self.requests_get_url_image,
+                'uget': self.urlopen_get_url_image,
             }
             if args['-m'] in dl_image_funcs.keys():
                 self._dl_image = dl_image_funcs[args['-m']]
         if '-d' in args:
             self.__dbg = 1
-            self.pr.set_pr_level(self.pr.get_pr_level() | Print.PR_LVL_ALL )
+            self.pr.set_pr_level(self.pr.get_pr_level() | Print.PR_LVL_ALL)
         if '-D' in args:
             self.__dbg = 2
             self.pr.setpr_level(self.pr.getpr_level() | Print.PR_LVL_DBG)
@@ -345,12 +350,14 @@ class WebImage(object):
         for index in range(self._num):
             # get the first page.
             if self._url_base:
-                url = self.get_url_address(self._url_base, int(self._url) + index)
+                url = self.get_url_address(self._url_base,
+                                           int(self._url) + index)
             else:
                 url = self.get_url_address(None, self._url)
             if self._thread_queue:
                 # create thread and put to queue.
-                t = threading.Thread(target=self.process_url_web, args=(url, (index + 1, self._num)))
+                t = threading.Thread(target=self.process_url_web,
+                                     args=(url, (index + 1, self._num)))
                 self._thread_queue.put(url)
                 t.start()
             else:

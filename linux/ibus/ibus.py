@@ -12,8 +12,9 @@ import subprocess
 from mypy.base import Base
 
 WUBI_LOVE98_TXT = '%s/wubi-love98/wubi-love98.txt' % os.getenv('IBus')
-WUBI_LOVE98_DB  = '%s/wubi-love98/wubi-love98.db' % os.getenv('IBus')
-IBUS_LOVE98_DB  = '/usr/share/ibus-table/tables/wubi-love98.db'
+WUBI_LOVE98_DB = '%s/wubi-love98/wubi-love98.db' % os.getenv('IBus')
+IBUS_LOVE98_DB = '/usr/share/ibus-table/tables/wubi-love98.db'
+
 
 class IBus(object):
 
@@ -71,7 +72,9 @@ class IBus(object):
     def ibus_update_wubi_love98_db(self):
         print('update ibus wubi_love98_db...')
         # make temlate love98.db
-        cmd = 'ibus-table-createdb -s %s -n %s' % (WUBI_LOVE98_TXT, WUBI_LOVE98_DB)
+        cmd = \
+            'ibus-table-createdb -s %s -n %s' % \
+            (WUBI_LOVE98_TXT, WUBI_LOVE98_DB)
         subprocess.call(cmd, shell=True)
         # backup ibus love98.db
         cmd = 'sudo mv %s %s' % (IBUS_LOVE98_DB, '%s.bak' % IBUS_LOVE98_DB)

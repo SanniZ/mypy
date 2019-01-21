@@ -10,6 +10,7 @@ import re
 from web.webcontent import WebContent
 from web.webimage.webimage import WebImage
 
+
 class Pstatp(WebImage):
 
     def __init__(self, name=None):

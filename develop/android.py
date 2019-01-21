@@ -9,6 +9,7 @@ Created on Thu Jul  5 11:10:22 2018
 import subprocess
 from debug import Debug as d
 
+
 class Android(object):
     def __init__(self):
         d.dbg('Android init done.')
@@ -46,22 +47,20 @@ class Android(object):
                 d.info('  clr : clear screen display')
                 d.info('  xxx : grep xxx')
 
-
     CMD_DICT = {
-        'wait' : 'adb wait-for-device',
-        'root' : 'adb root',
-        'devices' : 'adb devices',
-        'devicelock' : 'fastboot flashing lock',
-        'deviceunlock' : 'fastboot flashing unlock',
-        'reboot' : 'adb reboot',
-        'rebootloader' : 'adb reboot bootloader',
-        'fastreboot' : 'fastboot reboot',
-        'power' : 'adb shell input keyevent 26',
-        'back' : 'adb shell input keyevent 4',
-        'unlock' : 'adb shell input tap 500 600',
-        #'unlock' : 'adb shell input swipe 500 50 500 700',
+        'wait': 'adb wait-for-device',
+        'root': 'adb root',
+        'devices': 'adb devices',
+        'devicelock': 'fastboot flashing lock',
+        'deviceunlock': 'fastboot flashing unlock',
+        'reboot': 'adb reboot',
+        'rebootloader': 'adb reboot bootloader',
+        'fastreboot': 'fastboot reboot',
+        'power': 'adb shell input keyevent 26',
+        'back': 'adb shell input keyevent 4',
+        'unlock': 'adb shell input tap 500 600',
+        # 'unlock': 'adb shell input swipe 500 50 500 700',
     }
-
 
     def run_cmd_handler(self, cmds):
         d.dbg('adb_handlers: %s' % cmds)
@@ -83,7 +82,7 @@ class Android(object):
             elif cmd == 'unlock':
                 self.run_cmd_handler(['deviceunlock'])
             else:
-                image=r''
+                image = r''
                 self.flash_image(cmd, cmd, image)
 
     def print_log(self, log_type, text=None):
@@ -97,12 +96,12 @@ class Android(object):
             d.err('unknown type!')
             return
 
-        if text != None and len(text) != 0:
-            filter_cnt=0
+        if all((text, len(text))):
+            filter_cnt = 0
             for i in range(len(text)):
                 if text[i] == 'all':
                     cmd = r' {}'.format(cmd)
-                    break;
+                    break
                 elif text[i] == 'wait':
                     subprocess.call(r'adb wait-for-device', shell=True)
                     continue
@@ -116,33 +115,33 @@ class Android(object):
                     if filter_cnt == 0:
                         txt = text[i]
                     else:
-                        txt=r'{}|{}'.format(txt, text[i])
-                    filter_cnt+=1
+                        txt = r'{}|{}'.format(txt, text[i])
+                    filter_cnt += 1
 
             cmd = r'{} | grep --color -iE "{}"'.format(cmd, txt)
             d.info(cmd)
-            #self.adb_root()
+            # self.adb_root()
             subprocess.call(cmd, shell=True)
 
-    def logcat_handlers(self,cmds):
+    def logcat_handlers(self, cmds):
         self.print_log('logcat', cmds)
 
-    def dmesg_handlers(self,cmds):
+    def dmesg_handlers(self, cmds):
         self.print_log('dmesg', cmds)
 
-    def kmsg_handlers(self,cmds):
+    def kmsg_handlers(self, cmds):
         self.print_log('kmsg', cmds)
 
     def get_cmd_handlers(self, cmd=None):
         hdrs = {
-            'help' : self.help,
-            'adb' : self.run_cmd_handler,
-            'fastboot' : self.fastboot_handler,
-            'logcat' : self.logcat_handlers,
-            'dmesg'  : self.dmesg_handlers,
-            'kmsg'   : self.kmsg_handlers,
+            'help': self.help,
+            'adb': self.run_cmd_handler,
+            'fastboot': self.fastboot_handler,
+            'logcat': self.logcat_handlers,
+            'dmesg': self.dmesg_handlers,
+            'kmsg': self.kmsg_handlers,
         }
-        if cmd == None:
+        if not cmd:
             return hdrs
         else:
             if cmd in hdrs:
@@ -154,7 +153,7 @@ class Android(object):
 if __name__ == '__main__':
     from cmdprocessing import CmdProcessing
 
-    #d.set_debug_level('dbg,info,err')
+    # d.set_debug_level('dbg,info,err')
     ad = Android()
     cmdHdr = CmdProcessing()
     cmdHdr.register_cmd_handler(ad.get_cmd_handlers())

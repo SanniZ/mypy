@@ -10,6 +10,7 @@ import re
 
 from mypy.file import File
 
+
 class WebBase(object):
 
     @classmethod
@@ -40,6 +41,6 @@ class WebBase(object):
 
     @classmethod
     def reclaim_url_address(cls, url):
-        for key, value in {'/$' : '', '\n$' : ''}.items():
+        for key, value in {'/$': '', '\n$': ''}.items():
             url = re.sub(key, value, url)
         return url
