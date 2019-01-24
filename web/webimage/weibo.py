@@ -25,14 +25,14 @@ class Weibo(WebImage):
         html = html.decode()
         # get screen_name and status_title
         screen_name = re.compile(
-                        '\"screen_name": \"(.+)\"', re.I).findall(html)
+                        '(?<=\"screen_name": \").+(?=\")', re.I).search(html)
         status_title = re.compile(
-                        '\"status_title\": \"(.+)\"', re.I).findall(html)
+                        '(?<=\"status_title\": \").+(?=\")', re.I).search(html)
         # get title.
         if all((screen_name, status_title)):
-            title = '%s: %s' % (screen_name[0], status_title[0])
+            title = '%s: %s' % (screen_name.group(), status_title.group())
         elif status_title:
-            title = status_title[0]
+            title = status_title.group()
         else:
             title = None
 

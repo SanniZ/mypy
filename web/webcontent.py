@@ -231,11 +231,10 @@ class WebContent (object):
     @classmethod
     def get_url_title(cls, html_content, pattern=None):
         if not pattern:
-            pattern = re.compile(b'<title>.+</title>')
+            pattern = re.compile(b'(?<=<title>).+(?=</title>)')
         data = pattern.search(html_content)
         if data:
-            data = data.group()
-            return data[len('<title>'): len(data) - len('</title>')]
+            return data.group()
         else:
             return None
 
