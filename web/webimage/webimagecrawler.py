@@ -17,39 +17,88 @@ from mypy.path import Path
 from mypy.pr import Print
 
 from web.webcontent import WebContent
-from web.webimage.girlsky import Girlsky
-from web.webimage.pstatp import Pstatp
-from web.webimage.meizitu import Meizitu
-from web.webimage.mzitu import Mzitu
-from web.webimage.webimage import WebImage, get_input
-from web.webimage.weibo import Weibo
+from web.webimage.webimage import get_input
 
 if sys.version_info[0] == 2:
     import Queue as queue
 else:
     import queue
 
+
+############################################################################
+#               URL_BASE Map
+############################################################################
+
 URL_BASE = {
     # xval: { url_base: class}
-    'xgmn': {'http://m.girlsky.cn/mntp/xgmn/URLID.html': Girlsky('Girlsky')},
-    'swmn': {'http://m.girlsky.cn/mntp/swmn/URLID.html': Girlsky('Girlsky')},
-    'wgmn': {'http://m.girlsky.cn/mntp/wgmn/URLID.html': Girlsky('Girlsky')},
-    'zpmn': {'http://m.girlsky.cn/mntp/zpmn/URLID.html': Girlsky('Girlsky')},
-    'mnxz': {'http://m.girlsky.cn/mntp/mnxz/URLID.html': Girlsky('Girlsky')},
-    'rtys': {'http://m.girlsky.cn/mntp/rtys/URLID.html': Girlsky('Girlsky')},
-    'jpmn': {'http://m.girlsky.cn/mntp/jpmn/URLID.html': Girlsky('Girlsky')},
-    'gzmn': {'http://m.girlsky.cn/mntp/gzmn/URLID.html': Girlsky('Girlsky')},
-    'nrtys': {'http://m.girlsky.cn/mntpn/rtys/URLID.html': Girlsky('Girlsky')},
+    'xgmn': {'http://m.girlsky.cn/mntp/xgmn/URLID.html': 'Girlsky'},
+    'swmn': {'http://m.girlsky.cn/mntp/swmn/URLID.html': 'Girlsky'},
+    'wgmn': {'http://m.girlsky.cn/mntp/wgmn/URLID.html': 'Girlsky'},
+    'zpmn': {'http://m.girlsky.cn/mntp/zpmn/URLID.html': 'Girlsky'},
+    'mnxz': {'http://m.girlsky.cn/mntp/mnxz/URLID.html': 'Girlsky'},
+    'rtys': {'http://m.girlsky.cn/mntp/rtys/URLID.html': 'Girlsky'},
+    'jpmn': {'http://m.girlsky.cn/mntp/jpmn/URLID.html': 'Girlsky'},
+    'gzmn': {'http://m.girlsky.cn/mntp/gzmn/URLID.html': 'Girlsky'},
+    'nrtys': {'http://m.girlsky.cn/mntpn/rtys/URLID.html': 'Girlsky'},
     # pstatp
-    'pstatp': {'https://www.toutiao.com/aURLID': Pstatp('Pstatp')},
-    'pstatp_i': {'https://www.toutiao.com/iURLID': Pstatp('Pstatp')},
+    'pstatp': {'https://www.toutiao.com/aURLID': 'Pstatp'},
+    'pstatp_i': {'https://www.toutiao.com/iURLID': 'Pstatp'},
     # meizitu
-    'meizitu': {'http://www.meizitu.com/a/URLID.html': Meizitu('Meizitu')},
+    'meizitu': {'http://www.meizitu.com/a/URLID.html': 'Meizitu'},
     # mzitu
-    'mzitu': {'https://m.mzitu.com/URLID': Mzitu('Mzitu')},
-    'weibo': {'https://m.weibo.cn/detail/URLID': Weibo('Weibo')},
+    'mzitu': {'https://m.mzitu.com/URLID': 'Mzitu'},
+    'weibo': {'https://m.weibo.cn/detail/URLID': 'Weibo'},
 }
 
+
+def get_class_instance(cls):
+    if cls == 'Girlsky':
+        from web.webimage.girlsky import Girlsky
+        hdr = Girlsky(cls)
+    elif cls == 'Pstatp':
+        from web.webimage.pstatp import Pstatp
+        hdr = Pstatp(cls)
+    elif cls == 'Meizitu':
+        from web.webimage.meizitu import Meizitu
+        hdr = Meizitu(cls)
+    elif cls == 'Mzitu':
+        from web.webimage.mzitu import Mzitu
+        hdr = Mzitu(cls)
+    elif cls == 'Weibo':
+        from web.webimage.weibo import Weibo
+        hdr = Weibo(cls)
+    else:
+        from web.webimage.webimage import WebImage
+        hdr = WebImage('WebImage')
+    return hdr
+
+
+def get_base_class_from_xval(xval):
+    if xval in URL_BASE:
+        url_base = list(URL_BASE[xval])[0]
+        cls = URL_BASE[xval][url_base]
+        return url_base, cls
+    else:
+        return None, None
+
+
+def get_num_url_from_xval(xval, num):
+    if xval in URL_BASE:
+        url_base = list(URL_BASE[xval])[0]
+        return url_base.replace('URLID', num)
+    return None
+
+
+def get_class_from_base(base):
+    for dict_url_base in URL_BASE.values():
+        if base == list(dict_url_base)[0]:
+            return dict_url_base[base]
+    return None
+
+
+############################################################################
+#               WebImageCrawler Class
+############################################################################
 
 class WebImageCrawler(WebContent):
 
@@ -89,7 +138,7 @@ class WebImageCrawler(WebContent):
         '  -t num:',
         '    set number of thread to download images.',
         '  -U:',
-        '    run UI version of WebImageCrawler.',
+        '    run GUI of WebImageCrawler.',
     )
 
     def __init__(self, name=None):
@@ -120,10 +169,9 @@ class WebImageCrawler(WebContent):
             self._pr.set_pr_level(self._pr.get_pr_level() | Print.PR_LVL_DBG)
         # get url_base from xval
         if self._xval:
-            if self._xval in URL_BASE:
-                self._url_base = list(URL_BASE[self._xval])[0]
-                self._class = URL_BASE[self._xval][self._url_base]
-            else:
+            self._url_base, self._class = \
+                get_base_class_from_xval(self._xval)
+            if not all((self._url_base, self._class)):
                 Base.print_exit('[WebImageCrawler] Error, invalid -x val!')
         # get class from url
         if self._url:
@@ -132,17 +180,11 @@ class WebImageCrawler(WebContent):
                 self._url_base = base
         # get class from url_base
         if all((not self._class, self._url_base)):
-                for dict_url_base in URL_BASE.values():
-                    if self._url_base == list(dict_url_base)[0]:
-                        self._class = dict_url_base[self._url_base]
-                        break
+            self._class = get_class_from_base(self._url_base)
         return args
 
     def process_input(self, args=None, info=None):
-        if self._class:
-            hdr = self._class
-        else:
-            hdr = WebImage('WebImage')
+        hdr = get_class_instance(self._class)
         if hdr:
             hdr.main(args)
         else:
@@ -174,10 +216,7 @@ class WebImageCrawler(WebContent):
                 # get base and num
                 base, num = self.get_url_base_and_num(url)
                 if base:
-                    for dict_url_base in URL_BASE.values():
-                        if base == list(dict_url_base)[0]:
-                            self._class = dict_url_base[base]
-                            break
+                    self._class = get_class_from_base(base)
                 if self._class:
                     url_args = {'-u': url}
                     url_args.update(args)

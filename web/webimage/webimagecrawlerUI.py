@@ -3,7 +3,7 @@
 """
 Created on: 2019-01-02
 
-@author: Zbyng Zeng
+@author: Byng Zeng
 """
 
 import os
@@ -16,9 +16,9 @@ from tkinter.filedialog import askopenfilename  # askdirectory
 from tkinter import ttk
 from tkinter.messagebox import showinfo, showerror, showwarning
 
-from web.webbase import WebBase
-from web.webimage.webimagecrawler import URL_BASE
-from web.webimage.webimage import WebImage
+from web.webcontent import WebContent
+from web.webimage.webimagecrawler import get_class_instance, \
+                        get_num_url_from_xval, get_class_from_base
 
 if sys.version_info[0] == 2:
     import Queue
@@ -31,6 +31,8 @@ else:
         Menu, Label, Entry, Button, Listbox, Checkbutton, Scrollbar, \
         X, Y, TOP, LEFT, RIGHT, NORMAL, DISABLED, HORIZONTAL, BOTH
 
+VERSION = 1.1
+
 STAT_WAITTING = 'Waitting'
 STAT_DOWNLOADING = 'Downloading'
 STAT_DONE = 'Done'
@@ -38,29 +40,34 @@ STAT_FAIL = 'Failed'
 STAT_NOT_SUPPORT = 'Not Support'
 
 LANG_MAP = (
-    {'Title': 'WebImageCrawler', 'File': 'File', 'Open': 'Open',
-     'Exit': 'Exit', 'Help': 'Help', 'About': 'About', 'URL': 'URL',
-     'Run': 'Run', 'Type': 'Type', 'Start': 'Start', 'End': 'End',
-     'OK': 'OK', 'State': 'State', 'Output': 'Output', 'Lang': 'Language',
-     'Warnning': 'Warnning', 'Error': 'Error', 'About': 'About',
-     'Cancel': 'Cancel', 'NoOutput': '\nNo Output', 'Notice': 'Notice',
-     'InvalidType': 'Type/Start is invalid', 'InvalidURL': 'URL is invalid',
+    {'About': 'About',
+     'AboutVersion':  'WebImage Crawler %s\n\nAuther@Byng.Zeng\n\n'
+                      'Copyright(c)Byng.Zeng\n' % VERSION,
+     'Config': 'Configuration', 'Cancel': 'Cancel', 'Debug': 'Debug',
+     'End': 'End', 'Error': 'Error', 'Exit': 'Exit', 'File': 'File',
+     'Help': 'Help', 'InvalidType': 'Type/Start is invalid',
+     'InvalidURL': 'URL is invalid', 'Lang': 'Language', 'Notice': 'Notice',
+     'NoOutput': '\nNo Output', 'Open': 'Open', 'Output': 'Output',
+     'Run': 'Run', 'Start': 'Start', 'State': 'State',
+     'Title': 'WebImageCrawler', 'Type': 'Type',
      'TypeList': ('xgmn', 'swmn', 'wgmn', 'zpmn', 'mnxz', 'rtys',
                   'jpmn', 'gzmn', 'nrtys', 'meizitu', 'mzitu'),
-     'AboutVersion':  'WebImage Crawler 1.0\n\nAuther@Zbyng.Zeng\n\n'
-                      'Copyright(c)Zbyng.Zeng\n'},
-    {'Title': '网页图片爬虫', 'File': '文件', 'Open': '打开',
-     'Exit': '退出', 'Help': '帮助', 'About': '关于', 'URL': '地址',
-     'Run': '运行', 'Type': '分类', 'Start': '开始', 'End': '结束',
-     'OK': '确定', 'State': '状态', 'Output': '输出', 'Lang': '语言',
-     'Warnning': '警告', 'Error': '错误', 'About': '关于',
-     'Cancel': '取消', 'NoOutput': '\n没有输出文件', 'Notice': '提示',
-     'InvalidType': '分类/开始值无效', 'InvalidURL': '地址值无效',
+     'OK': 'OK', 'URL': 'URL',  'Warnning': 'Warnning', },
+    {'About': '关于',
+     'AboutVersion': '网页图片爬虫 %s\n\n作者@Byng.Zeng\n\n'
+                     '版权所有(c)Byng.Zeng\n' % VERSION,
+     'Config': '配置', 'Cancel': '取消', 'Debug': '调试',
+     'End': '结束', 'Exit': '退出',
+     'Error': '错误', 'File': '文件', 'Help': '帮助',
+     'InvalidType': '分类/开始值无效',
+     'InvalidURL': '地址值无效', 'Lang': '语言', 'Notice': '提示',
+     'NoOutput': '\n没有输出文件', 'Open': '打开', 'Output': '输出',
+     'Run': '运行', 'Start': '开始', 'State': '状态', 'Title': '网页图片爬虫',
+     'Type': '分类',
      'TypeList': ('性感美女', '丝袜美女', '外国美女', '自拍美女',
                   '美女写真', '人体艺术', '街拍美女', '古装美女',
                   '人体艺术n', '妺子图', '妺子图Mz'),
-     'AboutVersion': '网页图片爬虫 1.0\n\n作者@Zbyng.Zeng\n\n'
-                     '版权所有(c)Zbyng.Zeng\n'}
+     'OK': '确定', 'URL': '地址', 'Warnning': '警告', },
 )
 
 
@@ -115,7 +122,7 @@ class WindowUI(object):
     def menu_file_exit(self):
         self._wm['top'].quit()
 
-    def menu_help_lang(self):
+    def menu_config_lang(self):
         self._lang = self._lang_set.get()
         # update title and menu.
         self._wm['top'].title('%s' % LANG_MAP[self._lang]['Title'])
@@ -132,6 +139,9 @@ class WindowUI(object):
         self._wm['lbOutput']['text'] = LANG_MAP[self._lang]['Output']
         # update type list.
         self._wm['cmbType']['value'] = LANG_MAP[self._lang]['TypeList']
+
+    def menu_config_debug(self):
+        pass
 
     def menu_help_about(self):
         pass
@@ -150,22 +160,47 @@ class WindowUI(object):
                         command=self.menu_file_exit,
                         label='%s' % LANG_MAP[self._lang]['Exit'].center(10))
 
-        # create help menu
-        menu_help = Menu(menubar, tearoff=0)
+        # create config menu and add commands
+        menu_config = Menu(menubar, tearoff=0)
         # create language nemu and add cascade
-        menu_lang = Menu(menu_help, tearoff=0)
-        mbar_lang = menu_help.add_cascade(
-                            menu=menu_lang,
-                            label='%s' % LANG_MAP[self._lang]['Lang'])
+        menu_lang = Menu(menu_config, tearoff=0)
         self._lang_set = IntVar()
         menu_lang.add_radiobutton(
-                label='English', command=self.menu_help_lang,
+                label='English', command=self.menu_config_lang,
                 variable=self._lang_set, value=0)
         menu_lang.add_radiobutton(
-                label='中文', command=self.menu_help_lang,
+                label='中文', command=self.menu_config_lang,
                 variable=self._lang_set, value=1)
         self._lang_set.set(self._lang)
-        # add about to help menu.
+        mbar_lang = menu_config.add_cascade(
+                            menu=menu_lang,
+                            label='%s' % LANG_MAP[self._lang]['Lang'])
+        # create configuration menu and add cascade
+        menu_debug = Menu(menu_config, tearoff=0)
+        self._debug_v_set = IntVar()
+        self._debug_d_set = IntVar()
+        self._debug_D_set = IntVar()
+        menu_debug.add_checkbutton(
+                        label='-v View', onvalue=1,
+                        variable=self._debug_v_set,
+                        command=self.menu_config_debug)
+        menu_debug.add_checkbutton(
+                        label='-d Debug', onvalue=1,
+                        variable=self._debug_D_set,
+                        command=self.menu_config_debug)
+        menu_debug.add_radiobutton(
+                        label='d1 Debug Basic', value=0x01,
+                        variable=self._debug_d_set,
+                        command=self.menu_config_debug)
+        menu_debug.add_radiobutton(
+                        label='d2 Debug Advance', value=0x02,
+                        variable=self._debug_d_set,
+                        command=self.menu_config_debug)
+        mbar_debug = menu_config.add_cascade(
+                                menu=menu_debug,
+                                label='%s' % LANG_MAP[self._lang]['Debug'])
+        # create help menu
+        menu_help = Menu(menubar, tearoff=0)
         menu_about = menu_help.add_command(
                             command=self.menu_help_about,
                             label='%s' % LANG_MAP[self._lang]['About'])
@@ -174,17 +209,21 @@ class WindowUI(object):
         mbar_file = menubar.add_cascade(
                                 menu=menu_file,
                                 label='%s' % LANG_MAP[self._lang]['File'])
+        mbar_config = menubar.add_cascade(
+                                menu=menu_config,
+                                label='%s' % LANG_MAP[self._lang]['Config'])
         mbar_help = menubar.add_cascade(
                                 menu=menu_help,
                                 label='%s' % LANG_MAP[self._lang]['Help'])
 
         root['menu'] = menubar
-
         self._wm['mbar_file'] = mbar_file
+        self._wm['mbar_config'] = mbar_config
         self._wm['mbar_help'] = mbar_help
         self._wm['menu_file'] = menu_file
         self._wm['menu_help'] = menu_help
         self._wm['mbar_lang'] = mbar_lang
+        self._wm['mbar_debug'] = mbar_debug
         self._wm['menu_open'] = menu_open
         self._wm['menu_exit'] = menu_exit
         self._wm['menu_about'] = menu_about
@@ -365,6 +404,8 @@ class WebImageCrawlerUI(WindowUI):
     def __init__(self, name=None):
         super().__init__()
         self._name = name
+        self._view = 0
+        self._debug = 0
 
         self._fs_list = None
         self._fs_list_cnt = 0
@@ -385,6 +426,28 @@ class WebImageCrawlerUI(WindowUI):
     def menu_help_about(self):
         showinfo(LANG_MAP[self._lang]['About'],
                  LANG_MAP[self._lang]['AboutVersion'])
+
+    def menu_config_lang(self):
+        super(WebImageCrawlerUI, self).menu_config_lang()
+        self._debug_v_set.set(self._view)
+        self._debug_D_set.set(self._debug)
+        self._debug_d_set.set(self._debug)
+
+    def menu_config_debug(self):
+        self._view = self._debug_v_set.get()
+        dm = self._debug_D_set.get()
+        dv = self._debug_d_set.get()
+        if dv != self._debug:
+            if not dm:
+                self._debug_D_set.set(1)
+            self._debug = dv
+        else:
+            if dm:
+                if not self._debug:
+                    self._debug_d_set.set(1)
+            else:
+                self._debug_d_set.set(0)
+            self._debug = self._debug_d_set.get()
 
     def on_chk_type_click(self):
         self.update_type_widget_state(self._type_chk.get())
@@ -535,15 +598,15 @@ class WebImageCrawlerUI(WindowUI):
             url_type = args['-x']
             urls = list()
             for index in range(n):
-                if url_type in URL_BASE:
-                    url_base = list(URL_BASE[url_type])[0]
-                    url = url_base.replace('URLID', str(url_start + index))
+                url = get_num_url_from_xval(
+                                    url_type, str(url_start + index))
+                if url:
                     urls.append(url)
         else:
             urls = [f]
         # add file info to list.
         for url in set(urls):
-            url = WebBase.reclaim_url_address(url)
+            url = WebContent.reclaim_url_address(url)
             if url:
                 self.add_url_info_to_list(url)
         # sort of file list.
@@ -551,10 +614,10 @@ class WebImageCrawlerUI(WindowUI):
 
     def download_url(self, args=None):
         url = args['-u']
-        if self._class:
-            hdr = self._class
-        else:
-            hdr = WebImage('WebImage')
+        base, num = WebContent.get_url_base_and_num(url)
+        if base:
+            self._class = get_class_from_base(base)
+        hdr = get_class_instance(self._class)
         if hdr:
             self.update_list_info(url, STAT_DOWNLOADING)
             output = hdr.main(args)
@@ -580,22 +643,18 @@ class WebImageCrawlerUI(WindowUI):
                 info = self._fs_list[index]
                 index += 1
                 self._fs_list_cnt -= 1
-                url = WebBase.reclaim_url_address(info._url)
-                base, num = WebBase.get_url_base_and_num(url)
-                if base:
-                    for dict_url_base in URL_BASE.values():
-                        if base == list(dict_url_base)[0]:
-                            self._class = dict_url_base[base]
-                            break
-                if self._class:
-                    url = {'-u': url}
-                    # create thread and put to queue.
-                    t = threading.Thread(target=self.download_url, args=(url,))
-                    self._download_thread_queue.put(url)
-                    self._download_threads.append(t)
-                    t.start()
-                else:
-                    self.update_list_info(url=url, state=STAT_NOT_SUPPORT)
+                # set url and start thread to download url.
+                url = {'-u': info._url}
+                if self._view:
+                    url['-v'] = True
+                if self._debug:
+                    url['-d'] = self._debug
+                # create thread and put to queue.
+                t = threading.Thread(target=self.download_url, args=(url,))
+                self._download_thread_queue.put(url)
+                self._download_threads.append(t)
+                t.start()
+            # waitting for thread.
             for t in self._download_threads:
                 t.join()
             self.update_widget_state(1)

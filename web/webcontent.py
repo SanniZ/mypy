@@ -285,6 +285,12 @@ class WebContent (object):
     def convert_url_to_title(cls, url):
         return File.reclaim_name(re.sub('/$', '', url))
 
+    @classmethod
+    def reclaim_url_address(cls, url):
+        for key, value in {'/$': '', '\n$': ''}.items():
+            url = re.sub(key, value, url)
+        return url
+
 
 if __name__ == '__main__':
 
