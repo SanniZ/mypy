@@ -43,11 +43,13 @@ LANG_MAP = (
     {'About': 'About',
      'AboutVersion':  'WebImage Crawler %s\n\nAuther@Byng.Zeng\n\n'
                       'Copyright(c)Byng.Zeng\n' % VERSION,
-     'Config': 'Configuration', 'Cancel': 'Cancel', 'Debug': 'Debug',
+     'Config': 'Configuration', 'Cancel': 'Cancel', 'Copy': 'Copy',
+     'Debug': 'Debug',
      'End': 'End', 'Error': 'Error', 'Exit': 'Exit', 'File': 'File',
      'Help': 'Help', 'InvalidType': 'Type/Start is invalid',
      'InvalidURL': 'URL is invalid', 'Lang': 'Language', 'Notice': 'Notice',
      'NoOutput': '\nNo Output', 'Open': 'Open', 'Output': 'Output',
+     'Paste': 'Paste',
      'Run': 'Run', 'Start': 'Start', 'State': 'State',
      'Title': 'WebImageCrawler', 'Type': 'Type',
      'TypeList': ('xgmn', 'swmn', 'wgmn', 'zpmn', 'mnxz', 'rtys',
@@ -56,12 +58,13 @@ LANG_MAP = (
     {'About': '关于',
      'AboutVersion': '网页图片爬虫 %s\n\n作者@Byng.Zeng\n\n'
                      '版权所有(c)Byng.Zeng\n' % VERSION,
-     'Config': '配置', 'Cancel': '取消', 'Debug': '调试',
+     'Config': '配置', 'Cancel': '取消', 'Copy': '复制', 'Debug': '调试',
      'End': '结束', 'Exit': '退出',
      'Error': '错误', 'File': '文件', 'Help': '帮助',
      'InvalidType': '分类/开始值无效',
      'InvalidURL': '地址值无效', 'Lang': '语言', 'Notice': '提示',
      'NoOutput': '\n没有输出文件', 'Open': '打开', 'Output': '输出',
+     'Paste': '粘贴',
      'Run': '运行', 'Start': '开始', 'State': '状态', 'Title': '网页图片爬虫',
      'Type': '分类',
      'TypeList': ('性感美女', '丝袜美女', '外国美女', '自拍美女',
@@ -267,6 +270,31 @@ class WindowUI(object):
         self._wm['frmSbX'] = SbX
         self._wm['frmSbY'] = SbY
 
+    def on_popmenu_path_copy(self):
+        pass
+
+    def on_popmenu_path_paste(self):
+        pass
+
+    def on_popmenu_path_leave(self, event):
+        path_popmenu = self._wm['path_popmenu']
+        path_popmenu.unpost()
+
+    def create_path_popmenu(self):
+        path_popmenu = Menu(self._wm['top'], tearoff=0)
+        path_popmenu.add_command(command=self.on_popmenu_path_copy,
+                                 label='%s' % LANG_MAP[self._lang]['Copy'])
+        path_popmenu.add_command(command=self.on_popmenu_path_paste,
+                                 label='%s' % LANG_MAP[self._lang]['Paste'])
+        # bind leave event
+        path_popmenu.bind("<Leave>", self.on_popmenu_path_leave)
+
+        self._wm['path_popmenu'] = path_popmenu
+
+    def pop_path_menu(self, event):
+        path_popmenu = self._wm['path_popmenu']
+        path_popmenu.post(event.x_root, event.y_root)
+
     def on_run_click(self):
         pass
 
@@ -280,6 +308,9 @@ class WindowUI(object):
         bnPath = Button(frm, text='%s' % LANG_MAP[self._lang]['Run'],
                         command=self.on_run_click)
         bnPath.pack(side=RIGHT, padx=4, pady=2)
+
+        # self.create_path_popmenu()
+        # enPath.bind("<Button-3>", self.pop_path_menu)
 
         self._wm['lbPath'] = lbPath
         self._wm['enPath'] = enPath
@@ -350,19 +381,19 @@ class WindowUI(object):
         self._wm['lbState'] = lbState
         self._wm['lbOutput'] = lbOutput
 
-    def on_popmenu_open(self):
+    def on_popmenu_fs_open(self):
         pass
 
-    def on_popmenu_leave(self, event):
+    def on_popmenu_fs_leave(self, event):
         fs_popmenu = self._wm['fs_popmenu']
         fs_popmenu.unpost()
 
     def create_file_list_popmenu(self):
         fs_popmenu = Menu(self._wm['top'], tearoff=0)
-        fs_popmenu.add_command(command=self.on_popmenu_open,
+        fs_popmenu.add_command(command=self.on_popmenu_fs_open,
                                label='%s' % LANG_MAP[self._lang]['Open'])
         # bind leave event
-        fs_popmenu.bind("<Leave>", self.on_popmenu_leave)
+        fs_popmenu.bind("<Leave>", self.on_popmenu_fs_leave)
 
         self._wm['fs_popmenu'] = fs_popmenu
 
@@ -502,7 +533,7 @@ class WebImageCrawlerUI(WindowUI):
             showwarning('%s' % LANG_MAP[self._lang]['Error'],
                         '\n%s!' % LANG_MAP[self._lang]['InvalidURL'])
 
-    def on_popmenu_open(self):
+    def on_popmenu_fs_open(self):
         output = None
         fs = self._wm['lbFs']
         index = fs.curselection()
