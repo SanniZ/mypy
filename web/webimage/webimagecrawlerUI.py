@@ -12,26 +12,32 @@ import sys
 import subprocess
 import threading
 
-from tkinter.filedialog import askopenfilename  # askdirectory
-from tkinter import ttk
-from tkinter.messagebox import showinfo, showerror, showwarning
-
 from web.webcontent import WebContent
-from web.webimage.webimagecrawler import get_class_instance, \
-                        get_num_url_from_xval, get_class_from_base
+from web.webimage.webimagecrawler import XBaseClass
 
 if sys.version_info[0] == 2:
-    import Queue
+    import ttk
+    from Queue import Queue
+    from tkFileDialog import askopenfilename, askdirectory
+    from tkMessageBox import showinfo, showerror, showwarning
     from Tkinter import Tk, Frame, StringVar, IntVar, \
         Menu, Label, Entry, Button, Listbox, Checkbutton, Scrollbar, \
         X, Y, TOP, LEFT, RIGHT, NORMAL, DISABLED, HORIZONTAL, BOTH
 else:
+    # from tkinter.simpledialog import askstring
     from queue import Queue
-    from tkinter import Tk, Frame, StringVar, IntVar, \
+    from tkinter.filedialog import askopenfilename, askdirectory
+    from tkinter.messagebox import showinfo, showerror, showwarning
+    from tkinter import Tk, ttk, Frame, StringVar, IntVar, \
         Menu, Label, Entry, Button, Listbox, Checkbutton, Scrollbar, \
         X, Y, TOP, LEFT, RIGHT, NORMAL, DISABLED, HORIZONTAL, BOTH
 
-VERSION = 1.1
+
+############################################################################
+#               Const Vars
+############################################################################
+
+VERSION = 1.2
 
 STAT_WAITTING = 'Waitting'
 STAT_DOWNLOADING = 'Downloading'
@@ -43,7 +49,7 @@ LANG_MAP = (
     {'About': 'About',
      'AboutVersion':  'WebImage Crawler %s\n\nAuther@Byng.Zeng\n\n'
                       'Copyright(c)Byng.Zeng\n' % VERSION,
-     'Config': 'Configuration', 'Cancel': 'Cancel', 'Copy': 'Copy',
+     'Config': 'Config', 'Cancel': 'Cancel', 'Copy': 'Copy',
      'Debug': 'Debug',
      'End': 'End', 'Error': 'Error', 'Exit': 'Exit', 'File': 'File',
      'Help': 'Help', 'InvalidType': 'Type/Start is invalid',
@@ -95,6 +101,9 @@ class WindowUI(object):
     def __init__(self):
         self._wm = dict()
         self._lang = 1
+        self._view = 0
+        self._debug = 0
+        self._output = ''
         # create UI
         top = Tk()
         self._wm['top'] = top
@@ -143,8 +152,28 @@ class WindowUI(object):
         # update type list.
         self._wm['cmbType']['value'] = LANG_MAP[self._lang]['TypeList']
 
+    def menu_config_output(self):
+        # output = askstring(
+        #            '%s' % LANG_MAP[self._lang]['Output'], self._output)
+        output = askdirectory()
+        if output:
+            self._output = output
+
     def menu_config_debug(self):
-        pass
+        self._view = self._debug_v_set.get()
+        dm = self._debug_D_set.get()
+        dv = self._debug_d_set.get()
+        if dv != self._debug:
+            if not dm:
+                self._debug_D_set.set(1)
+            self._debug = dv
+        else:
+            if dm:
+                if not self._debug:
+                    self._debug_d_set.set(1)
+            else:
+                self._debug_d_set.set(0)
+            self._debug = self._debug_d_set.get()
 
     def menu_help_about(self):
         pass
@@ -178,6 +207,10 @@ class WindowUI(object):
         mbar_lang = menu_config.add_cascade(
                             menu=menu_lang,
                             label='%s' % LANG_MAP[self._lang]['Lang'])
+        # create output menu
+        menu_output = menu_config.add_command(
+                                command=self.menu_config_output,
+                                label='%s' % LANG_MAP[self._lang]['Output'])
         # create configuration menu and add cascade
         menu_debug = Menu(menu_config, tearoff=0)
         self._debug_v_set = IntVar()
@@ -229,6 +262,7 @@ class WindowUI(object):
         self._wm['mbar_debug'] = mbar_debug
         self._wm['menu_open'] = menu_open
         self._wm['menu_exit'] = menu_exit
+        self._wm['menu_output'] = menu_output
         self._wm['menu_about'] = menu_about
 
     def create_main_window_frames(self, root):
@@ -433,10 +467,8 @@ class WindowUI(object):
 class WebImageCrawlerUI(WindowUI):
 
     def __init__(self, name=None):
-        super().__init__()
+        super(WebImageCrawlerUI, self).__init__()
         self._name = name
-        self._view = 0
-        self._debug = 0
 
         self._fs_list = None
         self._fs_list_cnt = 0
@@ -464,22 +496,6 @@ class WebImageCrawlerUI(WindowUI):
         self._debug_D_set.set(self._debug)
         self._debug_d_set.set(self._debug)
 
-    def menu_config_debug(self):
-        self._view = self._debug_v_set.get()
-        dm = self._debug_D_set.get()
-        dv = self._debug_d_set.get()
-        if dv != self._debug:
-            if not dm:
-                self._debug_D_set.set(1)
-            self._debug = dv
-        else:
-            if dm:
-                if not self._debug:
-                    self._debug_d_set.set(1)
-            else:
-                self._debug_d_set.set(0)
-            self._debug = self._debug_d_set.get()
-
     def on_chk_type_click(self):
         self.update_type_widget_state(self._type_chk.get())
 
@@ -492,8 +508,8 @@ class WebImageCrawlerUI(WindowUI):
                 url_start = int(t_start)
                 if t_end:
                     url_end = int(t_end)
-                    if url_end > url_start:
-                        n = url_end - url_start + 1
+                    if url_end >= url_start:
+                        n = url_end - url_start
                     else:
                         showerror('%s' % LANG_MAP[self._lang]['Error'],
                                   '%s(%d) > %s(%d)!' %
@@ -508,6 +524,8 @@ class WebImageCrawlerUI(WindowUI):
                 return
             # config args
             if self._lang:
+                if type(t_type) != str:
+                    t_type = t_type.encode('utf-8')
                 index = LANG_MAP[self._lang]['TypeList'].index(t_type)
                 t_type = LANG_MAP[0]['TypeList'][index]
             args = {'-x': t_type, '-u': t_start, '-n': n}
@@ -629,7 +647,7 @@ class WebImageCrawlerUI(WindowUI):
             url_type = args['-x']
             urls = list()
             for index in range(n):
-                url = get_num_url_from_xval(
+                url = XBaseClass.get_num_url_from_xval(
                                     url_type, str(url_start + index))
                 if url:
                     urls.append(url)
@@ -647,8 +665,8 @@ class WebImageCrawlerUI(WindowUI):
         url = args['-u']
         base, num = WebContent.get_url_base_and_num(url)
         if base:
-            self._class = get_class_from_base(base)
-        hdr = get_class_instance(self._class)
+            self._class = XBaseClass.get_class_from_base(base)
+        hdr = XBaseClass.get_class_instance(self._class)
         if hdr:
             self.update_list_info(url, STAT_DOWNLOADING)
             output = hdr.main(args)
@@ -680,6 +698,8 @@ class WebImageCrawlerUI(WindowUI):
                     url['-v'] = True
                 if self._debug:
                     url['-d'] = self._debug
+                if self._output:
+                    url['-p'] = self._output
                 # create thread and put to queue.
                 t = threading.Thread(target=self.download_url, args=(url,))
                 self._download_thread_queue.put(url)

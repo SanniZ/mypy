@@ -27,23 +27,25 @@ else:
     from urllib.request import Request, urlopen, URLError, HTTPError
 
 USER_AGENTS = {
-    'AppleWebKit/537.36': 'Mozilla/5.0 (Windows NT 6.1; WOW64) '
-                          'AppleWebKit/537.36 (KHTML, like Gecko) '
-                          'Chrome/34.0.1847.137 Safari/537.36 LBBROWSER',
-    'Gecko/20071127': 'Mozilla/5.0 (Windows NT 6.2; rv:16.0) '
-                      'Gecko/20100101 Firefox/16.0',
-    'Gecko/20070731': 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.0.12) '
-                      'Gecko/20070731 Ubuntu/dapper-security Firefox/1.5.0.12',
-    'Gecko/20100101': 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:10.0) '
-                      'Gecko/20100101 Firefox/10.0',
-    'Lynx/2.8.5rel.1': 'Lynx/2.8.5rel.1 libwww-FM/2.14 SSL-MM/1.4.1 '
-                       'GNUTLS/1.2.9',
-    'AppleWebKit/535.7': 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.7 '
-                         '(KHTML, like Gecko) Ubuntu/11.04 '
-                         'Chromium/16.0.912.77 '
-                         'Chrome/16.0.912.77 Safari/535.7',
-    'Kubuntu': 'Mozilla/5.0 (compatible; Konqueror/3.5; Linux) KHTML/3.5.5 '
-               '(like Gecko) (Kubuntu)',
+    'AppleWebKit/537.36':
+        'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 '
+        '(KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36 LBBROWSER',
+    'Gecko/20071127':
+        'Mozilla/5.0 (Windows NT 6.2; rv:16.0) Gecko/20100101 Firefox/16.0',
+    'Gecko/20070731':
+        'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.0.12) '
+        'Gecko/20070731 Ubuntu/dapper-security Firefox/1.5.0.12',
+    'Gecko/20100101':
+        'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:10.0) '
+        'Gecko/20100101 Firefox/10.0',
+    'Lynx/2.8.5rel.1':
+        'Lynx/2.8.5rel.1 libwww-FM/2.14 SSL-MM/1.4.1 GNUTLS/1.2.9',
+    'AppleWebKit/535.7':
+        'Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.7 (KHTML, like Gecko) '
+        'Ubuntu/11.04 Chromium/16.0.912.77 Chrome/16.0.912.77 Safari/535.7',
+    'Kubuntu':
+        'Mozilla/5.0 (compatible; Konqueror/3.5; Linux) '
+        'KHTML/3.5.5 (like Gecko) (Kubuntu)',
 }
 
 URL_HEADER = {
@@ -105,14 +107,22 @@ class WebContent (object):
                 cls.pr.pr_warn(str(e))
                 html_content = None
             else:
-                content_type = html.getheader('Content-Type')
-                if content_type:
-                    url_charset = \
-                        cls.get_url_charset(content_type=content_type)
+                try:
+                    content_type = html.getheader('Content-Type')
+                except AttributeError as e:
+                    cls.pr.pr_warn(str(e))
+                else:
+                    if content_type:
+                        url_charset = \
+                            cls.get_url_charset(content_type=content_type)
                 data = html.read()
-                encoding = html.getheader('Content-Encoding')
-                if encoding == 'gzip':
-                    data = gzip.GzipFile(fileobj=io.StringIO(data)).read()
+                try:
+                    encoding = html.getheader('Content-Encoding')
+                except AttributeError as e:
+                    cls.pr.pr_warn(str(e))
+                else:
+                    if encoding == 'gzip':
+                        data = gzip.GzipFile(fileobj=io.StringIO(data)).read()
                 if data:
                     for charset in CHARSETS:
                         if url_charset:
@@ -310,7 +320,7 @@ if __name__ == '__main__':
         '    rtrv: using retrieve to download file',
         '    rget: using requests to download file',
         '    uget: using urlopen to download file',
-        '    html: download html of url'
+        '    html: download html of url',
         '  -v:',
         '    view info of webcontent.',
     )

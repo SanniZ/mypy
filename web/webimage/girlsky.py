@@ -30,7 +30,7 @@ class Girlsky(WebImage):
     def __init__(self, name=None):
         super(Girlsky, self).__init__(name)
         self._redundant_title = ['_妹子天空']
-        self._remove_small_image = False
+        # self._remove_small_image = False
 
     def get_user_input(self, args=None):
         args = super(Girlsky, self).get_user_input(args)

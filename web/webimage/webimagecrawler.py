@@ -26,74 +26,76 @@ else:
 
 
 ############################################################################
-#               URL_BASE Map
+#               XBaseClass Class
 ############################################################################
 
-URL_BASE = {
-    # xval: { url_base: class}
-    'xgmn': {'http://m.girlsky.cn/mntp/xgmn/URLID.html': 'Girlsky'},
-    'swmn': {'http://m.girlsky.cn/mntp/swmn/URLID.html': 'Girlsky'},
-    'wgmn': {'http://m.girlsky.cn/mntp/wgmn/URLID.html': 'Girlsky'},
-    'zpmn': {'http://m.girlsky.cn/mntp/zpmn/URLID.html': 'Girlsky'},
-    'mnxz': {'http://m.girlsky.cn/mntp/mnxz/URLID.html': 'Girlsky'},
-    'rtys': {'http://m.girlsky.cn/mntp/rtys/URLID.html': 'Girlsky'},
-    'jpmn': {'http://m.girlsky.cn/mntp/jpmn/URLID.html': 'Girlsky'},
-    'gzmn': {'http://m.girlsky.cn/mntp/gzmn/URLID.html': 'Girlsky'},
-    'nrtys': {'http://m.girlsky.cn/mntpn/rtys/URLID.html': 'Girlsky'},
-    # pstatp
-    'pstatp': {'https://www.toutiao.com/aURLID': 'Pstatp'},
-    'pstatp_i': {'https://www.toutiao.com/iURLID': 'Pstatp'},
-    # meizitu
-    'meizitu': {'http://www.meizitu.com/a/URLID.html': 'Meizitu'},
-    # mzitu
-    'mzitu': {'https://m.mzitu.com/URLID': 'Mzitu'},
-    'weibo': {'https://m.weibo.cn/detail/URLID': 'Weibo'},
-}
+class XBaseClass(object):
 
+    URL_BASE = {
+        # xval: { url_base: class}
+        'xgmn': {'http://m.girlsky.cn/mntp/xgmn/URLID.html': 'Girlsky'},
+        'swmn': {'http://m.girlsky.cn/mntp/swmn/URLID.html': 'Girlsky'},
+        'wgmn': {'http://m.girlsky.cn/mntp/wgmn/URLID.html': 'Girlsky'},
+        'zpmn': {'http://m.girlsky.cn/mntp/zpmn/URLID.html': 'Girlsky'},
+        'mnxz': {'http://m.girlsky.cn/mntp/mnxz/URLID.html': 'Girlsky'},
+        'rtys': {'http://m.girlsky.cn/mntp/rtys/URLID.html': 'Girlsky'},
+        'jpmn': {'http://m.girlsky.cn/mntp/jpmn/URLID.html': 'Girlsky'},
+        'gzmn': {'http://m.girlsky.cn/mntp/gzmn/URLID.html': 'Girlsky'},
+        'nrtys': {'http://m.girlsky.cn/mntpn/rtys/URLID.html': 'Girlsky'},
+        # pstatp
+        'pstatp': {'https://www.toutiao.com/aURLID': 'Pstatp'},
+        'pstatp_i': {'https://www.toutiao.com/iURLID': 'Pstatp'},
+        # meizitu
+        'meizitu': {'http://www.meizitu.com/a/URLID.html': 'Meizitu'},
+        # mzitu
+        'mzitu': {'https://m.mzitu.com/URLID': 'Mzitu'},
+        'weibo': {'https://m.weibo.cn/detail/URLID': 'Weibo'},
+    }
 
-def get_class_instance(cls):
-    if cls == 'Girlsky':
-        from web.webimage.girlsky import Girlsky
-        hdr = Girlsky(cls)
-    elif cls == 'Pstatp':
-        from web.webimage.pstatp import Pstatp
-        hdr = Pstatp(cls)
-    elif cls == 'Meizitu':
-        from web.webimage.meizitu import Meizitu
-        hdr = Meizitu(cls)
-    elif cls == 'Mzitu':
-        from web.webimage.mzitu import Mzitu
-        hdr = Mzitu(cls)
-    elif cls == 'Weibo':
-        from web.webimage.weibo import Weibo
-        hdr = Weibo(cls)
-    else:
-        from web.webimage.webimage import WebImage
-        hdr = WebImage('WebImage')
-    return hdr
+    @classmethod
+    def get_class_instance(cls, c):
+        if c == 'Girlsky':
+            from web.webimage.girlsky import Girlsky
+            hdr = Girlsky(c)
+        elif c == 'Pstatp':
+            from web.webimage.pstatp import Pstatp
+            hdr = Pstatp(c)
+        elif c == 'Meizitu':
+            from web.webimage.meizitu import Meizitu
+            hdr = Meizitu(c)
+        elif c == 'Mzitu':
+            from web.webimage.mzitu import Mzitu
+            hdr = Mzitu(c)
+        elif c == 'Weibo':
+            from web.webimage.weibo import Weibo
+            hdr = Weibo(c)
+        else:
+            from web.webimage.webimage import WebImage
+            hdr = WebImage('WebImage')
+        return hdr
 
+    @classmethod
+    def get_base_class_from_xval(cls, xval):
+        if xval in cls.URL_BASE:
+            url_base = list(cls.URL_BASE[xval])[0]
+            cls = cls.URL_BASE[xval][url_base]
+            return url_base, cls
+        else:
+            return None, None
 
-def get_base_class_from_xval(xval):
-    if xval in URL_BASE:
-        url_base = list(URL_BASE[xval])[0]
-        cls = URL_BASE[xval][url_base]
-        return url_base, cls
-    else:
-        return None, None
+    @classmethod
+    def get_num_url_from_xval(cls, xval, num):
+        if xval in cls.URL_BASE:
+            url_base = list(cls.URL_BASE[xval])[0]
+            return url_base.replace('URLID', num)
+        return None
 
-
-def get_num_url_from_xval(xval, num):
-    if xval in URL_BASE:
-        url_base = list(URL_BASE[xval])[0]
-        return url_base.replace('URLID', num)
-    return None
-
-
-def get_class_from_base(base):
-    for dict_url_base in URL_BASE.values():
-        if base == list(dict_url_base)[0]:
-            return dict_url_base[base]
-    return None
+    @classmethod
+    def get_class_from_base(cls, base):
+        for dict_url_base in cls.URL_BASE.values():
+            if base == list(dict_url_base)[0]:
+                return dict_url_base[base]
+        return None
 
 
 ############################################################################
@@ -170,7 +172,7 @@ class WebImageCrawler(WebContent):
         # get url_base from xval
         if self._xval:
             self._url_base, self._class = \
-                get_base_class_from_xval(self._xval)
+                XBaseClass.get_base_class_from_xval(self._xval)
             if not all((self._url_base, self._class)):
                 Base.print_exit('[WebImageCrawler] Error, invalid -x val!')
         # get class from url
@@ -180,11 +182,11 @@ class WebImageCrawler(WebContent):
                 self._url_base = base
         # get class from url_base
         if all((not self._class, self._url_base)):
-            self._class = get_class_from_base(self._url_base)
+            self._class = XBaseClass.get_class_from_base(self._url_base)
         return args
 
     def process_input(self, args=None, info=None):
-        hdr = get_class_instance(self._class)
+        hdr = XBaseClass.get_class_instance(self._class)
         if hdr:
             hdr.main(args)
         else:
@@ -216,7 +218,7 @@ class WebImageCrawler(WebContent):
                 # get base and num
                 base, num = self.get_url_base_and_num(url)
                 if base:
-                    self._class = get_class_from_base(base)
+                    self._class = XBaseClass.get_class_from_base(base)
                 if self._class:
                     url_args = {'-u': url}
                     url_args.update(args)

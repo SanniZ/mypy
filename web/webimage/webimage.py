@@ -161,7 +161,8 @@ class WebImage(object):
     def get_title(self, html, pattern=None):
         title = WebContent.get_url_title(html, pattern)
         if title:
-            title = title.decode()
+            if type(title) != str:
+                title = title.decode()
             if self._redundant_title:
                 for rt in self._redundant_title:
                     title = title.replace(rt, '')

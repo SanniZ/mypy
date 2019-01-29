@@ -12,8 +12,8 @@ from PIL import Image as PILImg
 
 from mypy.file import File
 
-IMG_W_MIN = 240
-IMG_H_MIN = 240
+IMG_W_MIN = 220
+IMG_H_MIN = 220
 
 SMALL_IMG_SIZE = 1024 * 8  # 8K
 
@@ -246,7 +246,7 @@ if __name__ == '__main__':
     if '-r' in args:
         data = args['-r'].split(',')
         path = data[0]
-        if len(data) >= 2:
+        if len(data) >= 3:
             w = data[1]
             h = data[2]
             Img.remove_small_image(path, int(w), int(h))
