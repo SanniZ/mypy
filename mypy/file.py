@@ -20,16 +20,22 @@ class File(object):
         return os.path.basename(f)
 
     @classmethod
-    def get_name_ex(cls, f):
+    def get_name_ex(cls, f, lower=True):
         try:
-            return os.path.splitext(f)[1].lower()
+            name_ex = os.path.splitext(f)[1]
+            if lower:
+                name_ex = name_ex.lower()
+            return name_ex
         except AttributeError:
             return None
 
     @classmethod
-    def get_filetype(cls, f):
+    def get_filetype(cls, f, lower=True):
         try:
-            return os.path.splitext(f)[1][1:].lower()
+            ftype = os.path.splitext(f)[1][1:]
+            if lower:
+                ftype = ftype.lower()
+            return ftype
         except AttributeError:
             return None
 
@@ -57,3 +63,23 @@ class File(object):
         data = gz.read()
         gz.close()
         return data
+
+
+if __name__ == '__main__':
+    from base import Base
+
+    HELP_MENU = (
+        '============================================',
+        '    File help',
+        '============================================',
+        'options:',
+        '  -r path,size: remove small size of images',
+        '    path  : path of dir or file',
+        '    size : min of size',
+    )
+
+    args = Base.get_user_input('hr:')
+    if '-h' in args:
+        Base.print_help(HELP_MENU)
+    if '-r' in args:
+        File.remove_small_file(args['-r'])

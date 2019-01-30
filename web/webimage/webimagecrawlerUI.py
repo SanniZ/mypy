@@ -19,16 +19,20 @@ if sys.version_info[0] == 2:
     import ttk
     from Queue import Queue
     from tkFileDialog import askopenfilename, askdirectory
-    from tkMessageBox import showinfo, showerror, showwarning
-    from Tkinter import Tk, Frame, StringVar, IntVar, \
+    from tkMessageBox import \
+        showinfo, showerror, showwarning, askokcancel
+    from Tkinter import \
+        Tk, Frame, StringVar, IntVar, \
         Menu, Label, Entry, Button, Listbox, Checkbutton, Scrollbar, \
         X, Y, TOP, LEFT, RIGHT, NORMAL, DISABLED, HORIZONTAL, BOTH
 else:
     # from tkinter.simpledialog import askstring
     from queue import Queue
     from tkinter.filedialog import askopenfilename, askdirectory
-    from tkinter.messagebox import showinfo, showerror, showwarning
-    from tkinter import Tk, ttk, Frame, StringVar, IntVar, \
+    from tkinter.messagebox import \
+        showinfo, showerror, showwarning, askokcancel
+    from tkinter import \
+        Tk, ttk, Frame, StringVar, IntVar, \
         Menu, Label, Entry, Button, Listbox, Checkbutton, Scrollbar, \
         X, Y, TOP, LEFT, RIGHT, NORMAL, DISABLED, HORIZONTAL, BOTH
 
@@ -50,7 +54,7 @@ LANG_MAP = (
      'AboutVersion':  'WebImage Crawler %s\n\nAuther@Byng.Zeng\n\n'
                       'Copyright(c)Byng.Zeng\n' % VERSION,
      'Config': 'Config', 'Cancel': 'Cancel', 'Copy': 'Copy',
-     'Debug': 'Debug',
+     'Debug': 'Debug', 'Delete': 'Delete',
      'End': 'End', 'Error': 'Error', 'Exit': 'Exit', 'File': 'File',
      'Help': 'Help', 'InvalidType': 'Type/Start is invalid',
      'InvalidURL': 'URL is invalid', 'Lang': 'Language', 'Notice': 'Notice',
@@ -65,7 +69,7 @@ LANG_MAP = (
      'AboutVersion': '网页图片爬虫 %s\n\n作者@Byng.Zeng\n\n'
                      '版权所有(c)Byng.Zeng\n' % VERSION,
      'Config': '配置', 'Cancel': '取消', 'Copy': '复制', 'Debug': '调试',
-     'End': '结束', 'Exit': '退出',
+     'Delete': '删除', 'End': '结束', 'Exit': '退出',
      'Error': '错误', 'File': '文件', 'Help': '帮助',
      'InvalidType': '分类/开始值无效',
      'InvalidURL': '地址值无效', 'Lang': '语言', 'Notice': '提示',
@@ -85,10 +89,10 @@ LANG_MAP = (
 ############################################################################
 
 class FileInfo(object):
-    def __init__(self):
-        self._url = None
-        self._state = STAT_WAITTING
-        self._output = ''
+    def __init__(self, url=None, state=STAT_WAITTING, output=''):
+        self._url = url
+        self._state = state
+        self._output = output
         self._args = None
 
 
@@ -153,11 +157,14 @@ class WindowUI(object):
         self._wm['cmbType']['value'] = LANG_MAP[self._lang]['TypeList']
 
     def menu_config_output(self):
-        # output = askstring(
-        #            '%s' % LANG_MAP[self._lang]['Output'], self._output)
         output = askdirectory()
         if output:
             self._output = output
+        else:
+            res = askokcancel('%s' % LANG_MAP[self._lang]['Delete'],
+                              '%s' % self._output)
+            if res:
+                self._output = ''
 
     def menu_config_debug(self):
         self._view = self._debug_v_set.get()
@@ -607,7 +614,7 @@ class WebImageCrawlerUI(WindowUI):
             self.update_type_widget_state(0)
 
     def add_url_info_to_list(self, url, state=None, output=None):
-        info = FileInfo()
+        info = FileInfo(output=self._output)
         info._url = url
         if state:
             info._state = state

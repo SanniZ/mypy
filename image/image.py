@@ -129,7 +129,7 @@ class Image (object):
             fmt = img.format.lower()
             if fmt == 'jpeg':
                 fmt = 'jpg'
-            ftype = File.get_filetype(f)
+            ftype = File.get_filetype(f, False)
             if not ftype:  # no ext name
                 fname = '%s.%s' % (f, fmt)
             elif fmt != ftype:
@@ -211,7 +211,6 @@ class Image (object):
 if __name__ == '__main__':
     from mypy.base import Base
     from mypy.path import Path
-    from mypy.pr import Print
 
     HELP_MENU = (
         '============================================',
@@ -235,14 +234,13 @@ if __name__ == '__main__':
     )
 
     Img = Image()
-    pr = Print(Img.__class__.__name__)
     xval = None
     args = Base.get_user_input('hc:r:R:x:o:i:')
     if '-h' in args:
         Base.print_help(HELP_MENU)
     if '-c' in args:
         result = Img.image_file(Path.get_abs_path(args['-c']))
-        pr.pr_info(result)
+        print(result)
     if '-r' in args:
         data = args['-r'].split(',')
         path = data[0]
