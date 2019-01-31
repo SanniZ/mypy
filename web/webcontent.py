@@ -65,7 +65,7 @@ class WebContent (object):
     CONTEXT_UNVERIFIED = ssl._create_unverified_context()
     CONTEXT_TLSv1 = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
 
-    WEB_URL_FILE = r'web_url.txt'
+    WEB_URL_FILE = r'weburl.txt'
 
     pr = Print('WebContent')
 

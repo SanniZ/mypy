@@ -46,3 +46,13 @@ class Path(object):
             for rt, dr, fs in os.walk(path):
                 if len(dr) == 0 and len(fs) == 0:
                     os.rmdir(rt)
+
+    @classmethod
+    def recliam_path(cls, path, start=False, end=True):
+        if start:
+            if path[0] == '/':
+                path = path[1:]
+        if end:
+            if path[-1] == '/':
+                path = path[:len(path) - 1]
+        return path

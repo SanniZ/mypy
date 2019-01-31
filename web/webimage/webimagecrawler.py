@@ -19,6 +19,8 @@ from mypy.pr import Print
 from web.webcontent import WebContent
 from web.webimage.webimage import get_input
 
+from baiduyun import BaiduYun
+
 if sys.version_info[0] == 2:
     import Queue as queue
 else:
@@ -154,10 +156,11 @@ class WebImageCrawler(WebContent):
         self._class = None
         self._thread_max = 5
         self._thread_queue = None
+        self._byname = None
 
     def get_input_args(self, args):
         if not args:
-            args = get_input()
+            args = get_input(exopt='y:')
         if '-h' in args:
             Base.print_help(self.HELP_MENU)
         if '-u' in args:
@@ -169,6 +172,8 @@ class WebImageCrawler(WebContent):
             self._xval = args['-x']
         if '-d' in args:
             self._pr.set_pr_level(self._pr.get_pr_level() | Print.PR_LVL_DBG)
+        if '-y' in args:
+            self._byname = args['-y']
         # get url_base from xval
         if self._xval:
             self._url_base, self._class = \
@@ -188,7 +193,15 @@ class WebImageCrawler(WebContent):
     def process_input(self, args=None, info=None):
         hdr = XBaseClass.get_class_instance(self._class)
         if hdr:
-            hdr.main(args)
+            output = hdr.main(args)
+            # upload to baidu yun.
+            if all((self._byname, hdr)):
+                by = BaiduYun()
+                dst = '%s/%s' % (
+                    self._byname,
+                    re.sub('%s/' % os.path.dirname(hdr._path), '', output))
+                vargs = {'-d': dst, '-s': output}
+                by.main(vargs)
         else:
             self._pr.pr_err('[WebImageCrawler] Error, no found handler!')
         # release queue
@@ -238,7 +251,7 @@ class WebImageCrawler(WebContent):
             self.process_input(args)
 
 if __name__ == '__main__':
-    args = get_input(None, 'U')
+    args = get_input(None, 'Uy:')
     if '-U' in args:
         from webimagecrawlerUI import WebImageCrawlerUI
         del args['-U']  # delete -U value.
