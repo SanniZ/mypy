@@ -12,8 +12,8 @@ from PIL import Image as PILImg
 
 from mypy.file import File
 
-IMG_W_MIN = 220
-IMG_H_MIN = 220
+IMG_W_MIN = 240
+IMG_H_MIN = 240
 
 SMALL_IMG_SIZE = 1024 * 8  # 8K
 

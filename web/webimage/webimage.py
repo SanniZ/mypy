@@ -26,7 +26,7 @@ else:
 
 def get_input(args=None, exopt=None):
     if not args:
-        opt = 'hu:n:p:x:m:R:t:d:v'
+        opt = 'hu:n:p:x:m:R:t:d:vb:'
         if exopt:
             opt += exopt
         args = Base.get_user_input(opt)
@@ -317,6 +317,8 @@ class WebImage(object):
             }
             if args['-m'] in dl_image_funcs.keys():
                 self._dl_image = dl_image_funcs[args['-m']]
+        if '-b' in args:
+            self._url_base_ex = args['-b']
 
         if '-d' in args:
             try:
@@ -356,7 +358,16 @@ class WebImage(object):
         # get web now.
         for index in range(self._num):
             # get the first page.
-            if self._url_base:
+            if self._url_base_ex:
+                if index:
+                    base = re.sub(
+                            'URLID',
+                            '%s%s' % (self._url, self._url_base_ex),
+                            self._url_base)
+                    url = re.sub('URLID', '%s' % (index + 1), base)
+                else:
+                    url = self.get_url_address(self._url_base, int(self._url))
+            elif self._url_base:
                 url = self.get_url_address(self._url_base,
                                            int(self._url) + index)
             else:

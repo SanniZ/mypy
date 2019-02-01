@@ -7,6 +7,7 @@ Created on 2018-12-04
 """
 import os
 import re
+import shutil
 
 from base import Base
 from file import File
@@ -81,6 +82,36 @@ class MyPy(object):
                         with open(f, 'wr') as fd:
                             fd.write(data)
 
+    @classmethod
+    def copy(cls, src, dst):
+        lfs = list()
+        if os.path.isdir(src):
+            for rt, ds, fs in os.walk(src):
+                if fs:
+                    for f in fs:
+                        lfs.append(os.path.join(rt, f))
+        if lfs:
+            for f in lfs:
+                fname = os.path.basename(f)
+                if not os.path.exists(dst):
+                    os.makedirs(dst)
+                shutil.copy(f, '%s/%s' % (dst, fname))
+
+    @classmethod
+    def move(cls, src, dst):
+        lfs = list()
+        if os.path.isdir(src):
+            for rt, ds, fs in os.walk(src):
+                if fs:
+                    for f in fs:
+                        lfs.append(os.path.join(rt, f))
+        if lfs:
+            for f in lfs:
+                fname = os.path.basename(f)
+                if not os.path.exists(dst):
+                    os.makedirs(dst)
+                shutil.move(f, '%s/%s' % (dst, fname))
+
 if __name__ == '__main__':
     HELP_MENU = (
         '============================================',
@@ -96,11 +127,17 @@ if __name__ == '__main__':
         '    wd   : word will be find',
         '    newd : new word to replace wd',
         '    ftype: file type will be find',
+        '  -c src,dst: copy files',
+        '    src: path of source files.',
+        '    dst: path to copy files',
+        '  -m src,dst: move files',
+        '    src: path of source files.',
+        '    dst: path to copy files',
     )
 
     pr = Print('MyPy')
 
-    args = Base.get_user_input('hf:s:')
+    args = Base.get_user_input('hf:s:c:m:')
     if '-h' in args:
         Base.print_help(HELP_MENU)
     if '-f' in args:
@@ -138,3 +175,22 @@ if __name__ == '__main__':
         elif n > 3:
             ftype = values[3]
             MyPy.sub(path, wd, newd, ftype)
+    if '-c' in args:
+        values = args['-c'].split(',')
+        n = len(values)
+        src = dst = None
+        if n >= 2:
+            src = Path.get_abs_path(values[0])
+            dst = Path.get_abs_path(values[1])
+        if all((src, dst)):
+            MyPy.copy(src, dst)
+
+    if '-m' in args:
+        values = args['-m'].split(',')
+        n = len(values)
+        src = dst = None
+        if n >= 2:
+            src = Path.get_abs_path(values[0])
+            dst = Path.get_abs_path(values[1])
+        if all((src, dst)):
+            MyPy.move(src, dst)

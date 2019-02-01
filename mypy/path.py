@@ -7,6 +7,7 @@ Created on 2018-12-26
 """
 
 import os
+import re
 
 
 class Path(object):
@@ -34,6 +35,7 @@ class Path(object):
 
     @classmethod
     def get_abs_path(cls, path):
+        path = re.sub('~', os.getenv('HOME'), path)
         return os.path.abspath(path)
 
     @classmethod
