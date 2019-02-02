@@ -26,7 +26,7 @@ else:
 
 def get_input(args=None, exopt=None):
     if not args:
-        opt = 'hu:n:p:x:m:R:t:d:vb:'
+        opt = 'hu:n:p:x:m:R:t:d:v'
         if exopt:
             opt += exopt
         args = Base.get_user_input(opt)
@@ -56,16 +56,20 @@ class WebImage(object):
         '    rget: using requests to download images',
         '    uget: using urlopen to download images',
         '  -R file:',
-        '    re config file for re_image_url.'
+        '    re config file for re_image_url.',
         '  -t num:',
-        '    set max number of thread to download web.'
+        '    set max number of thread to download web.',
+        '  -s fnum:',
+        '    set number of sub pages and formal of url.',
     )
 
     def __init__(self, name=None):
         self._name = name
         self._com = None
-        self._url_base = None
         self._url = None
+        self._url_base = None
+        self._sub_url_base = None
+        self._sub_url_num = 0
         self._num = 1
         self._path = '%s/%s' % (Base.DEFAULT_DWN_PATH, self.__class__.__name__)
         self._re_image_url = [
@@ -171,13 +175,24 @@ class WebImage(object):
     def get_pages(self, html, pattern=None):
         return WebContent.get_url_pages(html, pattern)
 
-    def download_images(self, imgs, path):
-        for img in imgs:
-            self.download_image(self.get_image_raw_url(img), path)
+    def get_sub_url_base_and_num(self, data):
+        base = num = None
+        num = re.compile('\d+').search(data)
+        if num:
+            num = num.group()
+            base = '%s%s' % (self._url, data[:(len(data) - len(num))])
+        return base, int(num)
 
     def get_url_of_pages(self, num):
+        if self._sub_url_base:
+            sub_url_base = '%s%s' % (self._url, self._sub_url_base)
+        else:
+            sub_url_base = '%s/' % self._url
+        # create all of sub url.
         url = map(lambda x: WebContent.set_url_base_and_num(
-            self._url_base, '%s/%d' % (int(self._url), x)), range(2, num+1))
+                  self._url_base, '%s%d' % (sub_url_base, x)),
+                  range(2, num+1))
+        url = list(url)
         url.insert(0,
                    WebContent.set_url_base_and_num(self._url_base, self._url))
         return url
@@ -199,6 +214,10 @@ class WebImage(object):
             fd.write('url of imgs:\n')
             for url in urls:
                 fd.write('%s\n' % url)
+
+    def download_images(self, imgs, path):
+        for img in imgs:
+            self.download_image(self.get_image_raw_url(img), path)
 
     def output_image_exists(self, path):
         for rt, ds, fs in os.walk(path):
@@ -317,9 +336,6 @@ class WebImage(object):
             }
             if args['-m'] in dl_image_funcs.keys():
                 self._dl_image = dl_image_funcs[args['-m']]
-        if '-b' in args:
-            self._url_base_ex = args['-b']
-
         if '-d' in args:
             try:
                 self.__dbg = int(args['-d'])
@@ -348,6 +364,8 @@ class WebImage(object):
         return args
 
     def main(self, args=None):
+        thread_list = list()
+        result = dict()
         self.get_user_input(args)
         # get external re file.
         if self._ex_re_image_url:
@@ -358,29 +376,26 @@ class WebImage(object):
         # get web now.
         for index in range(self._num):
             # get the first page.
-            if self._url_base_ex:
-                if index:
-                    base = re.sub(
-                            'URLID',
-                            '%s%s' % (self._url, self._url_base_ex),
-                            self._url_base)
-                    url = re.sub('URLID', '%s' % (index + 1), base)
-                else:
-                    url = self.get_url_address(self._url_base, int(self._url))
-            elif self._url_base:
+            if self._url_base:
                 url = self.get_url_address(self._url_base,
                                            int(self._url) + index)
             else:
                 url = self.get_url_address(None, self._url)
+            # start to process url.
             if self._thread_queue:
                 # create thread and put to queue.
                 t = threading.Thread(target=self.process_url_web,
                                      args=(url, (index + 1, self._num)))
+                thread_list.append(t)
                 self._thread_queue.put(url)
                 t.start()
             else:
-                return self.process_url_web(url)
-
+                result[url] = self.process_url_web(url)
+        # waitting for all threading.
+        if self._thread_queue:
+            for t in thread_list:
+                t.join()
+        return result
 
 if __name__ == '__main__':
     wi = WebImage('WebImage')

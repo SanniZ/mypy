@@ -52,6 +52,7 @@ class XBaseClass(object):
         # mzitu
         'mzitu': {'https://m.mzitu.com/URLID': 'Mzitu'},
         'weibo': {'https://m.weibo.cn/detail/URLID': 'Weibo'},
+        'meitulu': {'https://www.meitulu.com/item/URLID.html': 'Meitulu'},
     }
 
     @classmethod
@@ -71,6 +72,9 @@ class XBaseClass(object):
         elif c == 'Weibo':
             from web.webimage.weibo import Weibo
             hdr = Weibo(c)
+        elif c == 'Meitulu':
+            from web.webimage.meitulu import Meitulu
+            hdr = Meitulu(c)
         else:
             from web.webimage.webimage import WebImage
             hdr = WebImage('WebImage')
@@ -141,6 +145,8 @@ class WebImageCrawler(WebContent):
         '    re config file for re_image_url.',
         '  -t num:',
         '    set number of thread to download images.',
+        '  -s fnum:',
+        '    set number of sub pages and formal of url.',
         '  -U:',
         '    run GUI of WebImageCrawler.',
     )
@@ -195,13 +201,16 @@ class WebImageCrawler(WebContent):
         if hdr:
             output = hdr.main(args)
             # upload to baidu yun.
-            if all((self._byname, hdr)):
+            if all((self._byname, output)):
                 by = BaiduYun()
-                dst = '%s/%s' % (
-                    self._byname,
-                    re.sub('%s/' % os.path.dirname(hdr._path), '', output))
-                vargs = {'-d': dst, '-s': output}
-                by.main(vargs)
+                for url, path in output.items():
+                    if path:
+                        dst = '%s/%s' % (
+                            self._byname,
+                            re.sub('%s/' % os.path.dirname(hdr._path),
+                                   '', path))
+                        vargs = {'-d': dst, '-s': path}
+                        by.main(vargs)
         else:
             self._pr.pr_err('[WebImageCrawler] Error, no found handler!')
         # release queue

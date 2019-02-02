@@ -54,7 +54,7 @@ class BaiduYun(object):
         '    path : path of dir or file',
         '  -v True/False: view info of uploading',
         '  -o: order to show files',
-        '  -r: order to show files',
+        '  -r: recursion of path',
         '',
         'Note:',
         ' if it is not able to access BaiduYun,',
@@ -99,7 +99,7 @@ class BaiduYun(object):
                 index += 1
                 pr_info('[%s/%s] uploading: %s ===> %s' % (index, self._count,
                         re.sub('%s/' % self._src, '', f), dst), self._view)
-                self._bp.upload(localpath=f, remotepath=dst, ondup='newcopy')
+                self._bp.upload(localpath=f, remotepath=dst, ondup='overwrite')
 
     def get_upload_files(self):
         dfs = dict()

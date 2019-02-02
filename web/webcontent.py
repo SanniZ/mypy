@@ -286,8 +286,10 @@ class WebContent (object):
 
     @classmethod
     def set_url_base_and_num(cls, base, num):
+        if type(num) is not str:
+            num = str(num)
         if base:
-            return re.sub('URLID', str(num), base)
+            return re.sub('URLID', num, base)
         else:
             return num
 

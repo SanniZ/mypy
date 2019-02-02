@@ -41,7 +41,7 @@ else:
 #               Const Vars
 ############################################################################
 
-VERSION = 1.2
+VERSION = '1.3.0'
 
 STAT_WAITTING = 'Waitting'
 STAT_DOWNLOADING = 'Downloading'
@@ -63,7 +63,7 @@ LANG_MAP = (
      'Run': 'Run', 'Start': 'Start', 'State': 'State',
      'Title': 'WebImageCrawler', 'Type': 'Type',
      'TypeList': ('xgmn', 'swmn', 'wgmn', 'zpmn', 'mnxz', 'rtys',
-                  'jpmn', 'gzmn', 'nrtys', 'meizitu', 'mzitu'),
+                  'jpmn', 'gzmn', 'nrtys', 'meizitu', 'mzitu', 'meitulu'),
      'OK': 'OK', 'URL': 'URL',  'Warnning': 'Warnning', },
     {'About': '关于',
      'AboutVersion': '网页图片爬虫 %s\n\n作者@Byng.Zeng\n\n'
@@ -79,7 +79,7 @@ LANG_MAP = (
      'Type': '分类',
      'TypeList': ('性感美女', '丝袜美女', '外国美女', '自拍美女',
                   '美女写真', '人体艺术', '街拍美女', '古装美女',
-                  '人体艺术n', '妺子图', '妺子图Mz'),
+                  '人体艺术n', '妺子图', '妺子图Mz', '美图录'),
      'OK': '确定', 'URL': '地址', 'Warnning': '警告', },
 )
 
@@ -516,7 +516,7 @@ class WebImageCrawlerUI(WindowUI):
                 if t_end:
                     url_end = int(t_end)
                     if url_end >= url_start:
-                        n = url_end - url_start
+                        n = url_end - url_start + 1
                     else:
                         showerror('%s' % LANG_MAP[self._lang]['Error'],
                                   '%s(%d) > %s(%d)!' %
@@ -548,6 +548,9 @@ class WebImageCrawlerUI(WindowUI):
     def on_run_click(self):
         fp = self._wm['enPath'].get()
         if fp:
+            if not re.compile('{.*}').match(fp):
+                args = {'-u': fp}
+                self._path_var.set(args)
             # # update file list and info
             self.update_url_list()
             self.update_list_info()
@@ -658,6 +661,22 @@ class WebImageCrawlerUI(WindowUI):
                                     url_type, str(url_start + index))
                 if url:
                     urls.append(url)
+        elif '-u' in f:
+            args = eval(f)
+            if '-n' in args:
+                n = args['-n']
+                if type(n) is not int:
+                    n = int(n)
+            else:
+                n = 1
+            urls = list()
+            for index in range(n):
+                base, num = WebContent.get_url_base_and_num(args['-u'])
+                if all((base, num)):
+                    url = WebContent.set_url_base_and_num(
+                                                base, int(num) + index)
+                if url:
+                    urls.append(url)
         else:
             urls = [f]
         # add file info to list.
@@ -679,7 +698,7 @@ class WebImageCrawlerUI(WindowUI):
             output = hdr.main(args)
             # update state to DONE.
             if output:
-                self.update_list_info(url, STAT_DONE, output)
+                self.update_list_info(url, STAT_DONE, output[url])
             else:
                 self.update_list_info(url, STAT_FAIL)
         else:
