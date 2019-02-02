@@ -44,7 +44,9 @@ if __name__ == '__main__':
     elif '-S' in args:
             urls = mt.get_url_from_search_links(args['-S'])
             del args['-S']
-            for url in urls:
+            n = len(urls)
+            for index, url in enumerate(urls):
+                print('[%d/%d] downloading: %s' % (index, n, url))
                 args['-u'] = url
                 mt.main(args)
     else:
