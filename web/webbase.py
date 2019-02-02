@@ -8,7 +8,7 @@ Created on: 2019-01-09
 
 import re
 
-from mypy.file import File
+from mypy.pyfile import PyFile
 
 
 class WebBase(object):
@@ -30,14 +30,16 @@ class WebBase(object):
 
     @classmethod
     def set_url_base_and_num(cls, base, num):
+        if type(num) is not str:
+            num = str(num)
         if base:
-            return re.sub('URLID', str(num), base)
+            return re.sub('URLID', num, base)
         else:
             return num
 
     @classmethod
     def convert_url_to_title(cls, url):
-        return File.reclaim_name(re.sub('/$', '', url))
+        return PyFile.reclaim_name(re.sub('/$', '', url))
 
     @classmethod
     def reclaim_url_address(cls, url):

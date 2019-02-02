@@ -12,7 +12,7 @@ import sys
 import subprocess
 import threading
 
-from web.webcontent import WebContent
+from web.webbase import WebBase
 from web.webimage.webimagecrawler import XBaseClass
 
 if sys.version_info[0] == 2:
@@ -62,8 +62,8 @@ LANG_MAP = (
      'Paste': 'Paste',
      'Run': 'Run', 'Start': 'Start', 'State': 'State',
      'Title': 'WebImageCrawler', 'Type': 'Type',
-     'TypeList': ('xgmn', 'swmn', 'wgmn', 'zpmn', 'mnxz', 'rtys',
-                  'jpmn', 'gzmn', 'nrtys', 'meizitu', 'mzitu', 'meitulu'),
+     'TypeList': ('meitulu', 'meizitu', 'mzitu', 'xgmn', 'swmn', 'wgmn',
+                  'zpmn', 'mnxz', 'rtys', 'jpmn', 'gzmn', 'nrtys',),
      'OK': 'OK', 'URL': 'URL',  'Warnning': 'Warnning', },
     {'About': '关于',
      'AboutVersion': '网页图片爬虫 %s\n\n作者@Byng.Zeng\n\n'
@@ -77,9 +77,9 @@ LANG_MAP = (
      'Paste': '粘贴',
      'Run': '运行', 'Start': '开始', 'State': '状态', 'Title': '网页图片爬虫',
      'Type': '分类',
-     'TypeList': ('性感美女', '丝袜美女', '外国美女', '自拍美女',
-                  '美女写真', '人体艺术', '街拍美女', '古装美女',
-                  '人体艺术n', '妺子图', '妺子图Mz', '美图录'),
+     'TypeList': ('美图录', '妺子图', '妺子图Mz', '性感美女', '丝袜美女',
+                  '外国美女', '自拍美女', '美女写真', '人体艺术', '街拍美女',
+                  '古装美女', '人体艺术n',),
      'OK': '确定', 'URL': '地址', 'Warnning': '警告', },
 )
 
@@ -671,9 +671,9 @@ class WebImageCrawlerUI(WindowUI):
                 n = 1
             urls = list()
             for index in range(n):
-                base, num = WebContent.get_url_base_and_num(args['-u'])
+                base, num = WebBase.get_url_base_and_num(args['-u'])
                 if all((base, num)):
-                    url = WebContent.set_url_base_and_num(
+                    url = WebBase.set_url_base_and_num(
                                                 base, int(num) + index)
                 if url:
                     urls.append(url)
@@ -681,7 +681,7 @@ class WebImageCrawlerUI(WindowUI):
             urls = [f]
         # add file info to list.
         for url in set(urls):
-            url = WebContent.reclaim_url_address(url)
+            url = WebBase.reclaim_url_address(url)
             if url:
                 self.add_url_info_to_list(url)
         # sort of file list.
@@ -689,7 +689,7 @@ class WebImageCrawlerUI(WindowUI):
 
     def download_url(self, args=None):
         url = args['-u']
-        base, num = WebContent.get_url_base_and_num(url)
+        base, num = WebBase.get_url_base_and_num(url)
         if base:
             self._class = XBaseClass.get_class_from_base(base)
         hdr = XBaseClass.get_class_instance(self._class)

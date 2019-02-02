@@ -9,10 +9,10 @@ import os
 import re
 import shutil
 
-from base import Base
-from file import File
-from path import Path
-from pr import Print
+from pybase import PyBase
+from pyfile import PyFile
+from pypath import PyPath
+from pypr import PyPrint
 
 
 class MyPy(object):
@@ -23,14 +23,14 @@ class MyPy(object):
         fs = None
         pattern = re.compile('%s' % wd, re.I)
         # check files now
-        if Path.path_is_file(path):
+        if PyPath.path_is_file(path):
             with open(path, 'r') as fd:
                 data = fd.read()
             data = pattern.findall(data)
             lst = map(lambda x: x, data)
             result[path] = lst
         else:
-            # check path.
+            # check PyPath.
             fty = re.compile('\*\.\w+$').search(path)
             if fty:
                 ftype = fty.group()[2:]
@@ -39,8 +39,8 @@ class MyPy(object):
                 if fs:
                     for f in fs:
                         if ftype:
-                            # check type of file.
-                            if File.get_filetype(f) != ftype:
+                            # check type of PyFile.
+                            if PyFile.get_filetype(f) != ftype:
                                 continue
                         f = os.path.join(rt, f)
                         lst = list()
@@ -56,14 +56,14 @@ class MyPy(object):
     # -w word: new
     @classmethod
     def sub(cls, path, wd, newd, ftype=None):
-        if Path.path_is_file(path):
+        if PyPath.path_is_file(path):
             with open(path, 'r') as fd:
                 data = fd.read()
             data = re.sub(wd, newd, data)
             with open(path, 'w') as fd:
                 fd.write(data)
         else:
-            # check path.
+            # check PyPath.
             fty = re.compile('\*\.\w+$').search(path)
             if fty:
                 ftype = fty.group()[2:]
@@ -72,8 +72,8 @@ class MyPy(object):
                 if fs:
                     for f in fs:
                         if ftype:
-                            # check type of file.
-                            if File.get_filetype(f) != ftype:
+                            # check type of PyFile.
+                            if PyFile.get_filetype(f) != ftype:
                                 continue
                         f = os.path.join(rt, f)
                         with open(f, 'r') as fd:
@@ -135,20 +135,20 @@ if __name__ == '__main__':
         '    dst: path to copy files',
     )
 
-    pr = Print('MyPy')
+    pr = PyPrint('MyPy')
 
-    args = Base.get_user_input('hf:s:c:m:')
+    args = PyBase.get_user_input('hf:s:c:m:')
     if '-h' in args:
-        Base.print_help(HELP_MENU)
+        PyBase.print_help(HELP_MENU)
     if '-f' in args:
         values = args['-f'].split(',')
         n = len(values)
         if n < 2:
-            Base.print_exit('input error, -h for help')
+            PyBase.print_exit('input error, -h for help')
         elif any((not values[0], not values[1])):
-            Base.print_exit('input error, -h for help')
+            PyBase.print_exit('input error, -h for help')
         # get args.
-        path = Path.get_abs_path(values[0])
+        path = PyPath.get_abs_path(values[0])
         wd = values[1]
         if n == 2:
             result = MyPy.find(path, wd)
@@ -164,10 +164,10 @@ if __name__ == '__main__':
         values = args['-s'].split(',')
         n = len(values)
         if n < 3:
-            Base.print_exit('input error, -h for help')
+            PyBase.print_exit('input error, -h for help')
         elif any((not values[0], not values[1])):
-            Base.print_exit('input error, -h for help')
-        path = Path.get_abs_path(values[0])
+            PyBase.print_exit('input error, -h for help')
+        path = PyPath.get_abs_path(values[0])
         wd = values[1]
         newd = values[2]
         if n == 3:
@@ -180,8 +180,8 @@ if __name__ == '__main__':
         n = len(values)
         src = dst = None
         if n >= 2:
-            src = Path.get_abs_path(values[0])
-            dst = Path.get_abs_path(values[1])
+            src = PyPath.get_abs_path(values[0])
+            dst = PyPath.get_abs_path(values[1])
         if all((src, dst)):
             MyPy.copy(src, dst)
 
@@ -190,7 +190,7 @@ if __name__ == '__main__':
         n = len(values)
         src = dst = None
         if n >= 2:
-            src = Path.get_abs_path(values[0])
-            dst = Path.get_abs_path(values[1])
+            src = PyPath.get_abs_path(values[0])
+            dst = PyPath.get_abs_path(values[1])
         if all((src, dst)):
             MyPy.move(src, dst)

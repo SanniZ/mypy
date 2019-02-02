@@ -11,7 +11,7 @@ Created on 2018-12-05
 # import sys
 # import getopt
 
-from mypy.base import Base
+from mypy.pybase import PyBase
 
 
 class Template(object):
@@ -28,10 +28,10 @@ class Template(object):
         # print
         for txt in help_menu:
             print(txt)
-        Base.print_exit()
+        PyBase.print_exit()
 
     def main(self):
-        args = Base.get_user_input('h')
+        args = PyBase.get_user_input('h')
         if '-h' in args:
             self.print_help()
 

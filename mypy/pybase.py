@@ -11,7 +11,7 @@ import sys
 import getopt
 
 
-class Base (object):
+class PyBase (object):
 
     DEFAULT_DWN_PATH = '%s/Downloads' % os.getenv('HOME')
 

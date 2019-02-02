@@ -17,9 +17,11 @@ import requests
 import subprocess
 import socket
 
-from mypy.path import Path
-from mypy.file import File
-from mypy.pr import Print
+from mypy.pypath import PyPath
+from mypy.pyfile import PyFile
+from mypy.pyprint import PyPrint
+
+from web.webbase import WebBase
 
 if sys.version_info[0] == 2:
     from urllib2 import Request, urlopen, URLError, HTTPError
@@ -67,7 +69,7 @@ class WebContent (object):
 
     WEB_URL_FILE = r'weburl.txt'
 
-    pr = Print('WebContent')
+    pr = PyPrint('WebContent')
 
     @classmethod
     def url_is_https(cls, url):
@@ -151,11 +153,11 @@ class WebContent (object):
                                    retry_times=retry_times, view=view)
         else:
             content = cls.get_html(url=url, retry_times=retry_times, view=view)
-        # save content to path.
+        # save content to PyPath.
         if all((content, path)):
-            Path.make_path(path)
-            f = '%s/%s' % (path, cls.convert_url_to_title(url))
-            if File.get_name_ex(f) != '.html':
+            PyPath.make_path(path)
+            f = '%s/%s' % (path, WebBase.convert_url_to_title(url))
+            if PyFile.get_name_ex(f) != '.html':
                 f = f + '.html'
             with open(f, 'w') as fd:
                 fd.write(content.decode())
@@ -269,44 +271,10 @@ class WebContent (object):
             pages = None
         return pages
 
-    @classmethod
-    def get_url_base_and_num(cls, url):
-        base = None
-        num = None
-        # numbers.
-        num = re.compile('^\d+$').search(url)
-        if num:
-            num = num.group()
-        else:
-            num = re.compile('(\d)+(/)?(.html)?$').search(url)
-            if num:
-                num = re.compile('\d+').search(num.group()).group()
-                base = re.sub(num, 'URLID', url)
-        return base, num
-
-    @classmethod
-    def set_url_base_and_num(cls, base, num):
-        if type(num) is not str:
-            num = str(num)
-        if base:
-            return re.sub('URLID', num, base)
-        else:
-            return num
-
-    @classmethod
-    def convert_url_to_title(cls, url):
-        return File.reclaim_name(re.sub('/$', '', url))
-
-    @classmethod
-    def reclaim_url_address(cls, url):
-        for key, value in {'/$': '', '\n$': ''}.items():
-            url = re.sub(key, value, url)
-        return url
-
 
 if __name__ == '__main__':
 
-    from mypy.base import Base
+    from mypy.pybase import PyBase
 
     HELP_MENU = (
         '==================================',
@@ -333,13 +301,13 @@ if __name__ == '__main__':
     view = False
 
     wc = WebContent()
-    pr = Print(wc.__class__.__name__)
+    pr = PyPrint(wc.__class__.__name__)
 
-    args = Base.get_user_input('hp:u:d:v')
+    args = PyBase.get_user_input('hp:u:d:v')
     if '-h' in args:
-        Base.print_help(HELP_MENU)
+        PyBase.print_help(HELP_MENU)
     if '-p' in args:
-        path = Path.get_abs_path(args['-p'])
+        path = PyPath.get_abs_path(args['-p'])
     if '-u' in args:
         url = args['-u']
     if '-v' in args:
@@ -356,11 +324,11 @@ if __name__ == '__main__':
         if all((args['-d'] in df_funcs.keys(), url)):
             df = df_funcs[args['-d']]
         else:
-            Base.print_exit('-d %s error, -h for help!' % args['-d'])
+            PyBase.print_exit('-d %s error, -h for help!' % args['-d'])
 
     # config default path
     if not path:
-        path = '%s/%s' % (Path.get_download_path(), wc.__class__.__name__)
+        path = '%s/%s' % (PyPath.get_download_path(), wc.__class__.__name__)
     # run cmd
     if df:
         df(url=url, path=path, view=view)

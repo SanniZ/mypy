@@ -10,7 +10,7 @@ import os
 import re
 from PIL import Image as PILImg
 
-from mypy.file import File
+from mypy.pyfile import PyFile
 
 IMG_W_MIN = 240
 IMG_H_MIN = 240
@@ -44,7 +44,7 @@ class Image (object):
     # check image base on extname, return True or False
     @classmethod
     def image_file_ex(cls, f):
-        exname = File.get_name_ex(f)
+        exname = PyFile.get_name_ex(f)
         if exname in ['.jpg', '.png', '.gif', '.jpeg', '.bmp']:
             return True
         else:
@@ -72,10 +72,11 @@ class Image (object):
                     os.remove(path)
         else:
             for rt, dirs, fs in os.walk(path):
-                if fs:  # found files.
+                if fs:  # found PyFile.s.
                     for f in fs:
                         f = os.path.join(rt, f)
-                        if any((cls.image_file(f), cls.image_file_ex(f))):
+                        if any((cls.image_file(f),
+                                cls.image_file_ex(f))):
                             if os.path.getsize(f) < size:
                                     os.remove(f)
 
@@ -92,7 +93,7 @@ class Image (object):
                 imgs_dict[path] = img
         elif os.path.isdir(path):
             for rt, dirs, fs in os.walk(path):
-                if fs:  # found files.
+                if fs:  # found PyFile.s.
                     for f in fs:
                         f = os.path.join(rt, f)
                         img = cls.image_file(f)
@@ -129,7 +130,7 @@ class Image (object):
             fmt = img.format.lower()
             if fmt == 'jpeg':
                 fmt = 'jpg'
-            ftype = File.get_filetype(f, False)
+            ftype = PyFile.get_filetype(f, False)
             if not ftype:  # no ext name
                 fname = '%s.%s' % (f, fmt)
             elif fmt != ftype:
@@ -209,37 +210,37 @@ class Image (object):
         return fmt, size, mode
 
 if __name__ == '__main__':
-    from mypy.base import Base
-    from mypy.path import Path
+    from mypy.pybase import PyBase
+    from mypy.pypath import PyPath
 
     HELP_MENU = (
         '============================================',
         '    Image help',
         '============================================',
         'options:',
-        '  -c img: check img is a image file',
-        '    img: the path of image file',
+        '  -c img: check img is a image PyFile.',
+        '    img: the path of image PyFile.',
         '  -r path,width,height: remove small size of images',
-        '    path  : path of dir or file',
+        '    path  : path of dir or PyFile.',
         '    width : min of width',
         '    height: min of height',
         '  -R path: reclaim image format',
-        '    path: path of dir or file',
+        '    path: path of dir or PyFile.',
         '  -o path,rename,nz: rename image to order',
         '    path  : path of images',
         '    rename: the format of image to be rename',
         '    nz    : True is set %0d, False is set %d',
-        '  -i img: show detail info of image file',
-        '    img: the path of image file',
+        '  -i img: show detail info of image PyFile.',
+        '    img: the path of image PyFile.',
     )
 
     Img = Image()
     xval = None
-    args = Base.get_user_input('hc:r:R:x:o:i:')
+    args = PyBase.get_user_input('hc:r:R:x:o:i:')
     if '-h' in args:
-        Base.print_help(HELP_MENU)
+        PyBase.print_help(HELP_MENU)
     if '-c' in args:
-        result = Img.image_file(Path.get_abs_path(args['-c']))
+        result = Img.image_file(PyPath.get_abs_path(args['-c']))
         print(result)
     if '-r' in args:
         data = args['-r'].split(',')
@@ -261,11 +262,11 @@ if __name__ == '__main__':
         n = len(val)
 
         if n >= 3:
-            Img.set_order_images(Path.get_abs_path(val[0]), val[1], val[2])
+            Img.set_order_images(PyPath.get_abs_path(val[0]), val[1], val[2])
         elif n == 2:
-            Img.set_order_images(Path.get_abs_path(val[0]), val[1])
+            Img.set_order_images(PyPath.get_abs_path(val[0]), val[1])
         elif n == 1:
-            Img.set_order_images(Path.get_abs_path(val[0]))
+            Img.set_order_images(PyPath.get_abs_path(val[0]))
         else:
             print('Error, -h for help!')
     if '-i' in args:
@@ -285,7 +286,7 @@ if __name__ == '__main__':
                             dt[f] = (fmt, size, mode)
         # print result.
         for img, detail in dt.items():
-            print('file  :', os.path.basename(img))
+            print('PyFile.  :', os.path.basename(img))
             print('format:', detail[0])
             print('size  :', detail[1])
             print('mode  :', detail[2])

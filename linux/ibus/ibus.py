@@ -9,7 +9,7 @@ Created on 2018-12-05
 import os
 import subprocess
 
-from mypy.base import Base
+from mypy.pybase import PyBase
 
 WUBI_LOVE98_TXT = '%s/wubi-love98/wubi-love98.txt' % os.getenv('IBus')
 WUBI_LOVE98_DB = '%s/wubi-love98/wubi-love98.db' % os.getenv('IBus')
@@ -90,9 +90,9 @@ class IBus(object):
         subprocess.call(cmd, shell=True)
 
     def main(self):
-        args = Base.get_user_input('harLPpgSBbu')
+        args = PyBase.get_user_input('harLPpgSBbu')
         if '-h' in args:
-            Base.print_help(self.help_menu)
+            PyBase.print_help(self.help_menu)
         if '-a' in args:
             self.ibus_add_to_wubi_love98_db()
         if '-r' in args:

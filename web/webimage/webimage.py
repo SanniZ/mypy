@@ -11,10 +11,11 @@ import sys
 
 import threading
 
-from mypy.base import Base
-from mypy.path import Path
-from mypy.pr import Print
+from mypy.pybase import PyBase
+from mypy.pypath import PyPath
+from mypy.pyprint import PyPrint
 
+from web.webbase import WebBase
 from web.webcontent import WebContent, USER_AGENTS
 from image.image import Image
 
@@ -29,15 +30,15 @@ def get_input(args=None, exopt=None):
         opt = 'hu:n:p:x:m:R:t:d:v'
         if exopt:
             opt += exopt
-        args = Base.get_user_input(opt)
+        args = PyBase.get_user_input(opt)
     return args
 
 
 class WebImage(object):
 
-    help_menu = (
+    help_menu = [
         '==================================',
-        '    WebImage help',
+        '    Command options',
         '==================================',
         'option:',
         '  -u url:',
@@ -59,9 +60,7 @@ class WebImage(object):
         '    re config file for re_image_url.',
         '  -t num:',
         '    set max number of thread to download web.',
-        '  -s fnum:',
-        '    set number of sub pages and formal of url.',
-    )
+    ]
 
     def __init__(self, name=None):
         self._name = name
@@ -71,7 +70,8 @@ class WebImage(object):
         self._sub_url_base = None
         self._sub_url_num = 0
         self._num = 1
-        self._path = '%s/%s' % (Base.DEFAULT_DWN_PATH, self.__class__.__name__)
+        self._path = '%s/%s' % (PyBase.DEFAULT_DWN_PATH,
+                                self.__class__.__name__)
         self._re_image_url = [
             re.compile(
                 'src=[\'|\"]?(http[s]?://[a-z0-9\./-]+\.'
@@ -90,7 +90,7 @@ class WebImage(object):
         self._dl_image = self.urlopen_get_url_image
         self._redundant_title = None
         self.__dbg = 0
-        self._pr = Print(self.__class__.__name__)
+        self._pr = PyPrint(self.__class__.__name__)
         self._thread_max = 5
         self._thread_queue = None
 
@@ -156,7 +156,7 @@ class WebImage(object):
     # download image of url.
     def download_image(self, url, path):
         if self._dl_image:
-            Path.make_path(path)
+            PyPath.make_path(path)
             self._dl_image(url, path, self.__dbg)
 
     def get_url_content(self, url, view=False):
@@ -189,16 +189,16 @@ class WebImage(object):
         else:
             sub_url_base = '%s/' % self._url
         # create all of sub url.
-        url = map(lambda x: WebContent.set_url_base_and_num(
+        url = map(lambda x: WebBase.set_url_base_and_num(
                   self._url_base, '%s%d' % (sub_url_base, x)),
                   range(2, num+1))
         url = list(url)
         url.insert(0,
-                   WebContent.set_url_base_and_num(self._url_base, self._url))
+                   WebBase.set_url_base_and_num(self._url_base, self._url))
         return url
 
     def get_url_address(self, url_base, url):
-        return WebContent.set_url_base_and_num(url_base, url)
+        return WebBase.set_url_base_and_num(url_base, url)
 
     def convert_url_to_title(self, url):
         return WebContent.convert_url_to_title(url)
@@ -306,7 +306,7 @@ class WebImage(object):
         if not args:
             args = get_input()
         if '-h' in args:
-            Base.print_help(self.help_menu)
+            PyBase.print_help(self.help_menu)
         if '-u' in args:
             self._url = re.sub('/$', '', args['-u'])
         if '-n' in args:
@@ -319,12 +319,13 @@ class WebImage(object):
             try:
                 n = int(args['-t'])
             except ValueError as e:
-                Base.print_exit('%s, -h for help!' % str(e))
+                PyBase.print_exit('%s, -h for help!' % str(e))
             if n:
                 self._thread_max = n
         if '-v' in args:
             self._view = True
-            self._pr.set_pr_level(self._pr.get_pr_level() | Print.PR_LVL_WARN)
+            self._pr.set_pr_level(
+                self._pr.get_pr_level() | PyPrint.PR_LVL_WARN)
         if '-x' in args:
             self._xval = args['-x']
         if '-m' in args:
@@ -343,20 +344,20 @@ class WebImage(object):
                 print(str(e))
             else:
                 self._pr.set_pr_level(
-                            self._pr.get_pr_level() | Print.PR_LVL_ALL)
+                            self._pr.get_pr_level() | PyPrint.PR_LVL_ALL)
             if self.__dbg >= 0x02:
                 WebContent.pr.set_pr_level(
-                            WebContent.pr.get_pr_level() | Print.PR_LVL_DBG)
+                            WebContent.pr.get_pr_level() | PyPrint.PR_LVL_DBG)
         # check url
         if self._url:
-            base, num = WebContent.get_url_base_and_num(self._url)
+            base, num = WebBase.get_url_base_and_num(self._url)
             if base:
                 self._url_base = base
             if num:
                 self._url = num
             self._pr.pr_dbg('get base: %s, url: %s' % (base, self._url))
         else:
-            Base.print_exit('[WebImage] Error, no set url, -h for help!')
+            PyBase.print_exit('[WebImage] Error, no set url, -h for help!')
         if self._url_base:
             www_com = re.match('http[s]?://.+\.(com|cn|net)', self._url_base)
             if www_com:

@@ -7,7 +7,7 @@ Created on 2018-12-26
 """
 
 
-class Print(object):
+class PyPrint(object):
 
     PR_LVL_DBG = 0x01
     PR_LVL_WARN = 0x02

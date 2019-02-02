@@ -7,7 +7,9 @@ Created on: 2019-01-16
 """
 import re
 
-from web.webimage.webimage import WebImage
+from mypy.pybase import PyBase
+
+from web.webimage.webimage import WebImage, get_input
 
 
 class Meitulu(WebImage):
@@ -25,7 +27,25 @@ class Meitulu(WebImage):
         data = pattern.findall(str(html))
         return int(data[-1])
 
+    def get_url_from_search_links(self, url):
+        html = self.get_url_content(url)
+        pattern = re.compile("https://www.meitulu.com/item/\d+\.html")
+        urls = pattern.findall(str(html))
+        return urls
+
 
 if __name__ == '__main__':
     mt = Meitulu('Weibo')
-    mt.main()
+    args = get_input(exopt='S:')
+    if '-h' in args:
+        mt.help_menu.append('  -S url:')
+        mt.help_menu.append('    url of web of search')
+        PyBase.print_help(mt.help_menu)
+    elif '-S' in args:
+            urls = mt.get_url_from_search_links(args['-S'])
+            del args['-S']
+            for url in urls:
+                args['-u'] = url
+                mt.main(args)
+    else:
+        mt.main(args)

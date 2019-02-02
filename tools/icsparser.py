@@ -10,8 +10,8 @@ import re
 import os
 import subprocess
 
-from mypy.base import Base
-from mypy.file import File
+from mypy.pybase import PyBase
+from mypy.pyfile import PyFile
 
 RE_DTSTART = r'DTSTART;.+'
 RE_DTEND = r'DTEND;.+'
@@ -114,7 +114,7 @@ class ICSCalendar(object):
         for root, dirs, files in os.walk(path):
             if len(files) != 0:
                 for f in files:
-                    if File.get_filetype(f) == TYPE_ICS:
+                    if PyFile.get_filetype(f) == TYPE_ICS:
                         if fs is None:
                             fs = list()
                         fs.append(os.path.join(root, f))
@@ -139,7 +139,7 @@ class ICSCalendar(object):
         fs = None
         if os.path.exists(path):
             if all((os.path.isfile(path),
-                    File.get_filetype(path) == TYPE_ICS)):
+                    PyFile.get_filetype(path) == TYPE_ICS)):
                 fs = list()
                 fs.append(path)
             elif os.path.isdir(path):
@@ -174,9 +174,9 @@ class ICSCalendar(object):
         self._re = None
 
     def get_user_opt(self):
-        args = Base.get_user_input('hcf:r:s:t:')
+        args = PyBase.get_user_input('hcf:r:s:t:')
         if r'-h' in args:
-            Base.print_help(self.help_menu)
+            PyBase.print_help(self.help_menu)
         if r'-c' in args:
             self._combine_files = True
         if r'-f' in args:
@@ -184,7 +184,7 @@ class ICSCalendar(object):
             if fmt == TYPE_TXT or fmt == TYPE_CSV:
                 self._fmt = fmt
             else:
-                Base.print_exit("Error, unsupport format!")
+                PyBase.print_exit("Error, unsupport format!")
         if r'-r' in args:
             if args['-r'] == r'True':
                 self._sort_reverse = True
@@ -201,7 +201,7 @@ class ICSCalendar(object):
                 for f in fs:
                     self._src.append(f)
         if r'-t' in args:
-            ftype = File.get_filetype(os.path.abspath(args['-t']))
+            ftype = PyFile.get_filetype(os.path.abspath(args['-t']))
             if ftype in [TYPE_TXT, TYPE_CSV]:
                 self._tgt = os.path.abspath(args['-t'])
                 self._combine_files = True
@@ -229,7 +229,7 @@ class ICSCalendar(object):
 
     # get name of output
     def get_output_name(self, fmt):
-        if File.get_filetype(self._tgt) == fmt:
+        if PyFile.get_filetype(self._tgt) == fmt:
             name = self._tgt
         elif self._combine_files:
             name = r'%s/%s.%s' % (self._tgt, u'日历', fmt.lower())
@@ -409,7 +409,7 @@ class ICSCalendar(object):
             self.print_ics_contents()
         else:
             print('Error, use -f txt/csv to set format output\n')
-            Base.print_help(self.help_menu)
+            PyBase.print_help(self.help_menu)
 
         # clear all of events.
         self._events = list()
@@ -504,7 +504,7 @@ class ICSCalendar(object):
         self.check_opt_args()
         # start to process data.
         if self._src is None or len(self._src) == 0:
-            Base.print_exit('No found .ics, do nothing.')
+            PyBase.print_exit('No found .ics, do nothing.')
         elif self._combine_files:
             self.combine_fs_handler()
         else:

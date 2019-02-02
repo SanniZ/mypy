@@ -11,7 +11,7 @@ Created on 2018-12-05
 # import sys
 # import getopt
 
-from mypy.base import Base
+from mypy.pybase import PyBase
 
 
 def print_help():
@@ -25,11 +25,11 @@ def print_help():
     # print
     for txt in help_menu:
         print(txt)
-    Base.print_exit()
+    PyBase.print_exit()
 
 
 def main():
-    args = Base.get_user_input('h')
+    args = PyBase.get_user_input('h')
     if '-h' in args:
         print_help()
 

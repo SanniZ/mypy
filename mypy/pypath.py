@@ -10,7 +10,7 @@ import os
 import re
 
 
-class Path(object):
+class PyPath(object):
 
     @classmethod
     def path_is_file(self, path):

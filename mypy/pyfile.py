@@ -13,7 +13,7 @@ import gzip
 import io
 
 
-class File(object):
+class PyFile(object):
 
     @classmethod
     def get_fname(cls, f):
@@ -66,7 +66,7 @@ class File(object):
 
 
 if __name__ == '__main__':
-    from base import Base
+    from pybase import PyBase
 
     HELP_MENU = (
         '============================================',
@@ -78,8 +78,8 @@ if __name__ == '__main__':
         '    size : min of size',
     )
 
-    args = Base.get_user_input('hr:')
+    args = PyBase.get_user_input('hr:')
     if '-h' in args:
-        Base.print_help(HELP_MENU)
+        PyBase.print_help(HELP_MENU)
     if '-r' in args:
-        File.remove_small_file(args['-r'])
+        PyFile.remove_small_file(args['-r'])

@@ -12,14 +12,12 @@ import re
 
 import threading
 
-from mypy.base import Base
-from mypy.path import Path
-from mypy.pr import Print
+from mypy.pybase import PyBase
+from mypy.pypath import PyPath
+from mypy.pyprint import PyPrint
 
-from web.webcontent import WebContent
+from web.webbase import WebBase
 from web.webimage.webimage import get_input
-
-from baiduyun import BaiduYun
 
 if sys.version_info[0] == 2:
     import Queue as queue
@@ -108,7 +106,7 @@ class XBaseClass(object):
 #               WebImageCrawler Class
 ############################################################################
 
-class WebImageCrawler(WebContent):
+class WebImageCrawler(object):
 
     HELP_MENU = (
         '==================================',
@@ -158,7 +156,7 @@ class WebImageCrawler(WebContent):
         self._url_file = None
         self._url = None
         self._xval = None
-        self._pr = Print(self.__class__.__name__)
+        self._pr = PyPrint(self.__class__.__name__)
         self._class = None
         self._thread_max = 5
         self._thread_queue = None
@@ -168,16 +166,16 @@ class WebImageCrawler(WebContent):
         if not args:
             args = get_input(exopt='y:')
         if '-h' in args:
-            Base.print_help(self.HELP_MENU)
+            PyBase.print_help(self.HELP_MENU)
         if '-u' in args:
             if os.path.isfile(args['-u']):
-                self._url_file = Path.get_abs_path(args['-u'])
+                self._url_file = PyPath.get_abs_path(args['-u'])
             else:
                 self._url = re.sub('/$', '', args['-u'])
         if '-x' in args:
             self._xval = args['-x']
         if '-d' in args:
-            self._pr.set_pr_level(self._pr.get_pr_level() | Print.PR_LVL_DBG)
+            self._pr.set_pr_level(self._pr.get_pr_level() | PyPrint.PR_LVL_DBG)
         if '-y' in args:
             self._byname = args['-y']
         # get url_base from xval
@@ -185,10 +183,10 @@ class WebImageCrawler(WebContent):
             self._url_base, self._class = \
                 XBaseClass.get_base_class_from_xval(self._xval)
             if not all((self._url_base, self._class)):
-                Base.print_exit('[WebImageCrawler] Error, invalid -x val!')
+                PyBase.print_exit('[WebImageCrawler] Error, invalid -x val!')
         # get class from url
         if self._url:
-            base, num = self.get_url_base_and_num(self._url)
+            base, num = WebBase.get_url_base_and_num(self._url)
             if base:
                 self._url_base = base
         # get class from url_base
@@ -202,6 +200,7 @@ class WebImageCrawler(WebContent):
             output = hdr.main(args)
             # upload to baidu yun.
             if all((self._byname, output)):
+                from baiduyun import BaiduYun
                 by = BaiduYun()
                 for url, path in output.items():
                     if path:
@@ -238,7 +237,7 @@ class WebImageCrawler(WebContent):
                 for key, value in {'/$': '', '\n$': ''}.items():
                     url = re.sub(key, value, url)
                 # get base and num
-                base, num = self.get_url_base_and_num(url)
+                base, num = WebBase.get_url_base_and_num(url)
                 if base:
                     self._class = XBaseClass.get_class_from_base(base)
                 if self._class:

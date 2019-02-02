@@ -12,8 +12,8 @@ import subprocess
 
 from bypy import ByPy
 
-from mypy.base import Base
-from mypy.path import Path
+from mypy.pybase import PyBase
+from mypy.pypath import PyPath
 
 
 ############################################################################
@@ -25,6 +25,7 @@ REMOTEROOT = 'apps/bypy'
 LISTROOT = ['ROOT', 'Root', 'root']
 
 LOCALROOT = r'LocalRoot'
+
 
 def pr_info(msg, view=False):
     if view:
@@ -72,7 +73,7 @@ class BaiduYun(object):
         self._bp = ByPy()
 
     def get_input(self):
-        return Base.get_user_input('hs:d:v:l:or')
+        return PyBase.get_user_input('hs:d:v:l:or')
 
     def join_path(self, rt, dr):
         if all((rt, dr)):
@@ -178,7 +179,7 @@ class BaiduYun(object):
         if not args:
             args = self.get_input()
         if '-h' in args:
-            Base.print_help(self.HELP_MENU)
+            PyBase.print_help(self.HELP_MENU)
             return
         if '-v' in args:
             if args['-v'] in ['True', '1', 'true']:
@@ -190,9 +191,9 @@ class BaiduYun(object):
         if '-r' in args:
             self._recursion_path = True
         if '-s' in args:
-            self._src = Path.recliam_path(os.path.abspath(args['-s']))
+            self._src = PyPath.recliam_path(os.path.abspath(args['-s']))
         if '-d' in args:
-            self._dst = Path.recliam_path(args['-d'])
+            self._dst = PyPath.recliam_path(args['-d'])
         if '-l' in args:
             fs = self.list_of_path(args['-l'], self._recursion_path)
             if fs:
