@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
-Created on: 2019-01-16
+Created on: 2019-02-01
 
-@author: Zbyng.Zeng
+@author: Byng.Zeng
 """
 import re
 
@@ -35,7 +35,7 @@ class Meitulu(WebImage):
 
 
 if __name__ == '__main__':
-    mt = Meitulu('Weibo')
+    mt = Meitulu('Meitulu')
     args = get_input(exopt='S:')
     if '-h' in args:
         mt.help_menu.append('  -S url:')
