@@ -14,8 +14,10 @@ import getopt
 # get_input
 #
 # it will get args from sys.argv[1:] and return kwargs.
-# input : [self,] opts
-# output: kwargs
+# sample function:
+# @get_input
+# def get_input_func([self,] opt, args=None):
+#     return args
 # =========================================================
 def get_input(func):
     def __get_user_input(opts):
@@ -34,15 +36,33 @@ def get_input(func):
     def get_input_wrapper(*args, **kwargs):
         opts = None
         if kwargs:
+            if 'args' in kwargs:
+                if type(kwargs['args']) == dict:
+                    return func(*args, **kwargs)
             if 'opts' in kwargs:
                 opts = kwargs['opts']
         if args:
-            # check args[0] for class function.
-            if not isinstance(args[0], (float, int, str, list, dict)):
-                if all((len(args) >= 2, not opts)):
-                    opts = args[1]
-            elif not opts:
+            n = len(args)
+            if all((args[0],  # class function
+                    not isinstance(args[0], (float, int, str, list, dict)))):
+                if n >= 3:  # (self, opts, args)
+                    if type(args[2]) == dict:  # args is done.
+                        return func(*args, **kwargs)
+                    elif all((args[1], not opts)):  # set opts
+                        opts = args[1]
+                elif n == 2:  # (self, opts)
+                    if all((args[1], not opts)):  # set opts
+                        opts = args[1]
+            elif n == 2:  # (opts, args)
+                if type(args[1]) == dict:  # args is done
+                    return func(*args, **kwargs)
+                elif all((args[0], not opts)):  # set opts
                     opts = args[0]
+            elif n == 1:  # (opts)
+                if all((args[0], not opts)):  # set opts
+                    opts = args[0]
+            else:
+                return None
         if opts:
             kwargs['args'] = __get_user_input(opts)
         return func(*args, **kwargs)
