@@ -21,6 +21,9 @@ from mypy.pydecorator import get_input
 #               Const Vars
 ############################################################################
 
+VERSION = '1.1.0'
+
+
 REMOTEROOT = 'apps/bypy'
 
 LISTROOT = ['ROOT', 'Root', 'root']
@@ -71,7 +74,7 @@ class BaiduYun(PyPrint):
         self._remote_path = yun_path
         self._upload_mode = upload_mode
         self._cmd = None
-        self._o_print = False
+        self._order = False
         self._recursion_path = False
         self._count = 0
         self._bp = None
@@ -84,7 +87,7 @@ class BaiduYun(PyPrint):
         if '-v' in args:
             self.set_pr_level(self.get_pr_level() | PyPrint.PR_LVL_INFO)
         if '-o' in args:
-            self._o_print = True
+            self._order = True
         if '-r' in args:
             self._recursion_path = True
         if '-l' in args:
@@ -227,7 +230,7 @@ class BaiduYun(PyPrint):
                         self.pr_info('%s:' % (REMOTEROOT))
                     else:
                         self.pr_info('%s/%s:' % (REMOTEROOT, dr))
-                    if self._o_print:
+                    if self._order:
                         if lfs:
                             for f in lfs:
                                 self.pr_info(f)

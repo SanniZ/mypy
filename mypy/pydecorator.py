@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on 2019-02-11
@@ -8,6 +8,9 @@ Created on 2019-02-11
 
 import sys
 import getopt
+
+
+VERSION = '1.0.0'
 
 
 # =========================================================

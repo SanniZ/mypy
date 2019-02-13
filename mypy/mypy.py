@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on 2018-12-04
@@ -12,7 +12,9 @@ import shutil
 from pybase import PyBase
 from pyfile import PyFile
 from pypath import PyPath
-from pypr import PyPrint
+from pyprint import PyPrint
+
+VERSION = '1.0.0'
 
 
 class MyPy(object):
@@ -79,7 +81,7 @@ class MyPy(object):
                         with open(f, 'r') as fd:
                             data = fd.read()
                         data = re.sub(wd, newd, data)
-                        with open(f, 'wr') as fd:
+                        with open(f, 'w') as fd:
                             fd.write(data)
 
     @classmethod

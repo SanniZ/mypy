@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on 2018-12-03
@@ -11,6 +11,8 @@ import re
 from PIL import Image as PILImg
 
 from mypy.pyfile import PyFile
+
+VERSION = '1.1.1'
 
 IMG_W_MIN = 240
 IMG_H_MIN = 240
