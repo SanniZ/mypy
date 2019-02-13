@@ -10,8 +10,8 @@ Created on 2018-12-26
 class PyPrint(object):
 
     PR_LVL_DBG = 0x01
-    PR_LVL_WARN = 0x02
-    PR_LVL_INFO = 0x04
+    PR_LVL_INFO = 0x02
+    PR_LVL_WARN = 0x04
     PR_LVL_ERR = 0x08
     PR_LVL_ALL = 0x0F
 

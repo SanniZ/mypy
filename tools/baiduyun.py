@@ -14,7 +14,8 @@ from bypy import ByPy
 
 from mypy.pybase import PyBase
 from mypy.pypath import PyPath
-
+from mypy.pyprint import PyPrint
+from mypy.pydecorator import get_input
 
 ############################################################################
 #               Const Vars
@@ -27,53 +28,76 @@ LISTROOT = ['ROOT', 'Root', 'root']
 LOCALROOT = r'LocalRoot'
 
 
-def pr_info(msg, view=False):
-    if view:
-        print(msg)
-
-
-def pr_warn(msg):
-    print(msg)
-
-
 ############################################################################
 #               BaiduYun class
 ############################################################################
 
-class BaiduYun(object):
+class BaiduYun(PyPrint):
 
     HELP_MENU = (
         '============================================',
         '    BaiduYun help',
         '============================================',
         'options:',
-        '  -d dirname: set dirname of baidu yun',
-        '    dirname : dirname of baidu yun',
-        '  -l dirname: list of dirname of baidu yun',
-        '    dirname : dirname of baidu yun',
-        '  -s path: upload local files to baidu yun',
+        '  -y path: set path of baidu yun',
+        '    path : path of baidu yun',
+        '  -c xxx: run command',
+        '    list: list path of baidu yun',
+        '    upload: upload local path to baidu yun',
+        '    download: download file from baidu yun',
+        '  -l path: set local path',
         '    path : path of dir or file',
-        '  -v True/False: view info of uploading',
+        '  -v: view info of uploading',
         '  -o: order to show files',
         '  -r: recursion of path',
+        '  -m o/n: set upload mode, overwrite or newcopy.',
         '',
         'Note:',
         ' if it is not able to access BaiduYun,',
         ' run \'bypy info\' to setup first!\n'
     )
 
-    def __init__(self, src=None, dirname=None, view=True):
-        self._src = src
-        self._dst = dirname
-        self._view = view
+    UPLOAD_MODES = {'o': 'overwrite', 'n': 'newcopy'}
+
+    CMD_LIST = 'list'
+    CMD_UPLOAD = 'upload'
+    CMD_DOWNLOAD = 'download'
+
+    def __init__(self,
+                 local_path=None, yun_path=None, upload_mode='overwrite'):
+        super(BaiduYun, self).__init__(
+            self.__class__.__name__, PyPrint.PR_LVL_WARN | PyPrint.PR_LVL_ERR)
+        self._local_path = local_path
+        self._remote_path = yun_path
+        self._upload_mode = upload_mode
+        self._cmd = None
         self._o_print = False
         self._recursion_path = False
         self._count = 0
-        # create baiduyun
-        self._bp = ByPy()
+        self._bp = None
+        self._input_opts = 'hy:l:c:m:vor'
 
-    def get_input(self):
-        return PyBase.get_user_input('hs:d:v:l:or')
+    @get_input
+    def get_input(self, opts=None, args=None):
+        if '-h' in args:
+            PyBase.print_help(self.HELP_MENU, True)
+        if '-v' in args:
+            self.set_pr_level(self.get_pr_level() | PyPrint.PR_LVL_INFO)
+        if '-o' in args:
+            self._o_print = True
+        if '-r' in args:
+            self._recursion_path = True
+        if '-l' in args:
+            self._local_path = PyPath.recliam_path(os.path.abspath(args['-l']))
+        if '-y' in args:
+            self._remote_path = PyPath.recliam_path(args['-y'])
+        if '-m' in args:
+            mode = args['-m'].lower()
+            if mode in self.UPLOAD_MODES:
+                self._upload_mode = self.UPLOAD_MODES[mode]
+        if '-c' in args:
+            self._cmd = args['-c'].lower()
+        return args
 
     def join_path(self, rt, dr):
         if all((rt, dr)):
@@ -83,34 +107,44 @@ class BaiduYun(object):
         else:
             return None
 
+    def create_bypy(self):
+        if not self._bp:
+            self._bp = ByPy()
+        return self._bp
+
     def upload_files(self, files):
         index = 0
+        bypy = self.create_bypy()
         for dr, fs in files.items():
             # create dir
             if dr == LOCALROOT:
-                dst = self._dst
+                dst = self._remote_path
             else:
-                dst = self.join_path(self._dst, dr)
+                dst = self.join_path(self._remote_path, dr)
                 if not dst:
-                    pr_warn('Warnning: failed to get remote path of %s' % dr)
+                    self.pr_warn(
+                        'Warnning: failed to get remote path of %s' % dr)
                     continue
-            self._bp.mkdir(dst)
+            bypy.mkdir(dst)
             # upload files
             for f in fs:
                 index += 1
-                pr_info('[%s/%s] uploading: %s ===> %s' % (index, self._count,
-                        re.sub('%s/' % self._src, '', f), dst), self._view)
-                self._bp.upload(localpath=f, remotepath=dst, ondup='overwrite')
+                self.pr_info(
+                    '[%s/%s] uploading: %s ===> %s' % (
+                        index, self._count,
+                        re.sub('%s/' % self._local_path, '', f), dst))
+                bypy.upload(localpath=f, remotepath=dst,
+                            ondup=self._upload_mode)
 
-    def get_upload_files(self):
+    def get_upload_files(self, src):
         dfs = dict()
         self._count = 0
-        if os.path.isfile(self._src):
-            dfs[LOCALROOT] = [self._src]
+        if os.path.isfile(src):
+            dfs[LOCALROOT] = [src]
             self._count += 1
-            self._src = os.path.dirname(self._src)
-        elif os.path.isdir(self._src):
-            for rt, ds, fs in os.walk(self._src):
+            self._local_path = os.path.dirname(src)
+        elif os.path.isdir(src):
+            for rt, ds, fs in os.walk(src):
                 if fs:
                     ls = list()
                     # append file to list
@@ -119,7 +153,7 @@ class BaiduYun(object):
                         ls.append(f)
                         self._count += 1
                     # get dir
-                    dr = re.sub('%s' % self._src, '', rt)
+                    dr = re.sub('%s' % src, '', rt)
                     if dr.startswith('/'):
                         dr = dr[1:]
                     if not dr:
@@ -137,7 +171,7 @@ class BaiduYun(object):
         try:
             res = subprocess.check_output(cmd, shell=True).decode()
         except subprocess.CalledProcessError:
-            print('warnning: access %s failed!', path)
+            self.pr_warn('warnning: access %s failed!', path)
         else:
             ls = res.split('\n')
             for f in ls:
@@ -175,48 +209,37 @@ class BaiduYun(object):
                 ds = ds3
         return lfs
 
+    def download_files(self, remotepath, localpath):
+        if not os.path.exists(localpath):
+            os.makedirs(localpath)
+        bypy = self.create_bypy()
+        bypy.download(remotepath, localpath)
+
     def main(self, args=None):
         if not args:
-            args = self.get_input()
-        if '-h' in args:
-            PyBase.print_help(self.HELP_MENU)
-            return
-        if '-v' in args:
-            if args['-v'] in ['True', '1', 'true']:
-                self._view = True
-            else:
-                self._view = False
-        if '-o' in args:
-            self._o_print = True
-        if '-r' in args:
-            self._recursion_path = True
-        if '-s' in args:
-            self._src = PyPath.recliam_path(os.path.abspath(args['-s']))
-        if '-d' in args:
-            self._dst = PyPath.recliam_path(args['-d'])
-        if '-l' in args:
-            fs = self.list_of_path(args['-l'], self._recursion_path)
+            self.get_input(self._input_opts)
+        # run command
+        if self._cmd == self.CMD_LIST:
+            fs = self.list_of_path(self._remote_path, self._recursion_path)
             if fs:
                 for dr, lfs in fs.items():
                     if dr in LISTROOT:
-                        print('%s:' % (REMOTEROOT))
+                        self.pr_info('%s:' % (REMOTEROOT))
                     else:
-                        print('%s/%s:' % (REMOTEROOT, dr))
+                        self.pr_info('%s/%s:' % (REMOTEROOT, dr))
                     if self._o_print:
                         if lfs:
                             for f in lfs:
-                                print(f)
+                                self.pr_info(f)
                     else:
-                        print(lfs)
-                    print('')
-        # start to upload files.
-        if self._src:
-            if os.path.exists(self._src):
-                fs = self.get_upload_files()
-                if fs:
-                    self.upload_files(fs)
-            else:
-                pr_warn('Error, %s in invalid!' % self._src)
+                        self.pr_info(lfs)
+                    self.pr_info('')
+        elif self._cmd == self.CMD_UPLOAD:
+            fs = self.get_upload_files(self._local_path)
+            if fs:
+                self.upload_files(fs)
+        elif self._cmd == self.CMD_DOWNLOAD:
+            self.download_files(self._remote_path, self._local_path)
 
 
 ############################################################################
