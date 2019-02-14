@@ -91,9 +91,9 @@ class BaiduYun(PyPrint):
         if '-r' in args:
             self._recursion_path = True
         if '-l' in args:
-            self._local_path = PyPath.recliam_path(os.path.abspath(args['-l']))
+            self._local_path = os.path.abspath(args['-l'])
         if '-y' in args:
-            self._remote_path = PyPath.recliam_path(args['-y'])
+            self._remote_path = args['-y']
         if '-m' in args:
             mode = args['-m'].lower()
             if mode in self.UPLOAD_MODES:
@@ -216,6 +216,9 @@ class BaiduYun(PyPrint):
         if not os.path.exists(localpath):
             os.makedirs(localpath)
         bypy = self.create_bypy()
+        if remotepath.endswith('/'):
+            dirname = os.path.basename(remotepath[:-1])
+            localpath = os.path.join(localpath, dirname)
         bypy.download(remotepath, localpath)
 
     def main(self, args=None):
