@@ -13,7 +13,6 @@ import subprocess
 from bypy import ByPy
 
 from mypy.pybase import PyBase
-from mypy.pypath import PyPath
 from mypy.pyprint import PyPrint
 from mypy.pydecorator import get_input
 
