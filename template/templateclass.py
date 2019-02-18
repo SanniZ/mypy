@@ -3,38 +3,46 @@
 """
 Created on 2018-12-05
 
-@author: Byng Zeng
+@author: Byng.Zeng
 """
 
-# import re
-# import os
-# import sys
-# import getopt
-
 from mypy.pybase import PyBase
+from mypy.pyprint import PyPrint
+from mypy.pydecorator import get_input
+
+VERSION = '1.0.0'
 
 
 class Template(object):
+    HELP_MENU = [
+        '==================================',
+        '    Template menu',
+        '==================================',
+        'option:',
+        '  -x xxx: xxxx',
+    ]
 
-    @classmethod
-    def print_help(cls):
-        help_menu = (
-            '==================================',
-            '    help menu',
-            '==================================',
-            'option: -x xxx',
-            '  -x xxx: xxxx',
-        )
-        # print
-        for txt in help_menu:
-            print(txt)
-        PyBase.print_exit()
+    pr = PyPrint('Template')
+    opts = 'hx:'
 
-    def main(self):
-        args = PyBase.get_user_input('h')
+    def __init__(self, name=None):
+        self._name = name if name else self.__class__.__name__
+
+    @get_input
+    def get_input(self, opt, args=None):
         if '-h' in args:
-            self.print_help()
+            PyBase.print_help(self.HELP_MENU)
+        if '-x' in args:
+            print(args['-x'])
+        return args
 
+    def run(self, args):
+        print(args)
+
+    def main(self, args=None):
+        if not args:
+            args = self.get_input(self.opts)
+        self.run(args)
 
 if __name__ == '__main__':
     template = Template()

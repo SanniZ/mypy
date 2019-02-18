@@ -10,17 +10,27 @@ import sys
 import getopt
 
 
-VERSION = '1.0.0'
+VERSION = '1.1.0'
+
+
+def __isinstance_class(obj):
+    if obj:
+        if all((obj, not isinstance(obj, (int, str, list, dict)))):
+            return True
+        else:
+            return False
+    else:
+        return False
 
 
 # =========================================================
 # get_input
 #
-# it will get args from sys.argv[1:] and return kwargs.
+# it will get args from sys.argv[1:] and return kwargs at args.
 # sample function:
 # @get_input
-# def get_input_func([self,] opt, args=None):
-#     return args
+# def xxx([self,] opt, args=None):
+#     print(args)
 # =========================================================
 def get_input(func):
     def __get_user_input(opts):
@@ -46,8 +56,7 @@ def get_input(func):
                 opts = kwargs['opts']
         if args:
             n = len(args)
-            if all((args[0],  # class function
-                    not isinstance(args[0], (float, int, str, list, dict)))):
+            if __isinstance_class(args[0]):
                 if n >= 3:  # (self, opts, args)
                     if type(args[2]) == dict:  # args is done.
                         return func(*args, **kwargs)
@@ -70,3 +79,49 @@ def get_input(func):
             kwargs['args'] = __get_user_input(opts)
         return func(*args, **kwargs)
     return get_input_wrapper
+
+
+# =========================================================
+# get_dict_args
+#
+# it will return dt with dict data.
+# sample function:
+# @get_dict_args
+# def xxx([self,] args, dt=None):
+#     print(dt)
+# =========================================================
+def get_dict_args(symbol=[':']):
+    def get_dict_args_decorator(func):
+        def __get_args_dict(args):
+            result = dict()
+            key = None
+            if type(args) == dict:
+                return args
+            elif args:
+                lt = args.split(',')
+                if lt:
+                    for element in lt:
+                        for sym in symbol:
+                            data = element.split(sym)
+                            n = len(data)
+                            if n == 2:
+                                result[data[0]] = data[1]
+                                key = data[0]
+                                break
+                        if n == 1:
+                            result[key] = result[key] + ', ' + element
+            return result
+
+        def get_dict_args_warpper(*args, **kwargs):
+            args_ = None
+            if kwargs:
+                if 'args' in kwargs:
+                    args_ = kwargs['args']
+            elif all((__isinstance_class(args[0]), len(args) >= 2)):
+                args_ = args[1]
+            else:
+                args_ = args[0]
+            kwargs['dt'] = __get_args_dict(args_)
+            return func(*args, **kwargs)
+        return get_dict_args_warpper
+    return get_dict_args_decorator

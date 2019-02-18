@@ -1,38 +1,49 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on 2018-12-05
+Created on 2018-02-19
 
-@author: Byng Zeng
+@author: Byng.Zeng
 """
 
-# import re
-# import os
-# import sys
-# import getopt
-
 from mypy.pybase import PyBase
+from mypy.pyprint import PyPrint
+from mypy.pydecorator import get_input
+
+VERSION = '1.0.0'
 
 
-def print_help():
-    help_menu = (
-        '==================================',
-        '    help menu',
-        '==================================',
-        'option: -x xxx',
-        '  -x xxx: xxxx',
-    )
-    # print
-    for txt in help_menu:
-        print(txt)
-    PyBase.print_exit()
+HELP_MENU = [
+    '==================================',
+    '    Template menu',
+    '==================================',
+    'option:',
+    '  -x xxx: xxxx',
+]
+
+pr = PyPrint('Template')
+
+opts = 'hx:'
 
 
-def main():
-    args = PyBase.get_user_input('h')
+@get_input
+def get_input(opt, args=None):
+    print(args)
     if '-h' in args:
-        print_help()
+        PyBase.print_help(HELP_MENU)
+    if '-x' in args:
+        print(args['-x'])
+    return args
 
+
+def run(args):
+    print(args)
+
+
+def main(args=None):
+    if not args:
+        args = get_input(opts)
+    run(args)
 
 if __name__ == '__main__':
     main()

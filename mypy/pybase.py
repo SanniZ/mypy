@@ -10,6 +10,8 @@ import os
 import sys
 import getopt
 
+VERSION = '1.1.0'
+
 
 class PyBase (object):
 
@@ -42,3 +44,28 @@ class PyBase (object):
             for name, value in opts:
                 result[name] = value
         return result
+
+    @classmethod
+    def get_args_dict(cls, args, symbol=[':']):
+        result = dict()
+        key = None
+        if type(args) == dict:
+            return args
+        elif args:
+            lt = args.split(',')
+            if lt:
+                for element in lt:
+                    for sym in symbol:
+                        data = element.split(sym)
+                        n = len(data)
+                        if n == 2:
+                            result[data[0]] = data[1]
+                            key = data[0]
+                            break
+                    if n == 1:
+                        result[key] = result[key] + ', ' + element
+        return result
+
+    @classmethod
+    def quote(cls, msg, symbol='\''):
+        return symbol + msg + symbol
