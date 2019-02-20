@@ -8,9 +8,9 @@ Created on Thu Jul  5 15:18:47 2018
 
 import subprocess
 
-from code import Code
-from debug import Debug as d
-from cmdprocessing import CmdProcessing
+from develop.code import Code
+from develop.debug import Debug as d
+from cmdprocessing.cmdprocessing import CmdProcessing
 
 
 class Cwp(Code):

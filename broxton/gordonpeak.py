@@ -7,7 +7,7 @@ Created on Thu Jul  5 14:33:36 2018
 """
 
 from broxton import Broxton
-# from debug import Debug as d
+# from develop.debug import Debug as d
 
 
 class GordonPeak(Broxton):

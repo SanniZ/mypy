@@ -7,11 +7,11 @@ Created on Thu Jul  5 12:39:24 2018
 """
 import subprocess
 
-from debug import Debug as d
-from cmdprocessing import CmdProcessing
-from code import Code
-from linux import HwInfo
-from android import Android
+from develop.debug import Debug as d
+from cmdprocess.cmdprocessing import CmdProcessing
+from develop.code import Code
+from linux.linux import HwInfo
+from develop.android import Android
 
 
 class AvbImage(object):

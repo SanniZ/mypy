@@ -10,7 +10,7 @@ import subprocess
 import socket
 import re
 
-from debug import Debug as d
+from develop.debug import Debug as d
 
 
 class HwInfo(object):

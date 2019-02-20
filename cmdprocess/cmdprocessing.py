@@ -5,8 +5,8 @@ Created on Thu Jul  5 11:17:08 2018
 @author: Byng.Zeng
 """
 
-from debug import Debug as d
-from input import Input
+from develop.debug import Debug as d
+from cmdprocess.input import Input
 
 
 class CmdProcessing(object):

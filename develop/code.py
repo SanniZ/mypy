@@ -7,8 +7,8 @@ Created on Thu Jul  5 11:25:54 2018
 """
 
 import subprocess
-from linux import HwInfo
-from debug import Debug as d
+from linux.linux import HwInfo
+from develop.debug import Debug as d
 
 
 class Code(object):

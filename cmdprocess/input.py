@@ -7,7 +7,7 @@ Created on Mon Jul  9 09:41:13 2018
 
 import re
 import sys
-from debug import Debug as d
+from develop.debug import Debug as d
 
 
 class Parser(object):

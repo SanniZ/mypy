@@ -7,7 +7,7 @@ Created on Thu Jul  5 11:10:22 2018
 """
 
 import subprocess
-from debug import Debug as d
+from develop.debug import Debug as d
 
 
 class Android(object):

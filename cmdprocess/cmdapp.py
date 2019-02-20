@@ -7,9 +7,9 @@ Created on Mon Aug 13 09:51:42 2018
 """
 
 
-from cmdprocessing import CmdProcessing
-from android import Android
-from linux import HwInfo, FileOps
+from cmdprocessing.cmdprocessing import CmdProcessing
+from develop.android import Android
+from linux.linux import HwInfo, FileOps
 
 
 class Tools(object):
