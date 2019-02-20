@@ -65,10 +65,13 @@ class BaiduYun(PyPrint):
     CMD_UPLOAD = 'upload'
     CMD_DOWNLOAD = 'download'
 
-    def __init__(self,
+    def __init__(self, name='BaiduYun', view=False,
                  local_path=None, yun_path=None, upload_mode='overwrite'):
-        super(BaiduYun, self).__init__(
-            self.__class__.__name__, PyPrint.PR_LVL_WARN | PyPrint.PR_LVL_ERR)
+        self._pr_lvl = \
+            PyPrint.PR_LVL_INFO | PyPrint.PR_LVL_WARN | PyPrint.PR_LVL_ERR if \
+            view else PyPrint.PR_LVL_WARN | PyPrint.PR_LVL_ERR
+        super(BaiduYun, self).__init__(self.__class__.__name__, self._pr_lvl)
+        self._name = name
         self._local_path = local_path
         self._remote_path = yun_path
         self._upload_mode = upload_mode
@@ -114,7 +117,7 @@ class BaiduYun(PyPrint):
             self._bp = ByPy()
         return self._bp
 
-    def upload_files(self, files):
+    def upload_files(self, files, path=None):
         index = 0
         bypy = self.create_bypy()
         for dr, fs in files.items():
@@ -122,7 +125,10 @@ class BaiduYun(PyPrint):
             if dr == LOCALROOT:
                 dst = self._remote_path
             else:
-                dst = self.join_path(self._remote_path, dr)
+                if path:
+                    dst = self.join_path(path, dr)
+                else:
+                    dst = self.join_path(self._remote_path, dr)
                 if not dst:
                     self.pr_warn(
                         'Warnning: failed to get remote path of %s' % dr)
