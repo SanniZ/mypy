@@ -20,7 +20,7 @@ from mypy.pydecorator import get_input
 #               Const Vars
 ############################################################################
 
-VERSION = '1.1.0'
+VERSION = '1.1.1'
 
 
 REMOTEROOT = 'apps/bypy'
@@ -83,7 +83,7 @@ class BaiduYun(PyPrint):
         self._input_opts = 'hy:l:c:m:vor'
 
     @get_input
-    def get_input(self, opts=None, args=None):
+    def process_input(self, opts=None, args=None):
         if '-h' in args:
             PyBase.print_help(self.HELP_MENU, True)
         if '-v' in args:
@@ -227,9 +227,7 @@ class BaiduYun(PyPrint):
         bypy.download(remotepath, localpath)
 
     def main(self, args=None):
-        if not args:
-            self.get_input(self._input_opts)
-        # run command
+        self.process_input(opts=self._input_opts, args=args)
         if self._cmd == self.CMD_LIST:
             fs = self.list_of_path(self._remote_path, self._recursion_path)
             if fs:

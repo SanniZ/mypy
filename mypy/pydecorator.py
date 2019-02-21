@@ -29,8 +29,10 @@ def __isinstance_class(obj):
 # it will get args from sys.argv[1:] and return kwargs at args.
 # sample function:
 # @get_input
-# def xxx([self,] opt, args=None):
+# def process_input([self,] opts, args=None):
 #     print(args)
+#
+# [self.]process_input(opts='hx:', args=args)
 # =========================================================
 def get_input(func):
     def __get_user_input(opts):

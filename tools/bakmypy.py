@@ -41,8 +41,5 @@ clean_cache(MYPY)
 tar = create_tar(MYPY)
 args = {'-l': tar, '-y': 'Mypy', '-c': 'upload'}
 by = BaiduYun('BackupMypy', True)
-by._local_path = tar
-by._remote_path = 'Mypy'
-by._cmd = 'upload'
 by.main(args)
 os.remove(tar)
