@@ -69,3 +69,10 @@ class PyBase (object):
     @classmethod
     def quote(cls, msg, symbol='\''):
         return symbol + msg + symbol
+
+    @classmethod
+    def align_length(cls, text, length):
+        n = len(text) % length
+        if n:
+            text += '\0' * (length - n)
+        return text
