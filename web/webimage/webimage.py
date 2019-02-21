@@ -250,8 +250,14 @@ class WebImage(object):
                 self._pr.pr_err(
                     '%s, failed to open %s' % (str(e), self._ex_re_image_url))
 
+    def search_urls_from_keyword(self, url):
+        return None
+
     # process url web images.
     def process_url_web(self, url, data=None):
+        search_urls = self.search_urls_from_keyword(url)
+        if search_urls:
+            return search_urls
         # get header web
         header_content = self.get_url_content(url, view=False)
         if not header_content:
@@ -341,7 +347,7 @@ class WebImage(object):
             try:
                 self.__dbg = int(args['-d'])
             except ValueError as e:
-                print(str(e))
+                self._pr.pr_err(str(e))
             else:
                 self._pr.set_pr_level(
                             self._pr.get_pr_level() | PyPrint.PR_LVL_ALL)
@@ -359,7 +365,12 @@ class WebImage(object):
         else:
             PyBase.print_exit('[WebImage] Error, no set url, -h for help!')
         if self._url_base:
-            www_com = re.match('http[s]?://.+\.(com|cn|net)', self._url_base)
+            pattern = re.compile('http[s]?://.+\.(com|cn|net)')
+            if type(self._url_base) == list:
+                for base in self._url_base:
+                    www_com = pattern.match(base)
+            else:
+                www_com = pattern.match(self._url_base)
             if www_com:
                 self._com = www_com.group()
         return args
@@ -377,11 +388,16 @@ class WebImage(object):
         # get web now.
         for index in range(self._num):
             # get the first page.
-            if self._url_base:
+            try:
                 url = self.get_url_address(self._url_base,
                                            int(self._url) + index)
-            else:
-                url = self.get_url_address(None, self._url)
+            except ValueError:
+                if self._url_base:
+                    base = self._url_base
+                else:
+                    base = None
+                url = self.get_url_address(base, self._url)
+
             # start to process url.
             if self._thread_queue:
                 # create thread and put to queue.

@@ -482,6 +482,7 @@ class WebImageCrawlerUI(WindowUI):
         self._fs_list_lock = threading.Lock()
 
         self._class = None
+        self._search_urls = list()
         self._download_thread_max = 5
         self._download_thread_queue = Queue(self._download_thread_max)
         self._download_threads = None
@@ -641,44 +642,47 @@ class WebImageCrawlerUI(WindowUI):
                                       info._output.ljust(64)))
             self._lbfs_var.set(tuple(fs))
 
-    def update_url_list(self):
+    def update_url_list(self, urls=None):
         # clear file list
         self._fs_list_cnt = 0
         self._fs_list = list()
         # get file
-        f = self._wm['enPath'].get()
-        if os.path.isfile(f):
-            with open(f, 'r') as fd:
-                urls = fd.readlines()
-        elif '-x' in f:
-            args = eval(f)
-            url_start = int(args['-u'])
-            n = args['-n']
-            url_type = args['-x']
-            urls = list()
-            for index in range(n):
-                url = XBaseClass.get_num_url_from_xval(
-                                    url_type, str(url_start + index))
-                if url:
-                    urls.append(url)
-        elif '-u' in f:
-            args = eval(f)
-            if '-n' in args:
+        if not urls:
+            f = self._wm['enPath'].get()
+            if os.path.isfile(f):
+                with open(f, 'r') as fd:
+                    urls = fd.readlines()
+            elif '-x' in f:
+                args = eval(f)
+                url_start = int(args['-u'])
                 n = args['-n']
-                if type(n) is not int:
-                    n = int(n)
+                url_type = args['-x']
+                urls = list()
+                for index in range(n):
+                    url = XBaseClass.get_num_url_from_xval(
+                                        url_type, str(url_start + index))
+                    if url:
+                        urls.append(url)
+            elif '-u' in f:
+                args = eval(f)
+                if '-n' in args:
+                    n = args['-n']
+                    if type(n) is not int:
+                        n = int(n)
+                else:
+                    n = 1
+                urls = list()
+                for index in range(n):
+                    base, num = WebBase.get_url_base_and_num(args['-u'])
+                    if all((base, num)):
+                        url = WebBase.set_url_base_and_num(
+                                                    base, int(num) + index)
+                    else:
+                        url = args['-u']
+                    if url:
+                        urls.append(url)
             else:
-                n = 1
-            urls = list()
-            for index in range(n):
-                base, num = WebBase.get_url_base_and_num(args['-u'])
-                if all((base, num)):
-                    url = WebBase.set_url_base_and_num(
-                                                base, int(num) + index)
-                if url:
-                    urls.append(url)
-        else:
-            urls = [f]
+                urls = [f]
         # add file info to list.
         for url in set(urls):
             url = WebBase.reclaim_url_address(url)
@@ -692,10 +696,15 @@ class WebImageCrawlerUI(WindowUI):
         base, num = WebBase.get_url_base_and_num(url)
         if base:
             self._class = XBaseClass.get_class_from_base(base)
+        else:
+            self._class = XBaseClass.get_class_from_url(url)
         hdr = XBaseClass.get_class_instance(self._class)
         if hdr:
             self.update_list_info(url, STAT_DOWNLOADING)
             output = hdr.main(args)
+            if 'search_urls' in output[url]:
+                self._search_urls += output[url]['search_urls']
+                output[url] = ''
             # update state to DONE.
             if output:
                 self.update_list_info(url, STAT_DONE, output[url])
@@ -735,6 +744,13 @@ class WebImageCrawlerUI(WindowUI):
             for t in self._download_threads:
                 t.join()
             self.update_widget_state(1)
+            # process search urls.
+            if self._search_urls:
+                self.update_url_list(self._search_urls)
+                self.update_list_info()
+                self.update_widget_state(0)
+                self.download_url_list()
+                self._search_urls = list()
             # print('All of url are done!')
 
     def download_url_list(self):

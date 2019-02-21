@@ -51,6 +51,8 @@ class XBaseClass(object):
         'mzitu': {'https://m.mzitu.com/URLID': 'Mzitu'},
         'weibo': {'https://m.weibo.cn/detail/URLID': 'Weibo'},
         'meitulu': {'https://www.meitulu.com/item/URLID.html': 'Meitulu'},
+        'meitulu_t': {'https://www.meitulu.com/t/URLID': 'Meitulu'},
+
     }
 
     @classmethod
@@ -100,6 +102,15 @@ class XBaseClass(object):
             if base == list(dict_url_base)[0]:
                 return dict_url_base[base]
         return None
+
+    @classmethod
+    def get_class_from_url(cls, url):
+        result = None
+        for dict_url_base in cls.URL_BASE.values():
+            base = list(dict_url_base)[0]
+            if url.startswith(base.replace('URLID', '')):
+                return dict_url_base[base]
+        return result
 
 
 ############################################################################
@@ -161,6 +172,7 @@ class WebImageCrawler(object):
         self._thread_max = 5
         self._thread_queue = None
         self._byname = None
+        self._search_urls = list()
 
     def get_input_args(self, args):
         if not args:
@@ -185,31 +197,41 @@ class WebImageCrawler(object):
             if not all((self._url_base, self._class)):
                 PyBase.print_exit('[WebImageCrawler] Error, invalid -x val!')
         # get class from url
-        if self._url:
+        if all((self._url, not self._class)):
             base, num = WebBase.get_url_base_and_num(self._url)
             if base:
-                self._url_base = base
+                self._class = XBaseClass.get_class_from_base(base)
+            else:
+                self._class = XBaseClass.get_class_from_url(self._url)
         # get class from url_base
         if all((not self._class, self._url_base)):
             self._class = XBaseClass.get_class_from_base(self._url_base)
         return args
+
+    def upload_to_baiduyun(self, fs, localpath, remotepath):
+        from baiduyun import BaiduYun
+        by = BaiduYun()
+        for url, path in fs:
+            if path:
+                dst = '%s/%s' % (
+                    remotepath,
+                    re.sub('%s/' % os.path.dirname(localpath), '', path))
+                vargs = {'-d': dst, '-s': path}
+                by.main(vargs)
 
     def process_input(self, args=None, info=None):
         hdr = XBaseClass.get_class_instance(self._class)
         if hdr:
             output = hdr.main(args)
             # upload to baidu yun.
+            url = args['-u']
+            if output:
+                for k, data in output.items():
+                    if 'search_urls' in data:
+                        self._search_urls += data['search_urls']
             if all((self._byname, output)):
-                from baiduyun import BaiduYun
-                by = BaiduYun()
-                for url, path in output.items():
-                    if path:
-                        dst = '%s/%s' % (
-                            self._byname,
-                            re.sub('%s/' % os.path.dirname(hdr._path),
-                                   '', path))
-                        vargs = {'-d': dst, '-s': path}
-                        by.main(vargs)
+                self.upload_to_baiduyun(
+                    output.items(), hdr._path, self._byname)
         else:
             self._pr.pr_err('[WebImageCrawler] Error, no found handler!')
         # release queue
@@ -218,20 +240,19 @@ class WebImageCrawler(object):
         if info:
             index = info[0]
             total = info[1]
-            self._pr.pr_info('process %d/%d input file done' % (index, total))
+            self._pr.pr_info('[%d/%d] %s done' % (index, total, url))
 
-    def process_file_input(self, args=None):
-        if self._url_file:
-            with open(self._url_file, 'r') as fd:
-                lines = set(fd.readlines())
+    def process_list_input(self, urls, args=None):
+        if urls:
             self._thread_queue = queue.Queue(self._thread_max)
-            total = len(lines)
+            total = len(urls)
             index = 1
+            threads = list()
             # delete -u arg.
             if '-u' in args:
                 del args['-u']
             # process all of url.
-            for url in lines:
+            for url in urls:
                 self._class = None
                 # remove invalid chars.
                 for key, value in {'/$': '', '\n$': ''}.items():
@@ -247,16 +268,26 @@ class WebImageCrawler(object):
                     # create thread and put to queue.
                     t = threading.Thread(target=self.process_input,
                                          args=(url_args, info))
+                    threads.append(t)
                     self._thread_queue.put(url)
                     t.start()
-                index = index + 1
+                index += 1
+            for t in threads:
+                t.join()
 
     def main(self, args=None):
         args = self.get_input_args(args)
         if self._url_file:
-            self.process_file_input(args)
+            with open(self._url_file, 'r') as fd:
+                urls = set(fd.readlines())
+            self.process_list_input(urls, args)
         else:
             self.process_input(args)
+        if self._search_urls:
+            if '-x' in args:
+                del args['-x']
+            self.process_list_input(self._search_urls, args)
+            self._search_urls = list()
 
 if __name__ == '__main__':
     args = get_input(None, 'Uy:')

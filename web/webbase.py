@@ -17,15 +17,17 @@ class WebBase(object):
     def get_url_base_and_num(cls, url):
         base = None
         num = None
-        # numbers.
-        num = re.compile('^\d+$').search(url)
-        if num:
-            num = num.group()
-        else:
-            num = re.compile('(\d)+(/)?(.html)?$').search(url)
+        if url:
+            txt = url.replace('.html', '')
+            index = txt.rfind('/')
+            if index != -1:
+                num = txt[index + 1:]
+                if not num.isdigit():
+                    n = re.compile('\d+').search(num)
+                    if n:
+                        num = n.group()
             if num:
-                num = re.compile('\d+').search(num.group()).group()
-                base = re.sub(num, 'URLID', url)
+                base = url.replace(num, 'URLID')
         return base, num
 
     @classmethod
