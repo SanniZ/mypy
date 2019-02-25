@@ -10,10 +10,10 @@ import sys
 import getopt
 
 
-VERSION = '1.1.0'
+VERSION = '1.2.0'
 
 
-def __isinstance_class(obj):
+def isinstance_class(obj):
     if obj:
         if all((obj, not isinstance(obj, (int, str, list, dict)))):
             return True
@@ -58,7 +58,7 @@ def get_input(func):
                 opts = kwargs['opts']
         if args:
             n = len(args)
-            if __isinstance_class(args[0]):
+            if isinstance_class(args[0]):
                 if n >= 3:  # (self, opts, args)
                     if type(args[2]) == dict:  # args is done.
                         return func(*args, **kwargs)
@@ -119,7 +119,7 @@ def get_dict_args(symbol=[':']):
             if kwargs:
                 if 'args' in kwargs:
                     args_ = kwargs['args']
-            elif all((__isinstance_class(args[0]), len(args) >= 2)):
+            elif all((isinstance_class(args[0]), len(args) >= 2)):
                 args_ = args[1]
             else:
                 args_ = args[0]

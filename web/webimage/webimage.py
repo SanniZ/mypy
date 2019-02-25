@@ -291,6 +291,7 @@ class WebImage(object):
             self.store_web_info(subpath, title, url)
             # reclaim image, remove small image
             Image.reclaim_path_images(subpath, self._remove_small_image)
+            # Image.set_order_images(subpath)  # set order images.
             # show output info.
             if self._view:
                 if self.output_image_exists(subpath):

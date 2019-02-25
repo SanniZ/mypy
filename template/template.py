@@ -6,7 +6,7 @@ Created on 2018-02-19
 @author: Byng.Zeng
 """
 
-from mypy.pybase import PyBase
+from mypy.pybase import print_help
 from mypy.pyprint import PyPrint
 from mypy.pydecorator import get_input
 
@@ -26,18 +26,21 @@ pr = PyPrint('Template')
 opts = 'hx:'
 
 
+def xxx_func(values):
+    print('xxx_func: values=%s' % values)
+
+
 @get_input
 def get_input(opt, args=None):
-    print(args)
-    if '-h' in args:
-        PyBase.print_help(HELP_MENU)
-    if '-x' in args:
-        print(args['-x'])
     return args
 
 
 def run(args):
-    print(args)
+    if '-h' in args:
+        print_help(HELP_MENU)
+    if '-x' in args:
+        xxx_func(args['-x'])
+    return args
 
 
 def main(args=None):

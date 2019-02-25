@@ -22,20 +22,16 @@ class PyPrint(object):
     # decorator pr_fmt
     def __pr_msg(func):
         def fmt_pr_warpper(*args, **kwargs):
+            pr = args[0]
             if func(*args, **kwargs):
                 msg = ''
                 for m in args[1:]:
                     msg += m
-                print(msg)
-        return fmt_pr_warpper
-
-    def __pr_print(self, msg):
-        if msg:
-            for fmt in msg:
-                if self._tag:
-                    print('[%s] %s' % (self._tag, fmt))
+                if pr._tag:
+                    print('[%s] %s' % (pr._tag, msg))
                 else:
-                    print('%s' % (fmt))
+                    print('%s' % (msg))
+        return fmt_pr_warpper
 
     @__pr_msg
     def pr_dbg(self, *msg):

@@ -10,7 +10,7 @@ import subprocess
 
 from develop.code import Code
 from develop.debug import Debug as d
-from cmdprocessing.cmdprocessing import CmdProcessing
+from cmdprocess.cmdprocessing import CmdProcessing
 
 
 class Cwp(Code):
@@ -29,7 +29,7 @@ class Cwp(Code):
 
     def help(self, cmds):
         super(Cwp, self).help(cmds)
-        for cmd in cmds.values():
+        for cmd in cmds:
             if cmd == 'help':
                 d.info('make:[option][,option]')
                 d.info('  [option]:')

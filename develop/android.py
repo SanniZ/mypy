@@ -151,7 +151,7 @@ class Android(object):
 
 
 if __name__ == '__main__':
-    from cmdprocessing import CmdProcessing
+    from cmdprocess.cmdprocessing import CmdProcessing
 
     # d.set_debug_level('dbg,info,err')
     ad = Android()

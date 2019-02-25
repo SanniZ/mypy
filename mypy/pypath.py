@@ -10,51 +10,95 @@ import os
 import re
 
 
+############################################################################
+#               functions
+############################################################################
+
+def path_is_file(path):
+    return os.path.isfile(path)
+
+
+def make_path(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+
+def get_mypy_path():
+    return os.getenv('MYPY')
+
+
+def get_home_path():
+    return os.getenv('HOME')
+
+
+def get_download_path():
+    return '%s/Downloads' % os.getenv('HOME')
+
+
+def get_abs_path(path):
+    path = re.sub('~', os.getenv('HOME'), path)
+    return os.path.abspath(path)
+
+
+def get_current_path():
+    return os.getcwd()
+
+
+def remove_blank_dir(path, level=4):
+    for i in range(level):
+        for rt, dr, fs in os.walk(path):
+            if len(dr) == 0 and len(fs) == 0:
+                os.rmdir(rt)
+
+
+def recliam_path(path, start=False, end=True):
+    if start:
+        if path[0] == '/':
+            path = path[1:]
+    if end:
+        if path[-1] == '/':
+            path = path[:len(path) - 1]
+    return path
+
+
+############################################################################
+#               PyPath Class
+############################################################################
+
 class PyPath(object):
 
     @classmethod
-    def path_is_file(self, path):
-        return os.path.isfile(path)
+    def path_is_file(cls, path):
+        return path_is_file(path)
 
     @classmethod
     def make_path(cls, path):
-        if not os.path.exists(path):
-            os.makedirs(path)
+        return make_path(path)
 
     @classmethod
     def get_mypy_path(cls):
-        return os.getenv('MYPY')
+        return get_mypy_path()
 
     @classmethod
     def get_home_path(cls):
-        return os.getenv('HOME')
+        return get_home_path()
 
     @classmethod
     def get_download_path(cls):
-        return '%s/Downloads' % os.getenv('HOME')
+        return get_download_path()
 
     @classmethod
     def get_abs_path(cls, path):
-        path = re.sub('~', os.getenv('HOME'), path)
-        return os.path.abspath(path)
+        return get_abs_path(path)
 
     @classmethod
     def get_current_path(cls):
-        return os.getcwd()
+        return get_current_path()
 
     @classmethod
     def remove_blank_dir(cls, path, level=4):
-        for i in range(level):
-            for rt, dr, fs in os.walk(path):
-                if len(dr) == 0 and len(fs) == 0:
-                    os.rmdir(rt)
+        return remove_blank_dir(path, level)
 
     @classmethod
     def recliam_path(cls, path, start=False, end=True):
-        if start:
-            if path[0] == '/':
-                path = path[1:]
-        if end:
-            if path[-1] == '/':
-                path = path[:len(path) - 1]
-        return path
+        return recliam_path(path, start, end)

@@ -44,8 +44,8 @@ class Code(object):
         d.info(cmd)
         subprocess.call(cmd, shell=True)
 
-    def repo_handler(self, cmds):
-        d.dbg('repo_handler: %s' % cmds)
+    def url_handler(self, cmds):
+        d.dbg('url_handler: %s' % cmds)
 
         for cmd in cmds:
             if cmd == 'init':
@@ -58,7 +58,7 @@ class Code(object):
     def get_cmd_handlers(self, cmd=None):
         hdrs = {
             'help': self.help,
-            'repo': self.repo_handler,
+            'repo': self.url_handler,
         }
         if not cmd:
             return hdrs
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     code = Code(
         r'ssh://android.intel.com/h/hypervisor/manifests -b hypervisor/master')
 
-    from cmdprocessing import CmdProcessing
+    from cmdprocess.cmdprocessing import CmdProcessing
     cmdHdr = CmdProcessing()
     cmdHdr.register_cmd_handler(code.get_cmd_handlers())
     cmdHdr.run_sys_input()

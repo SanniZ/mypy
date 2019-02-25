@@ -36,10 +36,10 @@ def create_tar(path):
                     fd.add(f)
     return tar
 
-
-clean_cache(MYPY)
-tar = create_tar(MYPY)
-args = {'-l': tar, '-y': 'Mypy', '-c': 'upload'}
-by = BaiduYun('BackupMypy', True)
-by.main(args)
-os.remove(tar)
+if __name__ == '__main__':
+    clean_cache(MYPY)
+    tar = create_tar(MYPY)
+    args = {'-l': tar, '-y': 'Mypy', '-c': 'upload'}
+    by = BaiduYun('BackupMypy', True)
+    by.main(args)
+    os.remove(tar)
