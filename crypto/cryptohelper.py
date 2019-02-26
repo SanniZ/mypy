@@ -9,6 +9,8 @@ Created on 2018-02-25
 from Crypto.Cipher import AES, DES
 import base64
 
+import rsa
+
 '''
 Note:
     run 'sudo pip3 install pycrypto' to install Crypto module.
@@ -47,11 +49,55 @@ def get_cipher_mode(cipher, mode):
 def align_length(text, length):
     n = len(text) % length
     if n:
-        text += '\0' * (length - n)
+        text += '\0'.encode() * (length - n)
     return text
 
 
+# create rsa keys.
+#
+# return values: pubkey, prikey.
+#
+def RSA_create_keys(n=256):
+    return rsa.newkeys(n)
+
+
+def RSA_encrypt(pubkey, text):
+    text = text.encode() if type(text) == str else text
+    result = bytes()
+    n = len(text)
+    while n:
+        if n > 21:
+            txt = text[:21]
+            text = text[21:]
+            n = len(text)
+        else:
+            txt = text
+            n = 0
+        result += base64.b64encode(rsa.encrypt(txt, pubkey))
+    return result
+
+
+def RSA_decrypt(prikey, text):
+    result = None
+    n = len(text)
+    while n:
+        if n > 44:
+            txt = text[:44]
+            text = text[44:]
+            n = len(text)
+        else:
+            txt = text
+            n = 0
+        if result:
+            result += rsa.decrypt(base64.b64decode(txt), prikey)
+        else:
+            result = rsa.decrypt(base64.b64decode(txt), prikey)
+    result = result.decode() if type(result) == bytes else result
+    return result
+
+
 def DES_encrypt(key, text, iv=DES_IV, mode='ECB'):
+    text = text.encode() if type(text) == str else text
     if any((not key, not text, not iv, not mode)):
         print('AES_encrypt error, found None input.')
         return None
@@ -89,6 +135,7 @@ def DES_decrypt(key, text, iv=DES_IV, mode='ECB'):
 
 
 def AES_encrypt(key, text, iv=AES_IV, mode=AES.MODE_CBC):
+    text = text.encode() if type(text) == str else text
     if any((not key, not text, not iv, not mode)):
         print('AES_encrypt error, found None input.')
         return None
@@ -133,8 +180,9 @@ class CryptoHelper(object):
 
     IVS = {'AES': AES_IV, 'DES': DES_IV}
 
-    def __init__(self, key, iv=None, cipher='AES', mode='CBC'):
+    def __init__(self, key, pubkey=None, iv=None, cipher='AES', mode='CBC'):
         self._key = key
+        self._pubkey = pubkey
         self._cipher = cipher
         self._mode = mode
         if iv:
@@ -142,14 +190,18 @@ class CryptoHelper(object):
         elif cipher in self.IVS:
             self._iv = self.IVS[cipher]
 
-    def encrypt(self, data):
+    def encrypt(self, text):
         if self._cipher == 'AES':
-            return AES_encrypt(self._key, data, self._iv, self._mode)
+            return AES_encrypt(self._key, text, self._iv, self._mode)
         elif self._cipher == 'DES':
-            return DES_encrypt(self._key, data, self._iv, self._mode)
+            return DES_encrypt(self._key, text, self._iv, self._mode)
+        elif self._cipher == 'RSA':
+            return RSA_encrypt(self._pubkey, text)
 
-    def decrypt(self, data):
+    def decrypt(self, text):
         if self._cipher == 'AES':
-            return AES_decrypt(self._key, data, self._iv, self._mode)
+            return AES_decrypt(self._key, text, self._iv, self._mode)
         elif self._cipher == 'DES':
-            return DES_decrypt(self._key, data, self._iv, self._mode)
+            return DES_decrypt(self._key, text, self._iv, self._mode)
+        elif self._cipher == 'RSA':
+            return RSA_decrypt(self._key, text)
