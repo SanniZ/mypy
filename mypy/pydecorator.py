@@ -13,16 +13,6 @@ import getopt
 VERSION = '1.2.0'
 
 
-def isinstance_class(obj):
-    if obj:
-        if all((obj, not isinstance(obj, (int, str, list, dict)))):
-            return True
-        else:
-            return False
-    else:
-        return False
-
-
 # =========================================================
 # get_input
 #
@@ -34,7 +24,8 @@ def isinstance_class(obj):
 #
 # [self.]process_input(opts='hx:', args=args)
 # =========================================================
-def get_input(func):
+
+def get_input(classname=None):
     def __get_user_input(opts):
         kw = None
         try:
@@ -48,39 +39,41 @@ def get_input(func):
                 kw[name] = value
         return kw
 
-    def get_input_wrapper(*args, **kwargs):
-        opts = None
-        if kwargs:
-            if 'args' in kwargs:
-                if type(kwargs['args']) == dict:
-                    return func(*args, **kwargs)
-            if 'opts' in kwargs:
-                opts = kwargs['opts']
-        if args:
-            n = len(args)
-            if isinstance_class(args[0]):
-                if n >= 3:  # (self, opts, args)
-                    if type(args[2]) == dict:  # args is done.
+    def get_input_decorator(func):
+        def get_input_wrapper(*args, **kwargs):
+            opts = None
+            if kwargs:
+                if 'args' in kwargs:
+                    if type(kwargs['args']) == dict:
                         return func(*args, **kwargs)
-                    elif all((args[1], not opts)):  # set opts
-                        opts = args[1]
-                elif n == 2:  # (self, opts)
-                    if all((args[1], not opts)):  # set opts
-                        opts = args[1]
-            elif n == 2:  # (opts, args)
-                if type(args[1]) == dict:  # args is done
-                    return func(*args, **kwargs)
-                elif all((args[0], not opts)):  # set opts
-                    opts = args[0]
-            elif n == 1:  # (opts)
-                if all((args[0], not opts)):  # set opts
-                    opts = args[0]
-            else:
-                return None
-        if opts:
-            kwargs['args'] = __get_user_input(opts)
-        return func(*args, **kwargs)
-    return get_input_wrapper
+                if 'opts' in kwargs:
+                    opts = kwargs['opts']
+            if args:
+                n = len(args)
+                if classname:
+                    if n >= 3:  # (self, opts, args)
+                        if type(args[2]) == dict:  # args is done.
+                            return func(*args, **kwargs)
+                        elif all((args[1], not opts)):  # set opts
+                            opts = args[1]
+                    elif n == 2:  # (self, opts)
+                        if all((args[1], not opts)):  # set opts
+                            opts = args[1]
+                elif n == 2:  # (opts, args)
+                    if type(args[1]) == dict:  # args is done
+                        return func(*args, **kwargs)
+                    elif all((args[0], not opts)):  # set opts
+                        opts = args[0]
+                elif n == 1:  # (opts)
+                    if all((args[0], not opts)):  # set opts
+                        opts = args[0]
+                else:
+                    return None
+            if opts:
+                kwargs['args'] = __get_user_input(opts)
+            return func(*args, **kwargs)
+        return get_input_wrapper
+    return get_input_decorator
 
 
 # =========================================================
@@ -92,7 +85,8 @@ def get_input(func):
 # def xxx([self,] args, dt=None):
 #     print(dt)
 # =========================================================
-def get_dict_args(symbol=[':']):
+
+def get_dict_args(classname=None, symbol=[':']):
     def get_dict_args_decorator(func):
         def __get_args_dict(args):
             result = dict()
@@ -119,7 +113,7 @@ def get_dict_args(symbol=[':']):
             if kwargs:
                 if 'args' in kwargs:
                     args_ = kwargs['args']
-            elif all((isinstance_class(args[0]), len(args) >= 2)):
+            elif all((classname, len(args) >= 2)):
                 args_ = args[1]
             else:
                 args_ = args[0]

@@ -30,7 +30,7 @@ def xxx_func(values):
     print('xxx_func: values=%s' % values)
 
 
-@get_input
+@get_input()
 def get_input(opt, args=None):
     return args
 

@@ -82,7 +82,7 @@ class BaiduYun(PyPrint):
         self._bp = None
         self._input_opts = 'hy:l:c:m:vor'
 
-    @get_input
+    @get_input('BaiduYun')
     def process_input(self, opts=None, args=None):
         if '-h' in args:
             PyBase.print_help(self.HELP_MENU, True)

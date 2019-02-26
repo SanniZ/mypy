@@ -41,7 +41,7 @@ class Template(object):
         self._name = name if name else self.__class__.__name__
         self._xxx = None
 
-    @get_input
+    @get_input('Template')
     def get_input(self, opt, args=None):
         if '-h' in args:
             print_help(self.HELP_MENU)

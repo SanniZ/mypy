@@ -85,18 +85,6 @@ LANG_MAP = (
 
 
 ############################################################################
-#               FileInfo Class
-############################################################################
-
-class FileInfo(object):
-    def __init__(self, url=None, state=STAT_WAITTING, output=''):
-        self._url = url
-        self._state = state
-        self._output = output
-        self._args = None
-
-
-############################################################################
 #               WindowUI Class
 ############################################################################
 
@@ -618,34 +606,34 @@ class WebImageCrawlerUI(WindowUI):
             self.update_type_widget_state(0)
 
     def add_url_info_to_list(self, url, state=None, output=None):
-        info = FileInfo(output=self._output)
-        info._url = url
-        if state:
-            info._state = state
-        if output:
-            info._output = output
-        self._fs_list.append(info)
+        if not state:
+            state = STAT_WAITTING
+        if not output:
+            output = ''
+        self._fs_list[url] = [state, output]
         self._fs_list_cnt += 1
 
     def update_list_info(self, url=None, state=None, output=None):
+        # update fs list
+        if url in self._fs_list:
+            if state:
+                self._fs_list[url][0] = state
+            if output:
+                self._fs_list[url][1] = output
+        # update fs to show.
         with self._fs_list_lock:
             fs = list()
-            for i, info in enumerate(self._fs_list):
-                if url == info._url:
-                    if state:
-                        info._state = state
-                    if output:
-                        info._output = output
-                # print(info._url, info._state, info._output)
-                fs.append('%s%s%s' % (info._url.ljust(64),
-                                      info._state.ljust(16),
-                                      info._output.ljust(64)))
+            for key, info in self._fs_list.items():
+                fs.append('%s%s%s' % (
+                    key.ljust(64), info[0].ljust(16), info[1].ljust(64)))
+            # update fs list
+            fs.sort(key=lambda f: f)  # it will match crawler_download_url().
             self._lbfs_var.set(tuple(fs))
 
     def update_url_list(self, urls=None):
         # clear file list
         self._fs_list_cnt = 0
-        self._fs_list = list()
+        self._fs_list = dict()
         # get file
         if not urls:
             f = self._wm['enPath'].get()
@@ -665,22 +653,26 @@ class WebImageCrawlerUI(WindowUI):
                         urls.append(url)
             elif '-u' in f:
                 args = eval(f)
-                if '-n' in args:
-                    n = args['-n']
-                    if type(n) is not int:
-                        n = int(n)
+                if os.path.isfile(args['-u']):
+                    with open(args['-u'], 'r') as fd:
+                        urls = fd.readlines()
                 else:
-                    n = 1
-                urls = list()
-                for index in range(n):
-                    base, num = WebBase.get_url_base_and_num(args['-u'])
-                    if all((base, num)):
-                        url = WebBase.set_url_base_and_num(
-                                                    base, int(num) + index)
+                    if '-n' in args:
+                        n = args['-n']
+                        if type(n) is not int:
+                            n = int(n)
                     else:
-                        url = args['-u']
-                    if url:
-                        urls.append(url)
+                        n = 1
+                    urls = list()
+                    for index in range(n):
+                        base, num = WebBase.get_url_base_and_num(args['-u'])
+                        if all((base, num)):
+                            url = WebBase.set_url_base_and_num(
+                                                        base, int(num) + index)
+                        else:
+                            url = args['-u']
+                        if url:
+                            urls.append(url)
             else:
                 urls = [f]
         # add file info to list.
@@ -688,8 +680,6 @@ class WebImageCrawlerUI(WindowUI):
             url = WebBase.reclaim_url_address(url)
             if url:
                 self.add_url_info_to_list(url)
-        # sort of file list.
-        self._fs_list.sort(key=lambda info: info._url, reverse=False)
 
     def download_url(self, args=None):
         url = args['-u']
@@ -719,16 +709,14 @@ class WebImageCrawlerUI(WindowUI):
 
     def crawler_download_url(self):
         if self._fs_list_cnt:
-            index = 0
             self._download_threads = list()
             # create thread to download url.
-            while self._fs_list_cnt:
+            urls = sorted(self._fs_list.keys(), key=lambda k: k)
+            for url_ in urls:
                 self._class = None
-                info = self._fs_list[index]
-                index += 1
                 self._fs_list_cnt -= 1
                 # set url and start thread to download url.
-                url = {'-u': info._url}
+                url = {'-u': url_}
                 if self._view:
                     url['-v'] = True
                 if self._debug:
