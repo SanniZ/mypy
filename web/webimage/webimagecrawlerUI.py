@@ -712,20 +712,20 @@ class WebImageCrawlerUI(WindowUI):
             self._download_threads = list()
             # create thread to download url.
             urls = sorted(self._fs_list.keys(), key=lambda k: k)
-            for url_ in urls:
+            for url in urls:
                 self._class = None
                 self._fs_list_cnt -= 1
                 # set url and start thread to download url.
-                url = {'-u': url_}
+                args = {'-u': url}
                 if self._view:
-                    url['-v'] = True
+                    args['-v'] = True
                 if self._debug:
-                    url['-d'] = self._debug
+                    args['-d'] = self._debug
                 if self._output:
-                    url['-p'] = self._output
+                    args['-p'] = self._output
                 # create thread and put to queue.
-                t = threading.Thread(target=self.download_url, args=(url,))
-                self._download_thread_queue.put(url)
+                t = threading.Thread(target=self.download_url, args=(args,))
+                self._download_thread_queue.put(args)
                 self._download_threads.append(t)
                 t.start()
             # waitting for thread.

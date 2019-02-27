@@ -24,9 +24,7 @@ class PyPrint(object):
         def fmt_pr_warpper(*args, **kwargs):
             pr = args[0]
             if func(*args, **kwargs):
-                msg = ''
-                for m in args[1:]:
-                    msg += m
+                msg = ''.join(args[1:])
                 if pr._tag:
                     print('[%s] %s' % (pr._tag, msg))
                 else:

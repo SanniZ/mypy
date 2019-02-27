@@ -13,6 +13,14 @@ import getopt
 VERSION = '1.2.0'
 
 
+def get_instance_self(args):
+    result = None
+    if args:
+        if all((args[0], not isinstance(args[0], (int, str, list, dict)))):
+            return args[0]
+    return result
+
+
 # =========================================================
 # get_input
 #

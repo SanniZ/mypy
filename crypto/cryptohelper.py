@@ -53,6 +53,10 @@ def align_length(text, length):
     return text
 
 
+def encode_text(text):
+    return text.encode() if type(text) == str else text
+
+
 # create rsa keys.
 #
 # return values: pubkey, prikey.
@@ -61,43 +65,68 @@ def RSA_create_keys(n=256):
     return rsa.newkeys(n)
 
 
-def RSA_encrypt(pubkey, text):
-    text = text.encode() if type(text) == str else text
+def RSA_get_msg_space(key, decrypt=0):
+    SPACES = {77: [21, 44], 78: [21, 44],
+              154: [53, 88], 155: [53, 88],
+              308: [117, 172], 309: [117, 172],
+              617: [245, 344], 618: [245, 344]}
+    key = str(key)
+    if key.startswith('PublicKey'):
+        key = key[len('PublicKey'):]
+    elif key.startswith('PrivateKey'):
+        key = key[len('PrivateKey'):]
+    else:
+        print('RSA error: not get msg space!')
+        return None
+    key = key[1:-1].split(',')[0]
+    n = len(key)
+    if n in SPACES:
+        return SPACES[n][decrypt]
+    else:
+        return None
+
+
+def RSA_encrypt(pubkey, text, keylenght=None):
+    msg_space = RSA_get_msg_space(pubkey)
+    if not msg_space:
+        return None
+    text = encode_text(text)
     result = bytes()
     n = len(text)
     while n:
-        if n > 21:
-            txt = text[:21]
-            text = text[21:]
+        if n > msg_space:
+            txt = text[:msg_space]
+            text = text[msg_space:]
             n = len(text)
         else:
             txt = text
             n = 0
-        result += base64.b64encode(rsa.encrypt(txt, pubkey))
+        result += base64.urlsafe_b64encode(rsa.encrypt(txt, pubkey))
     return result
 
 
 def RSA_decrypt(prikey, text):
+    msg_space = RSA_get_msg_space(prikey, 1)
+    if not msg_space:
+        return None
     result = None
     n = len(text)
+    result = bytes()
+    rsa.decrypt(base64.urlsafe_b64decode(text), prikey)
     while n:
-        if n > 44:
-            txt = text[:44]
-            text = text[44:]
+        if n > msg_space:
+            txt = text[:msg_space]
+            text = text[msg_space:]
             n = len(text)
         else:
             txt = text
             n = 0
-        if result:
-            result += rsa.decrypt(base64.b64decode(txt), prikey)
-        else:
-            result = rsa.decrypt(base64.b64decode(txt), prikey)
-    result = result.decode() if type(result) == bytes else result
-    return result
+        result += rsa.decrypt(base64.urlsafe_b64decode(txt), prikey)
+    return result.decode() if type(result) == bytes else result
 
 
 def DES_encrypt(key, text, iv=DES_IV, mode='ECB'):
-    text = text.encode() if type(text) == str else text
+    text = encode_text(text)
     if any((not key, not text, not iv, not mode)):
         print('AES_encrypt error, found None input.')
         return None
@@ -135,7 +164,7 @@ def DES_decrypt(key, text, iv=DES_IV, mode='ECB'):
 
 
 def AES_encrypt(key, text, iv=AES_IV, mode=AES.MODE_CBC):
-    text = text.encode() if type(text) == str else text
+    text = encode_text(text)
     if any((not key, not text, not iv, not mode)):
         print('AES_encrypt error, found None input.')
         return None
