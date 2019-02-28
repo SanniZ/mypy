@@ -12,8 +12,8 @@ import subprocess
 
 from bypy import ByPy
 
-from mypy.pybase import PyBase
-from mypy.pyprint import PyPrint
+from mypy.pybase import print_help
+from mypy.pyprint import PyPrint, PR_LVL_DEFAULT, PR_LVL_ALL
 from mypy.pydecorator import get_input
 
 ############################################################################
@@ -34,7 +34,7 @@ LOCALROOT = r'LocalRoot'
 #               BaiduYun class
 ############################################################################
 
-class BaiduYun(PyPrint):
+class BaiduYun(object):
 
     HELP_MENU = (
         '============================================',
@@ -67,10 +67,6 @@ class BaiduYun(PyPrint):
 
     def __init__(self, name='BaiduYun', view=False,
                  local_path=None, yun_path=None, upload_mode='overwrite'):
-        self._pr_lvl = \
-            PyPrint.PR_LVL_INFO | PyPrint.PR_LVL_WARN | PyPrint.PR_LVL_ERR if \
-            view else PyPrint.PR_LVL_WARN | PyPrint.PR_LVL_ERR
-        super(BaiduYun, self).__init__(self.__class__.__name__, self._pr_lvl)
         self._name = name
         self._local_path = local_path
         self._remote_path = yun_path
@@ -81,13 +77,15 @@ class BaiduYun(PyPrint):
         self._count = 0
         self._bp = None
         self._input_opts = 'hy:l:c:m:vor'
+        self._pr = PyPrint('BaiduYun',
+                           lvl=PR_LVL_ALL if view else PR_LVL_DEFAULT)
 
     @get_input('BaiduYun')
     def process_input(self, opts=None, args=None):
         if '-h' in args:
-            PyBase.print_help(self.HELP_MENU, True)
+            print_help(self.HELP_MENU, True)
         if '-v' in args:
-            self.set_pr_level(self.get_pr_level() | PyPrint.PR_LVL_INFO)
+            self._pr.add_pr_level(PR_LVL_ALL)
         if '-o' in args:
             self._order = True
         if '-r' in args:
@@ -130,14 +128,14 @@ class BaiduYun(PyPrint):
                 else:
                     dst = self.join_path(self._remote_path, dr)
                 if not dst:
-                    self.pr_warn(
+                    self._pr.pr_warn(
                         'Warnning: failed to get remote path of %s' % dr)
                     continue
             bypy.mkdir(dst)
             # upload files
             for f in fs:
                 index += 1
-                self.pr_info(
+                self._pr.pr_info(
                     '[%s/%s] uploading: %s ===> %s' % (
                         index, self._count,
                         re.sub('%s/' % self._local_path, '', f), dst))
@@ -179,7 +177,7 @@ class BaiduYun(PyPrint):
         try:
             res = subprocess.check_output(cmd, shell=True).decode()
         except subprocess.CalledProcessError:
-            self.pr_warn('warnning: access %s failed!', path)
+            self._pr.pr_warn('warnning: access %s failed!', path)
         else:
             ls = res.split('\n')
             for f in ls:
@@ -233,16 +231,16 @@ class BaiduYun(PyPrint):
             if fs:
                 for dr, lfs in fs.items():
                     if dr in LISTROOT:
-                        self.pr_info('%s:' % (REMOTEROOT))
+                        self._pr.pr_dbg('%s:' % (REMOTEROOT))
                     else:
-                        self.pr_info('%s/%s:' % (REMOTEROOT, dr))
+                        self._pr.pr_dbg('%s/%s:' % (REMOTEROOT, dr))
                     if self._order:
                         if lfs:
                             for f in lfs:
-                                self.pr_info(f)
+                                self._pr.pr_dbg(f)
                     else:
-                        self.pr_info(lfs)
-                    self.pr_info('')
+                        self._pr.pr_dbg(lfs)
+                    self._pr.pr_dbg('')
         elif self._cmd == self.CMD_UPLOAD:
             fs = self.get_upload_files(self._local_path)
             if fs:

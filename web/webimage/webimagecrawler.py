@@ -14,7 +14,7 @@ import threading
 
 from mypy.pybase import PyBase
 from mypy.pypath import PyPath
-from mypy.pyprint import PyPrint
+from mypy.pyprint import PyPrint, PR_LVL_DBG
 
 from web.webbase import WebBase
 from web.webimage.webimage import get_input
@@ -187,7 +187,8 @@ class WebImageCrawler(object):
         if '-x' in args:
             self._xval = args['-x']
         if '-d' in args:
-            self._pr.set_pr_level(self._pr.get_pr_level() | PyPrint.PR_LVL_DBG)
+            self._pr.add_pr_level(PR_LVL_DBG)
+            self._pr.set_funcname(True)
         if '-y' in args:
             self._byname = args['-y']
         # get url_base from xval

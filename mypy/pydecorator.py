@@ -8,18 +8,43 @@ Created on 2019-02-11
 
 import sys
 import getopt
+import subprocess
 
+
+############################################################################
+#               Const Vars
+############################################################################
 
 VERSION = '1.2.0'
 
 
-def get_instance_self(args):
-    result = None
-    if args:
-        if all((args[0], not isinstance(args[0], (int, str, list, dict)))):
-            return args[0]
-    return result
+############################################################################
+#               Function definition
+############################################################################
 
+def object_valid_types(obj, types=(int, str, list, dict)):
+    return obj if all((obj, isinstance(obj, types))) else None
+
+
+# =========================================================
+# run_shell
+#
+# it will run shell command.
+# sample function:
+# @run_shell
+# def adb_power():
+#     return 'adb shell input keyevent 26'
+# =========================================================
+
+def run_shell(func):
+    def run_shell_warpper(*args, **kwargs):
+        return subprocess.check_output(func(*args, **kwargs), shell=True)
+    return run_shell_warpper
+
+
+############################################################################
+#             Decorator definition
+############################################################################
 
 # =========================================================
 # get_input
@@ -35,14 +60,13 @@ def get_instance_self(args):
 
 def get_input(classname=None):
     def __get_user_input(opts):
-        kw = None
+        kw = {}
         try:
             opts, args = getopt.getopt(sys.argv[1:], opts)
         except getopt.GetoptError as e:
             print('%s, -h for help.' % str(e))
             return None
         if opts:
-            kw = dict()
             for name, value in opts:
                 kw[name] = value
         return kw
@@ -52,7 +76,7 @@ def get_input(classname=None):
             opts = None
             if kwargs:
                 if 'args' in kwargs:
-                    if type(kwargs['args']) == dict:
+                    if isinstance(kwargs['args'], dict):
                         return func(*args, **kwargs)
                 if 'opts' in kwargs:
                     opts = kwargs['opts']
@@ -60,7 +84,7 @@ def get_input(classname=None):
                 n = len(args)
                 if classname:
                     if n >= 3:  # (self, opts, args)
-                        if type(args[2]) == dict:  # args is done.
+                        if isinstance(args[2], dict):  # args is done.
                             return func(*args, **kwargs)
                         elif all((args[1], not opts)):  # set opts
                             opts = args[1]
@@ -68,7 +92,7 @@ def get_input(classname=None):
                         if all((args[1], not opts)):  # set opts
                             opts = args[1]
                 elif n == 2:  # (opts, args)
-                    if type(args[1]) == dict:  # args is done
+                    if isinstance(args[1], dict):  # args is done
                         return func(*args, **kwargs)
                     elif all((args[0], not opts)):  # set opts
                         opts = args[0]
@@ -97,9 +121,9 @@ def get_input(classname=None):
 def get_dict_args(classname=None, symbol=[':']):
     def get_dict_args_decorator(func):
         def __get_args_dict(args):
-            result = dict()
+            result = {}
             key = None
-            if type(args) == dict:
+            if isinstance(args, dict):
                 return args
             elif args:
                 lt = args.split(',')

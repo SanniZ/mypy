@@ -13,10 +13,10 @@ import threading
 
 from mypy.pybase import PyBase
 from mypy.pypath import PyPath
-from mypy.pyprint import PyPrint
+from mypy.pyprint import PyPrint, PR_LVL_DBG
 
 from web.webbase import WebBase
-from web.webcontent import WebContent, USER_AGENTS
+from web.webcontent import WebContent, USER_AGENTS, DEFAULT_WEB_URL_FILE
 from image.image import Image
 
 if sys.version_info[0] == 2:
@@ -204,11 +204,11 @@ class WebImage(object):
         return WebContent.convert_url_to_title(url)
 
     def store_web_info(self, path, title, url):
-        with open('%s/%s' % (path, WebContent.WEB_URL_FILE), 'w') as fd:
+        with open('%s/%s' % (path, DEFAULT_WEB_URL_FILE), 'w') as fd:
             fd.write('%s\n%s' % (title, url))
 
     def store_url_of_images(self, path, urls):
-        with open('%s/%s' % (path, WebContent.WEB_URL_FILE), 'a') as fd:
+        with open('%s/%s' % (path, DEFAULT_WEB_URL_FILE), 'a') as fd:
             fd.write('\n')
             fd.write('\n')
             fd.write('url of imgs:\n')
@@ -331,8 +331,6 @@ class WebImage(object):
                 self._thread_max = n
         if '-v' in args:
             self._view = True
-            self._pr.set_pr_level(
-                self._pr.get_pr_level() | PyPrint.PR_LVL_WARN)
         if '-x' in args:
             self._xval = args['-x']
         if '-m' in args:
@@ -350,11 +348,14 @@ class WebImage(object):
             except ValueError as e:
                 self._pr.pr_err(str(e))
             else:
-                self._pr.set_pr_level(
-                            self._pr.get_pr_level() | PyPrint.PR_LVL_ALL)
+                self._pr.add_pr_level(PR_LVL_DBG)
+                self._pr.set_funcname(True)
             if self.__dbg >= 0x02:
-                WebContent.pr.set_pr_level(
-                            WebContent.pr.get_pr_level() | PyPrint.PR_LVL_DBG)
+                WebContent.pr.add_pr_level(PR_LVL_DBG)
+                WebContent.pr.set_funcname(True)
+            else:
+                WebContent.pr.clear_pr_level(PR_LVL_DBG)
+                WebContent.pr.set_funcname(False)
         # check url
         if self._url:
             base, num = WebBase.get_url_base_and_num(self._url)
@@ -367,7 +368,7 @@ class WebImage(object):
             PyBase.print_exit('[WebImage] Error, no set url, -h for help!')
         if self._url_base:
             pattern = re.compile('http[s]?://.+\.(com|cn|net)')
-            if type(self._url_base) == list:
+            if isinstance(self._url_base, list):
                 for base in self._url_base:
                     www_com = pattern.match(base)
             else:

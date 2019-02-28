@@ -10,6 +10,9 @@ import os
 import sys
 import getopt
 
+import inspect
+
+
 VERSION = '2.0.0'
 
 
@@ -75,6 +78,10 @@ def align_length(text, length):
     if n:
         text += '\0' * (length - n)
     return text
+
+
+def get_funcname():
+    return inspect.stack()[1][3]
 
 
 ############################################################################
