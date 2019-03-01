@@ -20,7 +20,7 @@ from mypy.pydecorator import get_input
 #               Const Vars
 ############################################################################
 
-VERSION = '1.1.1'
+VERSION = '1.2.0'
 
 
 REMOTEROOT = 'apps/bypy'
@@ -53,6 +53,8 @@ class BaiduYun(object):
         '  -o: order to show files',
         '  -r: recursion of path',
         '  -m o/n: set upload mode, overwrite or newcopy.',
+        '  -x .xxx: except files of type',
+        '  -f .xxx: files of type',
         '',
         'Note:',
         ' if it is not able to access BaiduYun,',
@@ -76,30 +78,36 @@ class BaiduYun(object):
         self._recursion_path = False
         self._count = 0
         self._bp = None
-        self._input_opts = 'hy:l:c:m:vor'
+        self._ftype = None
+        self._input_opts = 'hy:l:c:m:vorf:x:'
         self._pr = PyPrint('BaiduYun',
                            lvl=PR_LVL_ALL if view else PR_LVL_DEFAULT)
 
     @get_input('BaiduYun')
     def process_input(self, opts=None, args=None):
-        if '-h' in args:
-            print_help(self.HELP_MENU, True)
-        if '-v' in args:
-            self._pr.add_pr_level(PR_LVL_ALL)
-        if '-o' in args:
-            self._order = True
-        if '-r' in args:
-            self._recursion_path = True
-        if '-l' in args:
-            self._local_path = os.path.abspath(args['-l'])
-        if '-y' in args:
-            self._remote_path = args['-y']
-        if '-m' in args:
-            mode = args['-m'].lower()
-            if mode in self.UPLOAD_MODES:
-                self._upload_mode = self.UPLOAD_MODES[mode]
-        if '-c' in args:
-            self._cmd = args['-c'].lower()
+        if args:
+            if '-h' in args:
+                print_help(self.HELP_MENU, True)
+            if '-v' in args:
+                self._pr.add_pr_level(PR_LVL_ALL)
+            if '-o' in args:
+                self._order = True
+            if '-r' in args:
+                self._recursion_path = True
+            if '-l' in args:
+                self._local_path = os.path.abspath(args['-l'])
+            if '-y' in args:
+                self._remote_path = args['-y']
+            if '-m' in args:
+                mode = args['-m'].lower()
+                if mode in self.UPLOAD_MODES:
+                    self._upload_mode = self.UPLOAD_MODES[mode]
+            if '-c' in args:
+                self._cmd = args['-c'].lower()
+            if '-f' in args:
+                self._ftype = args['-f']
+            if '-x' in args:
+                self._xftype = args['-x']
         return args
 
     def join_path(self, rt, dr):
@@ -155,16 +163,28 @@ class BaiduYun(object):
                     ls = list()
                     # append file to list
                     for f in fs:
-                        f = os.path.join(rt, f)
-                        ls.append(f)
-                        self._count += 1
+                        if self._ftype:
+                            if f.endswith(self._ftype):
+                                f = os.path.join(rt, f)
+                                ls.append(f)
+                                self._count += 1
+                        elif self._xftype:
+                            if not f.endswith(self._xftype):
+                                f = os.path.join(rt, f)
+                                ls.append(f)
+                                self._count += 1
+                        else:
+                            f = os.path.join(rt, f)
+                            ls.append(f)
+                            self._count += 1
                     # get dir
-                    dr = re.sub('%s' % src, '', rt)
-                    if dr.startswith('/'):
-                        dr = dr[1:]
-                    if not dr:
-                        dr = LOCALROOT
-                    dfs[dr] = ls
+                    if ls:
+                        dr = re.sub('%s' % src, '', rt)
+                        if dr.startswith('/'):
+                            dr = dr[1:]
+                        if not dr:
+                            dr = LOCALROOT
+                        dfs[dr] = ls
         return dfs
 
     def __list_of_dir(self, path):

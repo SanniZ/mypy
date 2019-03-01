@@ -13,38 +13,35 @@ import getopt
 import inspect
 
 
-VERSION = '2.0.0'
+VERSION = '2.0.1'
 
 
 ############################################################################
 #               pybase functions
 ############################################################################
 
-def print_help(help_menu, _exit=True):
-    for help in help_menu:
-        print(help)
-    if _exit:
-        exit()
-
-
 # print msg and exit
-def print_exit(msg=None):
-    if msg:
-        print(msg)
-    exit()
+def print_exit(msg=None, exit_=True):
+    print(msg) if msg else None
+    exit() if exit_ else None
 
 
-def get_user_input(opts):
+def print_help(help_menu, exit_=True):
+    for menu in help_menu:
+        print(menu)
+    print_exit(exit_=exit_)
+
+
+def get_user_input(opts, err_exit=True):
     result = dict()
     try:
         opts, args = getopt.getopt(sys.argv[1:], opts)
     except getopt.GetoptError as e:
-        print_exit('%s, -h for help.' % str(e))
-    if not opts:
-        print_exit('invalid input, -h for help.')
+        print_exit('%s, -h for help.' % str(e), err_exit)
     else:
-        for name, value in opts:
-            result[name] = value
+        if opts:
+            for name, value in opts:
+                result[name] = value
     return result
 
 
