@@ -14,6 +14,8 @@ import threading
 
 from web.webbase import WebBase
 from web.webimage.webimagecrawler import XBaseClass
+from mypy.orderdict import OrderDict
+
 
 if sys.version_info[0] == 2:
     import ttk
@@ -465,8 +467,7 @@ class WebImageCrawlerUI(WindowUI):
         super(WebImageCrawlerUI, self).__init__()
         self._name = name
 
-        self._fs_list = None
-        self._fs_list_cnt = 0
+        self._fs_list = OrderDict()
         self._fs_list_lock = threading.Lock()
 
         self._class = None
@@ -610,12 +611,11 @@ class WebImageCrawlerUI(WindowUI):
             state = STAT_WAITTING
         if not output:
             output = ''
-        self._fs_list[url] = [state, output]
-        self._fs_list_cnt += 1
+        self._fs_list.append({url: [state, output]})
 
     def update_list_info(self, url=None, state=None, output=None):
         # update fs list
-        if url in self._fs_list:
+        if url in self._fs_list.keys():
             if state:
                 self._fs_list[url][0] = state
             if output:
@@ -623,17 +623,15 @@ class WebImageCrawlerUI(WindowUI):
         # update fs to show.
         with self._fs_list_lock:
             fs = list()
-            for key, info in self._fs_list.items():
+            for key, info in self._fs_list:
                 fs.append('%s%s%s' % (
                     key.ljust(64), info[0].ljust(16), info[1].ljust(64)))
             # update fs list
-            fs.sort(key=lambda f: f)  # it will match crawler_download_url().
             self._lbfs_var.set(tuple(fs))
 
     def update_url_list(self, urls=None):
         # clear file list
-        self._fs_list_cnt = 0
-        self._fs_list = dict()
+        self._fs_list.clear()
         # get file
         if not urls:
             f = self._wm['enPath'].get()
@@ -676,7 +674,7 @@ class WebImageCrawlerUI(WindowUI):
             else:
                 urls = [f]
         # add file info to list.
-        for url in set(urls):
+        for url in sorted(set(urls)):
             url = WebBase.reclaim_url_address(url)
             if url:
                 self.add_url_info_to_list(url)
@@ -708,13 +706,12 @@ class WebImageCrawlerUI(WindowUI):
         self._download_thread_queue.get()
 
     def crawler_download_url(self):
-        if self._fs_list_cnt:
+        if self._fs_list.count():
             self._download_threads = list()
             # create thread to download url.
-            urls = sorted(self._fs_list.keys(), key=lambda k: k)
-            for url in urls:
+            # urls = sorted(self._fs_list.keys(), key=lambda k: k)
+            for url in self._fs_list.keys():
                 self._class = None
-                self._fs_list_cnt -= 1
                 # set url and start thread to download url.
                 args = {'-u': url}
                 if self._view:
