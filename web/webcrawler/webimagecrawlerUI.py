@@ -13,9 +13,7 @@ import subprocess
 import threading
 
 from web.webbase import WebBase
-from web.webimage.webimagecrawler import XBaseClass
-from mypy.orderdict import OrderDict
-
+from web.webcrawler.webimagecrawler import XBaseClass
 
 if sys.version_info[0] == 2:
     import ttk
@@ -43,7 +41,7 @@ else:
 #               Const Vars
 ############################################################################
 
-VERSION = '1.3.0'
+VERSION = '1.3.1'
 
 STAT_WAITTING = 'Waitting'
 STAT_DOWNLOADING = 'Downloading'
@@ -467,7 +465,7 @@ class WebImageCrawlerUI(WindowUI):
         super(WebImageCrawlerUI, self).__init__()
         self._name = name
 
-        self._fs_list = OrderDict()
+        self._fs_list = {}
         self._fs_list_lock = threading.Lock()
 
         self._class = None
@@ -501,34 +499,39 @@ class WebImageCrawlerUI(WindowUI):
         t_start = self._type_start.get()
         t_end = self._type_end.get()
         if all((t_type, t_start)):
-            try:
-                url_start = int(t_start)
-                if t_end:
-                    url_end = int(t_end)
-                    if url_end >= url_start:
-                        n = url_end - url_start + 1
+            if t_type in ['meitulu', '美图录']:
+                url = 'https://www.meitulu.com/t/%s' % t_start
+                args = {'-u': url, '-n': 1}
+            else:
+                try:
+                    url_start = int(t_start)
+                    if t_end:
+                        url_end = int(t_end)
+                        if url_end >= url_start:
+                            n = url_end - url_start + 1
+                        else:
+                            showerror(
+                                '%s' % LANG_MAP[self._lang]['Error'],
+                                '%s(%d) > %s(%d)!' % (
+                                    LANG_MAP[self._lang]['Start'], url_start,
+                                    LANG_MAP[self._lang]['End'], url_end))
+                            return
                     else:
-                        showerror('%s' % LANG_MAP[self._lang]['Error'],
-                                  '%s(%d) > %s(%d)!' %
-                                  (LANG_MAP[self._lang]['Start'], url_start,
-                                   LANG_MAP[self._lang]['End'], url_end))
-                        return
-                else:
-                    n = 1
-            except ValueError as e:
-                showerror('%s' % LANG_MAP[self._lang]['Error'],
-                          '\n%s!' % str(e))
-                return
-            # config args
-            if self._lang:
-                if type(t_type) != str:
-                    t_type = t_type.encode('utf-8')
-                index = LANG_MAP[self._lang]['TypeList'].index(t_type)
-                t_type = LANG_MAP[0]['TypeList'][index]
-            args = {'-x': t_type, '-u': t_start, '-n': n}
-            self._path_var.set(args)
+                        n = 1
+                except ValueError as e:
+                    showerror('%s' % LANG_MAP[self._lang]['Error'],
+                              '\n%s!' % str(e))
+                    return
+                # config args
+                if self._lang:
+                    if type(t_type) != str:
+                        t_type = t_type.encode('utf-8')
+                    index = LANG_MAP[self._lang]['TypeList'].index(t_type)
+                    t_type = LANG_MAP[0]['TypeList'][index]
+                args = {'-x': t_type, '-u': t_start, '-n': n}
 
-            # update file list and info.
+            # uppdate fs info.
+            self._path_var.set(args)
             self.update_url_list()
             self.update_list_info()
         else:
@@ -611,7 +614,7 @@ class WebImageCrawlerUI(WindowUI):
             state = STAT_WAITTING
         if not output:
             output = ''
-        self._fs_list.append({url: [state, output]})
+        self._fs_list[url] = [state, output]
 
     def update_list_info(self, url=None, state=None, output=None):
         # update fs list
@@ -623,15 +626,16 @@ class WebImageCrawlerUI(WindowUI):
         # update fs to show.
         with self._fs_list_lock:
             fs = list()
-            for key, info in self._fs_list:
+            for key, info in self._fs_list.items():
                 fs.append('%s%s%s' % (
                     key.ljust(64), info[0].ljust(16), info[1].ljust(64)))
             # update fs list
+            fs.sort(key=lambda f: f)  # it will match crawler_download_url().
             self._lbfs_var.set(tuple(fs))
 
     def update_url_list(self, urls=None):
         # clear file list
-        self._fs_list.clear()
+        self._fs_list = {}
         # get file
         if not urls:
             f = self._wm['enPath'].get()
@@ -665,8 +669,14 @@ class WebImageCrawlerUI(WindowUI):
                     for index in range(n):
                         base, num = WebBase.get_url_base_and_num(args['-u'])
                         if all((base, num)):
-                            url = WebBase.set_url_base_and_num(
-                                                        base, int(num) + index)
+                            try:
+                                num = int(num)
+                            except ValueError:
+                                url = args['-u']
+                            else:
+                                url = \
+                                    WebBase.set_url_base_and_num(base,
+                                                                 num + index)
                         else:
                             url = args['-u']
                         if url:
@@ -674,7 +684,7 @@ class WebImageCrawlerUI(WindowUI):
             else:
                 urls = [f]
         # add file info to list.
-        for url in sorted(set(urls)):
+        for url in set(urls):
             url = WebBase.reclaim_url_address(url)
             if url:
                 self.add_url_info_to_list(url)
@@ -690,9 +700,10 @@ class WebImageCrawlerUI(WindowUI):
         if hdr:
             self.update_list_info(url, STAT_DOWNLOADING)
             output = hdr.main(args)
-            if 'search_urls' in output[url]:
-                self._search_urls += output[url]['search_urls']
-                output[url] = ''
+            if output:
+                if 'search_urls' in output[url]:
+                    self._search_urls += output[url]['search_urls']
+                    output[url] = ''
             # update state to DONE.
             if output:
                 self.update_list_info(url, STAT_DONE, output[url])
@@ -706,11 +717,10 @@ class WebImageCrawlerUI(WindowUI):
         self._download_thread_queue.get()
 
     def crawler_download_url(self):
-        if self._fs_list.count():
+        if len(self._fs_list):
             self._download_threads = list()
             # create thread to download url.
-            # urls = sorted(self._fs_list.keys(), key=lambda k: k)
-            for url in self._fs_list.keys():
+            for url in sorted(self._fs_list.keys()):
                 self._class = None
                 # set url and start thread to download url.
                 args = {'-u': url}

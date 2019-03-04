@@ -7,12 +7,17 @@ Created on 2018-12-03
 """
 
 import os
+import sys
 import re
-from PIL import Image as PILImg
 
 from mypy.pyfile import PyFile
 
-VERSION = '1.1.1'
+if sys.version_info[0] == 2:
+    import Image as PILImg
+else:
+    from PIL import Image as PILImg
+
+VERSION = '1.1.2'
 
 IMG_W_MIN = 240
 IMG_H_MIN = 240
