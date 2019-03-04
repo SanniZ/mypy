@@ -12,17 +12,24 @@ import re
 
 import threading
 
-from mypy.pybase import PyBase
-from mypy.pypath import PyPath
-from mypy.pyprint import PyPrint, PR_LVL_DBG
-
-from web.webbase import WebBase
-from web.webimage.webimage import get_input
+from pybase.pysys import print_help, print_exit
+from pybase.pypath import get_abs_path
+from pybase.pyprint import PyPrint, PR_LVL_DBG
+from pybase.pyinput import get_user_input
+from web.weburl import get_url_base_and_num
+from web.webimage.webimage import OPTS
 
 if sys.version_info[0] == 2:
     import Queue as queue
 else:
     import queue
+
+
+VERSION = '1.1.1'
+AUTHOR = 'Byng.Zeng'
+ABOUT = 'Web Image Crawler %s\n\nAuther@%s\n\nCopyright(c)%s\n' % (VERSION,
+                                                                   AUTHOR,
+                                                                   AUTHOR)
 
 
 ############################################################################
@@ -55,26 +62,26 @@ class XBaseClass(object):
 
     }
 
-    @classmethod
-    def get_class_instance(cls, c):
-        if c == 'Girlsky':
+    @staticmethod
+    def get_class_instance(cls):
+        if cls == 'Girlsky':
             from web.webimage.girlsky import Girlsky
-            hdr = Girlsky(c)
-        elif c == 'Pstatp':
+            hdr = Girlsky(cls)
+        elif cls == 'Pstatp':
             from web.webimage.pstatp import Pstatp
-            hdr = Pstatp(c)
-        elif c == 'Meizitu':
+            hdr = Pstatp(cls)
+        elif cls == 'Meizitu':
             from web.webimage.meizitu import Meizitu
-            hdr = Meizitu(c)
-        elif c == 'Mzitu':
+            hdr = Meizitu(cls)
+        elif cls == 'Mzitu':
             from web.webimage.mzitu import Mzitu
-            hdr = Mzitu(c)
-        elif c == 'Weibo':
+            hdr = Mzitu(cls)
+        elif cls == 'Weibo':
             from web.webimage.weibo import Weibo
-            hdr = Weibo(c)
-        elif c == 'Meitulu':
+            hdr = Weibo(cls)
+        elif cls == 'Meitulu':
             from web.webimage.meitulu import Meitulu
-            hdr = Meitulu(c)
+            hdr = Meitulu(cls)
         else:
             from web.webimage.webimage import WebImage
             hdr = WebImage('WebImage')
@@ -121,7 +128,10 @@ class WebImageCrawler(object):
 
     HELP_MENU = (
         '==================================',
-        '    WebImageCrawler help',
+        '    WebImageCrawler - %s' % VERSION,
+        '',
+        '    @Author: %s' % AUTHOR,
+        '    Copyright (c) %s studio' % AUTHOR,
         '==================================',
         'option:',
         '  -u url:',
@@ -158,7 +168,13 @@ class WebImageCrawler(object):
         '    set number of sub pages and formal of url.',
         '  -U:',
         '    run GUI of WebImageCrawler.',
+        '  -y path:',
+        '    set path of baiduyun'
     )
+
+    __slots__ = ('_name', '_web_base', '_url_base', '_url_file', '_url',
+                 '_xval', '_pr', '_class', '_thread_max', '_thread_queue',
+                 '_byname', '_search_urls')
 
     def __init__(self, name=None):
         self._name = name
@@ -174,14 +190,14 @@ class WebImageCrawler(object):
         self._byname = None
         self._search_urls = list()
 
-    def get_input_args(self, args):
+    def process_input_args(self, args):
         if not args:
-            args = get_input(exopt='y:')
+            args = get_user_input(OPTS + 'y:')
         if '-h' in args:
-            PyBase.print_help(self.HELP_MENU)
+            print_help(self.HELP_MENU)
         if '-u' in args:
             if os.path.isfile(args['-u']):
-                self._url_file = PyPath.get_abs_path(args['-u'])
+                self._url_file = get_abs_path(args['-u'])
             else:
                 self._url = re.sub('/$', '', args['-u'])
         if '-x' in args:
@@ -196,10 +212,10 @@ class WebImageCrawler(object):
             self._url_base, self._class = \
                 XBaseClass.get_base_class_from_xval(self._xval)
             if not all((self._url_base, self._class)):
-                PyBase.print_exit('[WebImageCrawler] Error, invalid -x val!')
+                print_exit('[WebImageCrawler] Error, invalid -x val!')
         # get class from url
         if all((self._url, not self._class)):
-            base, num = WebBase.get_url_base_and_num(self._url)
+            base, num = get_url_base_and_num(self._url)
             if base:
                 self._class = XBaseClass.get_class_from_base(base)
             else:
@@ -210,14 +226,14 @@ class WebImageCrawler(object):
         return args
 
     def upload_to_baiduyun(self, fs, localpath, remotepath):
-        from baiduyun import BaiduYun
+        from tools.baiduyun import BaiduYun
         by = BaiduYun()
-        for url, path in fs:
+        for url, path in fs.items():
             if path:
                 dst = '%s/%s' % (
                     remotepath,
                     re.sub('%s/' % os.path.dirname(localpath), '', path))
-                vargs = {'-d': dst, '-s': path}
+                vargs = {'-y': dst, '-l': path, '-c': 'upload'}
                 by.main(vargs)
 
     def process_input(self, args=None, info=None):
@@ -231,8 +247,7 @@ class WebImageCrawler(object):
                     if 'search_urls' in data:
                         self._search_urls += data['search_urls']
             if all((self._byname, output)):
-                self.upload_to_baiduyun(
-                    output.items(), hdr._path, self._byname)
+                self.upload_to_baiduyun(output, hdr._path, self._byname)
         else:
             self._pr.pr_err('[WebImageCrawler] Error, no found handler!')
         # release queue
@@ -259,7 +274,7 @@ class WebImageCrawler(object):
                 for key, value in {'/$': '', '\n$': ''}.items():
                     url = re.sub(key, value, url)
                 # get base and num
-                base, num = WebBase.get_url_base_and_num(url)
+                base, num = get_url_base_and_num(url)
                 if base:
                     self._class = XBaseClass.get_class_from_base(base)
                 if self._class:
@@ -277,7 +292,7 @@ class WebImageCrawler(object):
                 t.join()
 
     def main(self, args=None):
-        args = self.get_input_args(args)
+        args = self.process_input_args(args)
         if self._url_file:
             with open(self._url_file, 'r') as fd:
                 urls = set(fd.readlines())
@@ -291,7 +306,7 @@ class WebImageCrawler(object):
             self._search_urls = list()
 
 if __name__ == '__main__':
-    args = get_input(None, 'Uy:')
+    args = get_user_input('Uy:' + OPTS)
     if '-U' in args:
         from webimagecrawlerUI import WebImageCrawlerUI
         del args['-U']  # delete -U value.

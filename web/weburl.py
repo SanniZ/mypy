@@ -3,14 +3,15 @@
 """
 Created on: 2019-01-09
 
-@author: Zbyng Zeng
+@author: Byng.Zeng
 """
 
 import re
 
-from mypy.pyfile import PyFile
+from pybase.pyfile import reclaim_name
 
-VERSION = '2.0.0'
+VERSION = '2.0.1'
+AUTHOR = 'Byng.Zeng'
 
 
 ############################################################################
@@ -44,7 +45,7 @@ def set_url_base_and_num(base, num):
 
 
 def convert_url_to_title(url):
-    return PyFile.reclaim_name(re.sub('/$', '', url))
+    return reclaim_name(re.sub('/$', '', url))
 
 
 def reclaim_url_address(url):
@@ -54,23 +55,23 @@ def reclaim_url_address(url):
 
 
 ############################################################################
-#               WebBase Class
+#               WebUrl Class
 ############################################################################
 
-class WebBase(object):
+class WebUrl(object):
 
-    @classmethod
-    def get_url_base_and_num(cls, url):
+    @staticmethod
+    def get_url_base_and_num(url):
         return get_url_base_and_num(url)
 
-    @classmethod
-    def set_url_base_and_num(cls, base, num):
+    @staticmethod
+    def set_url_base_and_num(base, num):
         return set_url_base_and_num(base, num)
 
-    @classmethod
-    def convert_url_to_title(cls, url):
+    @staticmethod
+    def convert_url_to_title(url):
         return convert_url_to_title(url)
 
-    @classmethod
-    def reclaim_url_address(cls, url):
+    @staticmethod
+    def reclaim_url_address(url):
         return reclaim_url_address(url)

@@ -3,7 +3,7 @@
 """
 Created on 2019-02-20
 
-@author: Zbyng.Zeng
+@author: Byng.Zeng
 """
 
 import os
@@ -11,13 +11,14 @@ import shutil
 import tarfile
 import time
 
-from mypy.pybase import print_help, print_exit
+from pybase.pysys import print_help, print_exit
 from baiduyun import BaiduYun
 
-VERSION = '1.2.0'
+VERSION = '1.2.1'
+AUTHOR = 'Byng.Zeng'
 
 
-MYPY = os.path.join(os.getenv('HOME'), 'mypy')
+MYPYPATH = os.path.join(os.getenv('HOME'), 'mypy')
 
 
 def clean_cache(path):
@@ -42,11 +43,14 @@ def create_tar(path):
 
 
 if __name__ == '__main__':
-    from mypy.pybase import get_user_input
+    from pybase.pyinput import get_user_input
 
     HELP_MENU = (
         '============================================',
-        '    bakmypy help',
+        '    bakmypy - %s' % VERSION,
+        '',
+        '    @Author: %s' % AUTHOR,
+        '    Copyright (c) %s studio' % AUTHOR,
         '============================================',
         'options:',
         ' -a: upload all of files to baiduyun.',
@@ -57,23 +61,26 @@ if __name__ == '__main__':
 
     args = get_user_input('hafz')
     if args:
-        dt = time.strftime('%Y%m%d-%H%M', time.localtime())
-        clean_cache(MYPY)  # clear all of cache files: *.pyc and __pyc__ dirs
+        date_ = time.strftime('%Y%m%d', time.localtime())
+        time_ = time.strftime('%H%M', time.localtime())
+        clean_cache(MYPYPATH)  # clear all of cache files.
         by = BaiduYun('BackupMypy')
         if '-h' in args:
             print_help(HELP_MENU)
-        elif '-a' in args:
-            args = {'-l': MYPY, '-y': 'Mypy/mypy_%s' % dt, '-c': 'upload'}
+        if '-a' in args:
+            args = {'-c': 'upload', '-l': MYPYPATH,
+                    '-y': 'Mypy/%s/mypy_%s-%s_all' % (date_, date_, time_)}
             by.main(args)
-        elif '-f' in args:
-            args = {'-l': MYPY, '-y': 'Mypy/mypy_%s' % dt,
-                    '-f': ('.py', '.txt'), '-c': 'upload'}
+        if '-f' in args:
+            args = {'-c': 'upload', '-f': ('.py', '.txt'), '-l': MYPYPATH,
+                    '-y': 'Mypy/%s/mypy_%s-%s' % (date_, date_, time_)}
             by.main(args)
-        elif '-z' in args:
-            tar = create_tar(MYPY)
-            args = {'-l': tar, '-y': 'Mypy', '-c': 'upload'}
-            by.main(args)
-            os.remove(tar)
+        if '-z' in args:
+            tar = create_tar(MYPYPATH)
+            args = {'-c': 'upload', '-l': tar, '-y': 'Mypy/%s' % date_}
+            try:
+                by.main(args)
+            finally:
+                os.remove(tar)
     else:
         print_exit('no input, -h for help')
-

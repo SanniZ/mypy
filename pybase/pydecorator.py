@@ -15,7 +15,7 @@ import subprocess
 #               Const Vars
 ############################################################################
 
-VERSION = '1.2.0'
+VERSION = '1.2.2'
 
 
 ############################################################################
@@ -36,10 +36,16 @@ def object_valid_types(obj, types=(int, str, list, dict)):
 #     return 'adb shell input keyevent 26'
 # =========================================================
 
-def run_shell(func):
-    def run_shell_warpper(*args, **kwargs):
-        return subprocess.check_output(func(*args, **kwargs), shell=True)
-    return run_shell_warpper
+def execute_shell(func):
+    def execute_shell_warpper(*args, **kwargs):
+        cmd = func(*args, **kwargs)
+        try:
+            result = subprocess.check_output(cmd, shell=True)
+        except subprocess.CalledProcessError as e:
+            return -1, str(e)
+        else:
+            return 0, result
+    return execute_shell_warpper
 
 
 ############################################################################
@@ -51,14 +57,14 @@ def run_shell(func):
 #
 # it will get args from sys.argv[1:] and return kwargs at args.
 # sample function:
-# @get_input
+# @get_input_args
 # def process_input([self,] opts, args=None):
 #     print(args)
 #
 # [self.]process_input(opts='hx:', args=args)
 # =========================================================
 
-def get_input(classname=None):
+def get_input_args(func):
     def __get_user_input(opts):
         kw = {}
         try:
@@ -71,27 +77,18 @@ def get_input(classname=None):
                 kw[name] = value
         return kw
 
-    def get_input_decorator(func):
-        def get_input_wrapper(*args, **kwargs):
-            opts = None
-            if kwargs:
-                if 'args' in kwargs:
-                    if isinstance(kwargs['args'], dict):
-                        return func(*args, **kwargs)
-                if 'opts' in kwargs:
-                    opts = kwargs['opts']
-            if args:
-                n = len(args)
-                if classname:
-                    if n >= 3:  # (self, opts, args)
-                        if isinstance(args[2], dict):  # args is done.
-                            return func(*args, **kwargs)
-                        elif all((args[1], not opts)):  # set opts
-                            opts = args[1]
-                    elif n == 2:  # (self, opts)
-                        if all((args[1], not opts)):  # set opts
-                            opts = args[1]
-                elif n == 2:  # (opts, args)
+    def get_input_wrapper(*args, **kwargs):
+        opts = None
+        if kwargs:
+            if 'args' in kwargs:
+                if isinstance(kwargs['args'], dict):
+                    return func(*args, **kwargs)
+            if 'opts' in kwargs:
+                opts = kwargs['opts']
+        if args:
+            n = len(args)
+            if all((args[0], isinstance(args[0], str))):
+                if n == 2:  # (opts, args)
                     if isinstance(args[1], dict):  # args is done
                         return func(*args, **kwargs)
                     elif all((args[0], not opts)):  # set opts
@@ -99,13 +96,19 @@ def get_input(classname=None):
                 elif n == 1:  # (opts)
                     if all((args[0], not opts)):  # set opts
                         opts = args[0]
-                else:
-                    return None
-            if opts:
-                kwargs['args'] = __get_user_input(opts)
-            return func(*args, **kwargs)
-        return get_input_wrapper
-    return get_input_decorator
+            else:
+                if n >= 3:  # (self, opts, args)
+                    if isinstance(args[2], dict):  # args is done.
+                        return func(*args, **kwargs)
+                    elif all((args[1], isinstance(args[1], str), not opts)):
+                        opts = args[1]
+                elif n >= 2:  # (self, opts)
+                    if all((args[1], isinstance(args[1], str), not opts)):
+                        opts = args[1]
+        if opts:
+            kwargs['args'] = __get_user_input(opts)
+        return func(*args, **kwargs)
+    return get_input_wrapper
 
 
 # =========================================================
@@ -114,12 +117,12 @@ def get_input(classname=None):
 # it will return dt with dict data.
 # sample function:
 # @get_dict_args
-# def xxx([self,] args, dt=None):
+# def process_args([self,] args, dt=None):
 #     print(dt)
 # =========================================================
 
-def get_dict_args(classname=None, symbol=[':']):
-    def get_dict_args_decorator(func):
+def get_args_dict_values(symbol=[':']):
+    def get_args_dict_values_decorator(func):
         def __get_args_dict(args):
             result = {}
             key = None
@@ -140,16 +143,17 @@ def get_dict_args(classname=None, symbol=[':']):
                             result[key] = result[key] + ', ' + element
             return result
 
-        def get_dict_args_warpper(*args, **kwargs):
+        def get_args_dict_values_warpper(*args, **kwargs):
             args_ = None
             if kwargs:
                 if 'args' in kwargs:
                     args_ = kwargs['args']
-            elif all((classname, len(args) >= 2)):
-                args_ = args[1]
-            else:
-                args_ = args[0]
+            if args:
+                if all((args[0], isinstance(args[0], str), len(args) >= 2)):
+                    args_ = args[1]
+                else:
+                    args_ = args[0]
             kwargs['dt'] = __get_args_dict(args_)
             return func(*args, **kwargs)
-        return get_dict_args_warpper
-    return get_dict_args_decorator
+        return get_args_dict_values_warpper
+    return get_args_dict_values_decorator

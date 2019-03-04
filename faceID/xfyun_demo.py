@@ -12,12 +12,20 @@ import json
 import hashlib
 import base64
 
-from mypy.pybase import PyBase
-from mypy.pypath import PyPath
+from pybase.pysys import print_help, print_exit
+from pybase.pyinput import get_user_input
+from pybase.pypath import get_abs_path
 
-help_menu = (
+VERSION = '0.1.0'
+AUTHOR = 'Byng.Zeng'
+
+
+HELP_MENU = (
     '======================================',
-    '    XunFei FaceID',
+    '    XunFei FaceID - %s' % VERSION,
+    '',
+    '    @Author: %s' % AUTHOR,
+    '    Copyright (c) %s studio' % AUTHOR,
     '======================================',
     'option:',
     '  -f path: set first image',
@@ -30,20 +38,20 @@ help_menu = (
 def get_face_image():
     fid = None
     sid = None
-    args = PyBase.get_user_input('hf:s:')
+    args = get_user_input('hf:s:')
     if '-h' in args:
-        PyBase.print_help(help_menu)
+        print_help(HELP_MENU)
     if '-f' in args:
-        fid = PyPath.get_abs_path(args['-f'])
+        fid = get_abs_path(args['-f'])
     if '-s' in args:
-        sid = PyPath.get_abs_path(args['-s'])
+        sid = get_abs_path(args['-s'])
     return fid, sid
 
 
 def main():
     fid, sid = get_face_image()
     if any((not fid, not sid)):
-        PyBase.print_exit('Error, no found id image.')
+        print_exit('Error, no found id image.')
 
     x_appid = 'wsr00030d4d@ch407c0f6177e2477400'
     api_key = ''

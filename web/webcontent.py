@@ -17,16 +17,19 @@ import requests
 import subprocess
 import socket
 
-from mypy.pypath import PyPath
-from mypy.pyfile import PyFile
-from mypy.pyprint import PyPrint
-
-from web.webbase import WebBase
+from pybase.pypath import make_path, get_abs_path, get_download_path
+from pybase.pyfile import get_name_ex
+from pybase.pyprint import PyPrint
+from web.weburl import convert_url_to_title
 
 if sys.version_info[0] == 2:
     from urllib2 import Request, urlopen, URLError, HTTPError
 else:
     from urllib.request import Request, urlopen, URLError, HTTPError
+
+
+VERSION = '1.1.0'
+AUTHOR = 'Byng.Zeng'
 
 
 DEFAULT_WEB_URL_FILE = r'weburl.txt'
@@ -153,11 +156,10 @@ def get_url_content(url, retry_times=3, view=True, path=None):
                            retry_times=retry_times, view=view)
     else:
         content = get_html(url=url, retry_times=retry_times, view=view)
-    # save content to PyPath.
     if all((content, path)):
-        PyPath.make_path(path)
-        f = '%s/%s' % (path, WebBase.convert_url_to_title(url))
-        if PyFile.get_name_ex(f) != '.html':
+        make_path(path)
+        f = '%s/%s' % (path, convert_url_to_title(url))
+        if get_name_ex(f) != '.html':
             f = f + '.html'
         with open(f, 'w') as fd:
             fd.write(content.decode())
@@ -276,27 +278,36 @@ class WebContent (object):
 
     pr = PyPrint('WebContent')
 
-    @classmethod
-    def url_is_https(cls, url):
+    @property
+    def pr_level(self):
+        return self.pr.pr_level
+
+    @pr_level.setter
+    def pr_level(self, lvl):
+        self.pr.pr_level = lvl
+        return self.pr.pr_level
+
+    @staticmethod
+    def url_is_https(url):
         return url_is_https(url)
 
-    @classmethod
-    def get_url_charset(cls, html=None, content_type=None):
+    @staticmethod
+    def get_url_charset(html=None, content_type=None):
         return get_url_charset(html, content_type)
 
     @classmethod
     def get_html(cls, url, context=None, retry_times=3, view=False):
         return get_html(url, context, retry_times, view, cls.pr)
 
-    @classmethod
-    def get_url_content(cls, url, retry_times=3, view=True, path=None):
+    @staticmethod
+    def get_url_content(url, retry_times=3, view=True, path=None):
         return get_url_content(url, retry_times, view, path)
 
     @classmethod
     def urlretrieve_callback(cls, blocknum, blocksize, totalsize):
         return urlretrieve_callback(blocknum, blocksize, totalsize, cls.pr)
 
-    @classmethod
+    @staticmethod
     def retrieve_url_file(cls, url, path, view=False):
         return retrieve_url_file(url, path, view, cls.pr)
 
@@ -315,21 +326,25 @@ class WebContent (object):
             config='-c -t 3 -T 10 -U \'%s\'' % USER_AGENTS['Kubuntu']):
         return wget_url_file(url, path, view, config, cls.pr)
 
-    @classmethod
-    def get_url_title(cls, html_content, pattern=None):
+    @staticmethod
+    def get_url_title(html_content, pattern=None):
         return get_url_title(html_content, pattern)
 
-    @classmethod
-    def get_url_pages(cls, html, pattern=None):
+    @staticmethod
+    def get_url_pages(html, pattern=None):
         return get_url_pages(html, pattern)
 
 
 if __name__ == '__main__':
-    from mypy.pybase import get_user_input, print_help, print_exit
+    from pybase.pysys import print_help, print_exit
+    from pybase.pyinput import get_user_input
 
     HELP_MENU = (
         '==================================',
-        '    WebContentApp help',
+        '    WebContentApp - %s' % VERSION,
+        '',
+        '    @Author: %s' % AUTHOR,
+        '    Copyright (c) %s studio' % AUTHOR,
         '==================================',
         'option:',
         '  -u url:',
@@ -358,12 +373,12 @@ if __name__ == '__main__':
     if '-h' in args:
         print_help(HELP_MENU)
     if '-p' in args:
-        path = PyPath.get_abs_path(args['-p'])
+        path = get_abs_path(args['-p'])
     if '-u' in args:
         url = args['-u']
     if '-v' in args:
         view = True
-        wc.pr.set_pr_level(0x07)
+        wc.pr.pr_level = 0x0f
     if '-d' in args:
         df_funcs = {
             'wget': wc.wget_url_file,
@@ -379,7 +394,7 @@ if __name__ == '__main__':
 
     # config default path
     if not path:
-        path = '%s/%s' % (PyPath.get_download_path(), wc.__class__.__name__)
+        path = '%s/%s' % (get_download_path(), wc.__class__.__name__)
     # run cmd
     if df:
         df(url=url, path=path, view=view)

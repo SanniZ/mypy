@@ -3,7 +3,7 @@
 """
 Created on 2018-02-25
 
-@author: Zbyng.Zeng
+@author: Byng.Zeng
 """
 
 from Crypto.Cipher import AES, DES

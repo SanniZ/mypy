@@ -12,7 +12,8 @@ import sys
 import subprocess
 import threading
 
-from web.webbase import WebBase
+from web.weburl import \
+    get_url_base_and_num, set_url_base_and_num, reclaim_url_address
 from web.webcrawler.webimagecrawler import XBaseClass
 
 if sys.version_info[0] == 2:
@@ -20,7 +21,7 @@ if sys.version_info[0] == 2:
     from Queue import Queue
     from tkFileDialog import askopenfilename, askdirectory
     from tkMessageBox import \
-        showinfo, showerror, showwarning, askokcancel
+        showinfo, showerror, showwarning, askyesno
     from Tkinter import \
         Tk, Frame, StringVar, IntVar, \
         Menu, Label, Entry, Button, Listbox, Checkbutton, Scrollbar, \
@@ -30,7 +31,7 @@ else:
     from queue import Queue
     from tkinter.filedialog import askopenfilename, askdirectory
     from tkinter.messagebox import \
-        showinfo, showerror, showwarning, askokcancel
+        showinfo, showerror, showwarning, askyesno
     from tkinter import \
         Tk, ttk, Frame, StringVar, IntVar, \
         Menu, Label, Entry, Button, Listbox, Checkbutton, Scrollbar, \
@@ -41,7 +42,8 @@ else:
 #               Const Vars
 ############################################################################
 
-VERSION = '1.3.1'
+VERSION = '1.3.2'
+AUTHOR = 'Byng.Zeng'
 
 STAT_WAITTING = 'Waitting'
 STAT_DOWNLOADING = 'Downloading'
@@ -51,8 +53,10 @@ STAT_NOT_SUPPORT = 'Not Support'
 
 LANG_MAP = (
     {'About': 'About',
-     'AboutVersion':  'WebImage Crawler %s\n\nAuther@Byng.Zeng\n\n'
-                      'Copyright(c)Byng.Zeng\n' % VERSION,
+     'AboutVersion':
+         'Web Image Crawler %s\n\nAuther@%s\n\nCopyright(c)%s\n' % (VERSION,
+                                                                    AUTHOR,
+                                                                    AUTHOR),
      'Config': 'Config', 'Cancel': 'Cancel', 'Copy': 'Copy',
      'Debug': 'Debug', 'Delete': 'Delete',
      'End': 'End', 'Error': 'Error', 'Exit': 'Exit', 'File': 'File',
@@ -66,8 +70,9 @@ LANG_MAP = (
                   'zpmn', 'mnxz', 'rtys', 'jpmn', 'gzmn', 'nrtys',),
      'OK': 'OK', 'URL': 'URL',  'Warnning': 'Warnning', },
     {'About': '关于',
-     'AboutVersion': '网页图片爬虫 %s\n\n作者@Byng.Zeng\n\n'
-                     '版权所有(c)Byng.Zeng\n' % VERSION,
+     'AboutVersion':
+         '网页图片爬虫 %s\n\n作者@%s\n\n版权所有(c)%s\n' % (
+                                                 VERSION, AUTHOR, AUTHOR),
      'Config': '配置', 'Cancel': '取消', 'Copy': '复制', 'Debug': '调试',
      'Delete': '删除', 'End': '结束', 'Exit': '退出',
      'Error': '错误', 'File': '文件', 'Help': '帮助',
@@ -89,6 +94,11 @@ LANG_MAP = (
 ############################################################################
 
 class WindowUI(object):
+
+    __slots__ = ('_wm', '_lang', '_view', '_debug', '_output', '_lang_set',
+                 '_debug_v_set', '_debug_d_set', '_debug_D_set', '_path_var',
+                 '_type_chk', '_type_var', '_type_start', '_type_end',
+                 '_lbfs_var')
 
     def __init__(self):
         self._wm = dict()
@@ -149,10 +159,11 @@ class WindowUI(object):
         if output:
             self._output = output
         else:
-            res = askokcancel('%s' % LANG_MAP[self._lang]['Delete'],
-                              '%s' % self._output)
+            res = askyesno('%s' % LANG_MAP[self._lang]['Delete'],
+                           '%s' % self._output if self._output else 'None')
             if res:
                 self._output = ''
+        self.create_menu(self._wm['top'])
 
     def menu_config_debug(self):
         self._view = self._debug_v_set.get()
@@ -203,9 +214,13 @@ class WindowUI(object):
                             menu=menu_lang,
                             label='%s' % LANG_MAP[self._lang]['Lang'])
         # create output menu
-        menu_output = menu_config.add_command(
-                                command=self.menu_config_output,
-                                label='%s' % LANG_MAP[self._lang]['Output'])
+        menu_output = Menu(menu_config, tearoff=0)
+        menu_output.add_command(
+                command=self.menu_config_output,
+                label='%s' % self._output if self._output else 'None')
+        mbar_output = menu_config.add_cascade(
+                            menu=menu_output,
+                            label='%s' % LANG_MAP[self._lang]['Output'])
         # create configuration menu and add cascade
         menu_debug = Menu(menu_config, tearoff=0)
         self._debug_v_set = IntVar()
@@ -254,6 +269,7 @@ class WindowUI(object):
         self._wm['menu_file'] = menu_file
         self._wm['menu_help'] = menu_help
         self._wm['mbar_lang'] = mbar_lang
+        self._wm['mbar_output'] = mbar_output
         self._wm['mbar_debug'] = mbar_debug
         self._wm['menu_open'] = menu_open
         self._wm['menu_exit'] = menu_exit
@@ -461,6 +477,10 @@ class WindowUI(object):
 
 class WebImageCrawlerUI(WindowUI):
 
+    __slots__ = ('_name', '_fs_list', '_fs_list_lock', '_class',
+                 '_search_urls', '_download_thread_max',
+                 '_download_thread_queue', '_download_threads')
+
     def __init__(self, name=None):
         super(WebImageCrawlerUI, self).__init__()
         self._name = name
@@ -539,11 +559,19 @@ class WebImageCrawlerUI(WindowUI):
                       '\n%s!' % LANG_MAP[self._lang]['InvalidType'])
 
     def on_run_click(self):
-        fp = self._wm['enPath'].get()
-        if fp:
-            if not re.compile('{.*}').match(fp):
-                args = {'-u': fp}
-                self._path_var.set(args)
+        fpath = self._wm['enPath'].get()
+        if fpath:
+            if not re.compile('{.*}').match(fpath):
+                args = {'-u': fpath}
+                if self._output:
+                    args['-p'] = self._output
+            # else:
+            #    args = eval(fpath)
+            #    if self._output:
+            #        args['-p'] = self._output
+            #    elif '-p' in args:
+            #        del args['-p']
+            self._path_var.set(args)
             # # update file list and info
             self.update_url_list()
             self.update_list_info()
@@ -667,16 +695,14 @@ class WebImageCrawlerUI(WindowUI):
                         n = 1
                     urls = list()
                     for index in range(n):
-                        base, num = WebBase.get_url_base_and_num(args['-u'])
+                        base, num = get_url_base_and_num(args['-u'])
                         if all((base, num)):
                             try:
                                 num = int(num)
                             except ValueError:
                                 url = args['-u']
                             else:
-                                url = \
-                                    WebBase.set_url_base_and_num(base,
-                                                                 num + index)
+                                url = set_url_base_and_num(base, num + index)
                         else:
                             url = args['-u']
                         if url:
@@ -685,13 +711,13 @@ class WebImageCrawlerUI(WindowUI):
                 urls = [f]
         # add file info to list.
         for url in set(urls):
-            url = WebBase.reclaim_url_address(url)
+            url = reclaim_url_address(url)
             if url:
                 self.add_url_info_to_list(url)
 
     def download_url(self, args=None):
         url = args['-u']
-        base, num = WebBase.get_url_base_and_num(url)
+        base, num = get_url_base_and_num(url)
         if base:
             self._class = XBaseClass.get_class_from_base(base)
         else:

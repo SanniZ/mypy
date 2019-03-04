@@ -10,11 +10,15 @@ import os
 import re
 import subprocess
 
-from mypy.pybase import PyBase
-from mypy.pypath import PyPath
-from mypy.pyfile import PyFile
+from pybase.pysys import print_help
+from pybase.pyinput import get_user_input
+from pybase.pypath import get_current_path
+from pybase.pyfile import get_name_ex
 
-help_menu = (
+VERSION = '1.1.0'
+
+
+HELP_MENU = (
     '===================================',
     '    clean .pyc',
     '===================================',
@@ -38,7 +42,7 @@ def clean_pyc(path=os.getenv('MYPY'), show=False):
         if fs:
             for f in fs:
                 f = os.path.join(rt, f)
-                if PyFile.get_name_ex(f) == '.pyc':
+                if get_name_ex(f) == '.pyc':
                     os.remove(f)
                     if show:
                         print('remove: %s' % f)
@@ -48,18 +52,18 @@ def clean_pyc(path=os.getenv('MYPY'), show=False):
                         os.remove(d)
 
 if __name__ == '__main__':
-    args = PyBase.get_user_input('hp:vc')
+    args = get_user_input('hp:vc')
     # help
     if '-h' in args:
-        PyBase.print_help(help_menu)
+        print_help(HELP_MENU)
     # check path.
     if '-p' in args:
         if re.match('\.', args['-p']):
-            path = re.sub('.', PyPath.get_current_path(), args['-p'])
+            path = re.sub('.', get_current_path(), args['-p'])
         else:
             path = args['-p']
     else:
-        path = PyPath.get_current_path()
+        path = get_current_path()
     # check show.
     if '-v' in args:
         show = True

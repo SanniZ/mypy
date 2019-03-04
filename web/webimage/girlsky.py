@@ -6,9 +6,8 @@ Created on: 2018-12-11
 @author: Byng Zeng
 """
 
-from mypy.pybase import PyBase
-
-from web.webbase import WebBase
+from pybase.pypath import DEFAULT_DWN_PATH
+from web.weburl import set_url_base_and_num
 from web.webimage.webimage import WebImage
 
 
@@ -45,19 +44,18 @@ class Girlsky(WebImage):
                         path = dict_url_base[self._url_base]
                         self._path = \
                             '%s/%s/%s' % \
-                            (PyBase.DEFAULT_DWN_PATH,
+                            (DEFAULT_DWN_PATH,
                              self.__class__.__name__, path)
                     break
 
     def get_url_of_pages(self, num):
         url = list(
                 map(
-                    lambda x: WebBase.set_url_base_and_num(
-                        self._url_base,
-                        '%d_%d' % (int(self._url), x)),
+                    lambda x: set_url_base_and_num(
+                        self._url_base, '%d_%d' % (int(self._url), x)),
                     range(2, num + 1)))
         url.insert(0,
-                   WebBase.set_url_base_and_num(self._url_base, self._url))
+                   set_url_base_and_num(self._url_base, self._url))
         return url
 
 if __name__ == '__main__':

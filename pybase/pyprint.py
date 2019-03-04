@@ -34,6 +34,23 @@ class PyPrint(object):
         self._lvl = lvl
         self._funcname = funcname
 
+    @property
+    def tag(self):
+        return self._tag
+
+    @property
+    def pr_level(self):
+        return self._lvl
+
+    @pr_level.setter
+    def pr_level(self, lvl):
+        self._lvl = lvl
+        return self._lvl
+
+    @property
+    def config(self):
+        return self._tag, self._lvl, self._funcname
+
     # decorator pr_fmt
     def __pr_msg(func):
         def fmt_pr_warpper(*args, **kwargs):
@@ -46,7 +63,9 @@ class PyPrint(object):
                     msg += ' %s()' % inspect.stack()[1][3] \
                         if msg else '%s()' % inspect.stack()[1][3]
                 msg += ': ' if msg else ''
-                msg += ''.join(args[1:])
+                for m in args[1:]:
+                    msg += \
+                        ''.join(str(m)) if isinstance(m, dict) else ''.join(m)
                 print(msg)
         return fmt_pr_warpper
 

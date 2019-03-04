@@ -7,9 +7,10 @@ Created on: 2019-02-01
 """
 import re
 
-from mypy.pybase import PyBase
-
-from web.webimage.webimage import WebImage, get_input
+from pybase.pysys import print_help
+from pybase.pypath import DEFAULT_DWN_PATH
+from pybase.pyinput import get_user_input
+from web.webimage.webimage import WebImage, OPTS
 
 
 class Meitulu(WebImage):
@@ -36,7 +37,7 @@ class Meitulu(WebImage):
         if self._url_base:
             if all((not self._path, cls)):
                 self._path = '%s/%s/%s' % (
-                    PyBase.DEFAULT_DWN_PATH, self.__class__.__name__, cls)
+                    DEFAULT_DWN_PATH, self.__class__.__name__, cls)
 
     def get_pages(self, html, pattern=None):
         if not pattern:
@@ -64,11 +65,11 @@ class Meitulu(WebImage):
 
 if __name__ == '__main__':
     mt = Meitulu('Meitulu')
-    args = get_input(exopt='S:')
+    args = get_user_input(OPTS + 'S:')
     if '-h' in args:
-        mt.help_menu.append('  -S url:')
-        mt.help_menu.append('    url of web of search')
-        PyBase.print_help(mt.help_menu)
+        mt.HELP_MENU.append('  -S url:')
+        mt.HELP_MENU.append('    url of web of search')
+        print_help(mt.HELP_MENU)
     elif '-S' in args:
             urls = mt.get_url_from_search_links(args['-S'])
             del args['-S']

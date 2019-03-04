@@ -6,16 +6,20 @@ Created on 2018-02-19
 @author: Byng.Zeng
 """
 
-from mypy.pybase import print_help
-from mypy.pyprint import PyPrint
-from mypy.pydecorator import get_input
+from pybase.pysys import print_help
+from pybase.pyprint import PyPrint
+from pybase.pydecorator import get_input_args
 
 VERSION = '1.0.0'
+AUTHOR = 'Byng.Zeng'
 
 
 HELP_MENU = [
     '==================================',
-    '    Template menu',
+    '    Template - %s' % VERSION,
+    '',
+    '    @Author: %s' % AUTHOR,
+    '    Copyright (c) %s studio' % AUTHOR,
     '==================================',
     'option:',
     '  -x xxx: xxxx',
@@ -23,19 +27,15 @@ HELP_MENU = [
 
 pr = PyPrint('Template')
 
-opts = 'hx:'
+OPTS = 'hx:'
 
 
 def xxx_func(values):
-    print('xxx_func: values=%s' % values)
+    pr.pr_info('xxx_func: values=%s' % values)
 
 
-@get_input()
-def get_input(opt, args=None):
-    return args
-
-
-def run(args):
+@get_input_args
+def process_input(opts, args=None):
     if '-h' in args:
         print_help(HELP_MENU)
     if '-x' in args:
@@ -44,9 +44,7 @@ def run(args):
 
 
 def main(args=None):
-    if not args:
-        args = get_input(opts)
-    run(args)
+    args = process_input(OPTS, args=args)
 
 if __name__ == '__main__':
     main()

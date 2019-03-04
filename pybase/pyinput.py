@@ -5,39 +5,24 @@ Created on 2018-12-26
 
 @author: Byng Zeng
 """
-
-import os
 import sys
 import getopt
 
-import inspect
 
-
-VERSION = '2.0.1'
+VERSION = '1.0.1'
 
 
 ############################################################################
-#               pybase functions
+#               functions
 ############################################################################
-
-# print msg and exit
-def print_exit(msg=None, exit_=True):
-    print(msg) if msg else None
-    exit() if exit_ else None
-
-
-def print_help(help_menu, exit_=True):
-    for menu in help_menu:
-        print(menu)
-    print_exit(exit_=exit_)
-
 
 def get_user_input(opts, err_exit=True):
     result = dict()
     try:
         opts, args = getopt.getopt(sys.argv[1:], opts)
     except getopt.GetoptError as e:
-        print_exit('%s, -h for help.' % str(e), err_exit)
+        print('%s, -h for help.' % str(e), err_exit)
+        sys.exit()
     else:
         if opts:
             for name, value in opts:
@@ -66,50 +51,16 @@ def get_args_dict(args, symbol=[':']):
     return result
 
 
-def quote(msg, symbol='\''):
-    return symbol + msg + symbol
-
-
-def align_length(text, length):
-    n = len(text) % length
-    if n:
-        text += '\0' * (length - n)
-    return text
-
-
-def get_funcname():
-    return inspect.stack()[1][3]
-
-
 ############################################################################
-#               PyBase class
+#               PySys class
 ############################################################################
 
-class PyBase (object):
+class PyInput (object):
 
-    DEFAULT_DWN_PATH = '%s/Downloads' % os.getenv('HOME')
-
-    @classmethod
-    def print_help(cls, help_menu, _exit=True):
-        return print_help(help_menu, _exit)
-
-    # print msg and exit
-    @classmethod
-    def print_exit(cls, msg=None):
-        return print_exit(msg)
-
-    @classmethod
-    def get_user_input(cls, opts):
+    @staticmethod
+    def get_user_input(opts):
         return get_user_input(opts)
 
-    @classmethod
-    def get_args_dict(cls, args, symbol=[':']):
+    @staticmethod
+    def get_args_dict(args, symbol=[':']):
         return get_args_dict(args, symbol)
-
-    @classmethod
-    def quote(cls, msg, symbol='\''):
-        return quote(msg, symbol)
-
-    @classmethod
-    def align_length(cls, text, length):
-        return align_length(text, length)

@@ -12,6 +12,9 @@ import getopt
 import subprocess
 import shutil
 
+VERSION = '1.0.0'
+AUTHOR = 'Byng.Zeng'
+
 
 # print msg and exit
 def stop_and_exit(msg=None):
@@ -40,23 +43,26 @@ class FingerprintPatch(object):
         self._opt = None
 
     def print_help(self):
-        help_menu = (
+        HELP_MENU = (
             '======================================',
-        '     For fingerprint Patch',
-        '======================================'
-        'option: -s xxx -p xxx -o am|ghal|gta',
-        '  -s xxx',
-        '    if -o am: set root path of source code',
-        '    if -o ghal or -o gta: set out/target/product/xxx of source code',
-        '  -p xxx',
-        '    set root path of patch.',
-        '  -o am|ghal|gta',
-        '    am: run git am to apply all of patch.',
-        '    ghal: get prebuild files of fingerprint HAL',
-        '    gta: get prebuild files of fingerprint TA',
-        '    grh: revert all of patches.',
+            '    FingerprintPatch - %s' % VERSION,
+            '',
+            '    @Author: %s' % AUTHOR,
+            '    Copyright (c) %s studio' % AUTHOR,
+            '======================================'
+            'option: -s xxx -p xxx -o am|ghal|gta',
+            '  -s path: set source path',
+            '    if -o am: set root path of source code',
+            '    if -o ghal/gta: set out/target/product/xxx of source code',
+            '  -p path: set root path of patch',
+            '    path: path of patch.',
+            '  -o am|ghal|gta',
+            '    am: run git am to apply all of patch.',
+            '    ghal: get prebuild files of fingerprint HAL',
+            '    gta: get prebuild files of fingerprint TA',
+            '    grh: revert all of patches.',
         )
-        for help in help_menu:
+        for help in HELP_MENU:
             print(help)
 
     # get user input.
@@ -94,15 +100,16 @@ class FingerprintPatch(object):
 
     # run git am to apply all of .patch
     def apply_patch_of_dirs(self, dirs):
-        if dirs == None:
+        if not dirs:
             print('Error, no dir!')
         else:
             for d in dirs:
                 print('--------------------------------------------------')
                 print('apply patch: %s\n' % os.path.join(self._source, d))
-                cmd = 'cd %s && git am %s/*.patch' % (os.path.join(self._source, d), os.path.join(self._patch, d))
+                cmd = 'cd %s && git am %s/*.patch' % (
+                    os.path.join(self._source, d),
+                    os.path.join(self._patch, d))
                 subprocess.call(cmd, shell=True)
-
 
     # get all of fingerprint HAL prebuild files.
     def get_hal_prebuild_files(self):
@@ -140,11 +147,10 @@ class FingerprintPatch(object):
             tgt = os.path.join(self._patch, f)
             # create dir
             dt = os.path.split(tgt)[0]
-            if os.path.exists(dt) != True:
+            if not os.path.exists(dt):
                 os.makedirs(dt)
             # copy file here
             shutil.copy(src, tgt)
-
 
     # get all of TA prebuild files.
     def get_ta_prebuild_files(self):
@@ -157,11 +163,10 @@ class FingerprintPatch(object):
             tgt = os.path.join(self._patch, 'fingerprint/fingerprint.elf')
             # create dir
             dt = os.path.split(tgt)[0]
-            if os.path.exists(dt) != True:
+            if not os.path.exists(dt):
                 os.makedirs(dt)
             # copy file here
             shutil.copy(src, tgt)
-
 
     # revert all of patch.
     def revert_patches(self, source_path):

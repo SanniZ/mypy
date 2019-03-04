@@ -12,13 +12,21 @@ import sys
 import getopt
 import subprocess
 
+VERSION = '0.1.0'
+AUTHOR = 'Byng.Zeng'
+
+
 BASHRC = '%s/.bashrc' % os.getenv('HOME')
+
 
 class MyUbuntu(object):
 
-    help_menu = (
+    HELP_MENU = (
         '==================================',
-        '    MyUbuntu Help',
+        '    MyUbuntu - %s' % VERSION,
+        '',
+        '    @Author: %s' % AUTHOR,
+        '    Copyright (c) %s studio' % AUTHOR,
         '==================================',
         'option: -c -P -a path -A path -v',
         '  -c: create MYPATH to PATH',
@@ -40,7 +48,7 @@ class MyUbuntu(object):
         exit()
 
     def get_user_input(self, opts):
-        result=dict()
+        result = dict()
         try:
             opts, args = getopt.getopt(sys.argv[1:], opts)
         except getopt.GetoptError:
@@ -77,6 +85,7 @@ class MyUbuntu(object):
         else:
             with open(BASHRC, 'r') as f:
                 self.__bashrc = f.read()
+
     # config mypath
     def create_mypath(self):
         mypath = (
@@ -141,7 +150,8 @@ class MyUbuntu(object):
         new_path = self.re_compile(path).search(mypath.group())
         if not new_path:
             data = self.get_bashrc_data()
-            data = data.replace(mypath.group(), '%s:%s' % (mypath.group(), path))
+            data = data.replace(mypath.group(),
+                                '%s:%s' % (mypath.group(), path))
             with open(BASHRC, 'w') as f:
                 f.write(data)
 
@@ -155,8 +165,7 @@ class MyUbuntu(object):
     def add_mypys(self):
         mypys = (
             'export MYPY=$HOME/mypy\n',
-            'export MYPYS=$MYPY:$MYPY/broxton:$MYPY/develop:$MYPY/linux:$MYPY/linux/ubuntu:$MYPY/linux/ibus:$MYPY/iOS:$MYPY/tools:$MYPY/image:$MYPY/web:$MYPY/web/mzitu:$MYPY/faceID\n',
-            'export PYTHONPATH=$PYTHONPATH:$MYPYS',
+            'export PYTHONPATH=$PYTHONPATH:$MYPY',
         )
         # merge mypys
         mys = ''
@@ -170,7 +179,9 @@ class MyUbuntu(object):
             # search mypath and replace it.
             mypath = self.__re_mypath.search(self.__bashrc)
             if mypath:
-                self.__bashrc = re.sub(self.re_compile(mypath.group()), '%s%s:$MYPYS' % (mys, mypath.group()), self.__bashrc)
+                self.__bashrc = re.sub(self.re_compile(mypath.group()),
+                                       '%s%s:$MYPYS' % (mys, mypath.group()),
+                                       self.__bashrc)
                 with open(BASHRC, 'w') as f:
                     f.write(self.__bashrc)
 
@@ -184,14 +195,16 @@ class MyUbuntu(object):
         # search mypys and replace it.
         mypys = self.__re_mypys.search(self.__bashrc)
         if mypys:
-            self.__bashrc = re.sub(self.re_compile(mypys.group()), '%s:%s' % (mypys.group(), path), self.__bashrc)
+            self.__bashrc = re.sub(self.re_compile(mypys.group()),
+                                   '%s:%s' % (mypys.group(), path),
+                                   self.__bashrc)
             with open(BASHRC, 'w') as f:
                 f.write(self.__bashrc)
 
     def main(self):
         args = self.get_user_input('hcPa:A:vV')
         if '-h' in args:
-            self.print_help(self.help_menu)
+            self.print_help(self.HELP_MENU)
         if '-c' in args:
             self.create_mypath()
         if '-P' in args:

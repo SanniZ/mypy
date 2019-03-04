@@ -6,57 +6,60 @@ Created on 2018-12-05
 @author: Byng.Zeng
 """
 
-from mypy.pybase import print_help
-from mypy.pyprint import PyPrint
-from mypy.pydecorator import get_input
+from pybase.pysys import print_help
+from pybase.pyprint import PyPrint
+from pybase.pydecorator import get_input_args
 
 VERSION = '1.0.0'
+AUTHOR = 'Byng.Zeng'
 
 
 ############################################################################
 #               functions
 ############################################################################
 
+pr = PyPrint('TemplateClass')
+
+
 def xxx_func(values):
-    print('xxx_func: values=%s' % values)
+    pr.pr_info('xxx_func: values=%s' % values)
 
 
 ############################################################################
 #               PyPath Class
 ############################################################################
 
-class Template(object):
+OPTS = 'hx:'
+
+
+class TemplateClass(object):
     HELP_MENU = [
         '==================================',
-        '    Template menu',
+        '    Template - %s' % VERSION,
+        '',
+        '    @Author: %s' % AUTHOR,
+        '    Copyright (c) %s studio' % AUTHOR,
         '==================================',
         'option:',
         '  -x xxx: xxxx',
     ]
 
-    pr = PyPrint('Template')
-    opts = 'hx:'
-
     def __init__(self, name=None):
         self._name = name if name else self.__class__.__name__
         self._xxx = None
 
-    @get_input('Template')
-    def get_input(self, opt, args=None):
+    @get_input_args
+    def process_input(self, opts, args=None):
         if '-h' in args:
             print_help(self.HELP_MENU)
         if '-x' in args:
             self._xxx = args['-x']
         return args
 
-    def run(self, args):
+    def main(self, args=None):
+        args = self.process_input(OPTS, args=args)
         if self._xxx:
             xxx_func(self._xxx)
-
-    def main(self, args=None):
-        if not args:
-            args = self.get_input(self.opts)
-        self.run(args)
 
 
 ############################################################################
@@ -64,5 +67,5 @@ class Template(object):
 ############################################################################
 
 if __name__ == '__main__':
-    template = Template()
-    template.main()
+    temp = TemplateClass()
+    temp.main()

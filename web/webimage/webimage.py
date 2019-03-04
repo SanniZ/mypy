@@ -11,13 +11,14 @@ import sys
 
 import threading
 
-from mypy.pybase import PyBase
-from mypy.pypath import PyPath
-from mypy.pyprint import PyPrint, PR_LVL_DBG
-
-from web.webbase import WebBase
+from pybase.pysys import print_help, print_exit
+from pybase.pypath import get_abs_path
+from pybase.pydecorator import get_input_args
+from pybase.pypath import make_path, DEFAULT_DWN_PATH
+from pybase.pyprint import PyPrint, PR_LVL_DBG
+from pybase.pyimage import image_file_ex, reclaim_path_images
+from web.weburl import get_url_base_and_num, set_url_base_and_num
 from web.webcontent import WebContent, USER_AGENTS, DEFAULT_WEB_URL_FILE
-from image.image import Image
 
 if sys.version_info[0] == 2:
     import Queue
@@ -25,20 +26,21 @@ else:
     from queue import Queue
 
 
-def get_input(args=None, exopt=None):
-    if not args:
-        opt = 'hu:n:p:x:m:R:t:d:v'
-        if exopt:
-            opt += exopt
-        args = PyBase.get_user_input(opt)
-    return args
+VERSION = '1.1.0'
+AUTHOR = 'Byng.Zeng'
+
+
+OPTS = 'hu:n:p:x:m:R:t:d:v'
 
 
 class WebImage(object):
 
-    help_menu = [
+    HELP_MENU = [
         '==================================',
-        '    Command options',
+        '    Command - %s' % VERSION,
+        '',
+        '    @Author: %s' % AUTHOR,
+        '    Copyright (c) %s studio' % AUTHOR,
         '==================================',
         'option:',
         '  -u url:',
@@ -62,6 +64,12 @@ class WebImage(object):
         '    set max number of thread to download web.',
     ]
 
+    __slots__ = ('_name', '_com', '_url', '_url_base', '_sub_url_base',
+                 '_sub_url_num', '_num', '_path', '_re_image_url',
+                 '_ex_re_image_url', '_title', '_remove_small_image', '_view',
+                 '_dl_image', '_redundant_title', '__dbg', '_pr',
+                 '_thread_max', '_thread_queue')
+
     def __init__(self, name=None):
         self._name = name
         self._com = None
@@ -70,8 +78,7 @@ class WebImage(object):
         self._sub_url_base = None
         self._sub_url_num = 0
         self._num = 1
-        self._path = '%s/%s' % (PyBase.DEFAULT_DWN_PATH,
-                                self.__class__.__name__)
+        self._path = '%s/%s' % (DEFAULT_DWN_PATH, self.__class__.__name__)
         self._re_image_url = [
             re.compile(
                 'src=[\'|\"]?(http[s]?://[a-z0-9\./-]+\.'
@@ -156,7 +163,7 @@ class WebImage(object):
     # download image of url.
     def download_image(self, url, path):
         if self._dl_image:
-            PyPath.make_path(path)
+            make_path(path)
             self._dl_image(url, path, self.__dbg)
 
     def get_url_content(self, url, view=False):
@@ -189,16 +196,16 @@ class WebImage(object):
         else:
             sub_url_base = '%s/' % self._url
         # create all of sub url.
-        url = map(lambda x: WebBase.set_url_base_and_num(
+        url = map(lambda x: set_url_base_and_num(
                   self._url_base, '%s%d' % (sub_url_base, x)),
                   range(2, num+1))
         url = list(url)
         url.insert(0,
-                   WebBase.set_url_base_and_num(self._url_base, self._url))
+                   set_url_base_and_num(self._url_base, self._url))
         return url
 
     def get_url_address(self, url_base, url):
-        return WebBase.set_url_base_and_num(url_base, url)
+        return set_url_base_and_num(url_base, url)
 
     def convert_url_to_title(self, url):
         return WebContent.convert_url_to_title(url)
@@ -224,7 +231,7 @@ class WebImage(object):
             if fs:
                 for f in fs:
                     f = os.path.join(rt, f)
-                    if Image.image_file_ex(f):
+                    if image_file_ex(f):
                         return True
         return False
 
@@ -290,7 +297,7 @@ class WebImage(object):
             # write web info
             self.store_web_info(subpath, title, url)
             # reclaim image, remove small image
-            Image.reclaim_path_images(subpath, self._remove_small_image)
+            reclaim_path_images(subpath, self._remove_small_image)
             # Image.set_order_images(subpath)  # set order images.
             # show output info.
             if self._view:
@@ -309,24 +316,23 @@ class WebImage(object):
                 '%d/%d: process %s done!' % (data[0], data[1], url))
         return subpath
 
-    def get_user_input(self, args=None):
-        if not args:
-            args = get_input()
+    @get_input_args
+    def process_input(self, opts, args=None):
         if '-h' in args:
-            PyBase.print_help(self.help_menu)
+            print_help(self.HELP_MENU)
         if '-u' in args:
             self._url = re.sub('/$', '', args['-u'])
         if '-n' in args:
             self._num = int(args['-n'])
         if '-p' in args:
-            self._path = os.path.abspath(args['-p'])
+            self._path = get_abs_path(args['-p'])
         if '-R' in args:
-            self._ex_re_image_url = os.path.abspath(args['-R'])
+            self._ex_re_image_url = get_abs_path(args['-R'])
         if '-t' in args:
             try:
                 n = int(args['-t'])
             except ValueError as e:
-                PyBase.print_exit('%s, -h for help!' % str(e))
+                print_exit('%s, -h for help!' % str(e))
             if n:
                 self._thread_max = n
         if '-v' in args:
@@ -358,14 +364,14 @@ class WebImage(object):
                 WebContent.pr.set_funcname(False)
         # check url
         if self._url:
-            base, num = WebBase.get_url_base_and_num(self._url)
+            base, num = get_url_base_and_num(self._url)
             if base:
                 self._url_base = base
             if num:
                 self._url = num
             self._pr.pr_dbg('get base: %s, url: %s' % (base, self._url))
         else:
-            PyBase.print_exit('[WebImage] Error, no set url, -h for help!')
+            print_exit('[WebImage] Error, no set url, -h for help!')
         if self._url_base:
             pattern = re.compile('http[s]?://.+\.(com|cn|net)')
             if isinstance(self._url_base, list):
@@ -380,7 +386,7 @@ class WebImage(object):
     def main(self, args=None):
         thread_list = list()
         result = dict()
-        self.get_user_input(args)
+        args = self.process_input(OPTS, args=args)
         # get external re file.
         if self._ex_re_image_url:
             self.add_external_re_image_url()

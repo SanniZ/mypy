@@ -10,18 +10,25 @@ import os
 import zipfile
 import shutil
 
-from mypy.pybase import PyBase
-from mypy.pypath import PyPath
-from mypy.pyfile import PyFile
+from pybase.pysys import print_help
+from pybase.pyinput import get_user_input
+from pybase.pypath import get_abs_path, get_current_path, \
+                        make_path, remove_blank_dir
+from pybase.pyfile import get_name_ex, get_fname
+from pybase.pyimage import remove_small_image, image_file
 
-from image.image import Image
+VERSION = '1.1.0'
+AUTHOR = 'Byng.Zeng'
 
 
 class WizImage(object):
 
-    help_menu = (
+    HELP_MENU = (
         '======================================',
-        '     Unzip Wiz',
+        '     WizImage - %s' % VERSION,
+        '',
+        '    @Author: %s' % AUTHOR,
+        '    Copyright (c) %s studio' % AUTHOR,
         '======================================',
         'option:',
         '  -s path: root path of files',
@@ -36,16 +43,16 @@ class WizImage(object):
         self._show = False
 
     def get_user_input(self):
-        args = PyBase.get_user_input('hs:t:v')
+        args = get_user_input('hs:t:v')
         # help
         if '-h' in args:
-            PyBase.print_help(self.help_menu)
+            print_help(self.HELP_MENU)
         # src path
         if '-s' in args:
-            self._src = PyPath.get_abs_path(args['-s'])
+            self._src = get_abs_path(args['-s'])
         # dst path
         if '-t' in args:
-            self._dst = PyPath.get_abs_path(args['-t'])
+            self._dst = get_abs_path(args['-t'])
         # show
         if '-v' in args:
             self._show = True
@@ -55,7 +62,7 @@ class WizImage(object):
             return False
         # next to start if _end is not set.
         if not self._dst:
-            self._dst = PyPath.get_current_path()
+            self._dst = get_current_path()
             print('warnning: no found -t, output to: %s' % self._dst)
         return True
 
@@ -63,7 +70,7 @@ class WizImage(object):
         for root, dirs, fs in os.walk(self._src):
             if len(fs) != 0:
                 for f in fs:
-                    if PyFile.get_name_ex(f) == '.ziw':
+                    if get_name_ex(f) == '.ziw':
                         self._fs.append(os.path.join(root, f))
 
     def unzip_file(self, f, dst):
@@ -78,16 +85,16 @@ class WizImage(object):
     def unzip_wiz(self):
         for f in self._fs:
             path = os.path.join(os.path.dirname(f).replace(
-                                self._src, self._dst), PyFile.get_fname(f))
+                                self._src, self._dst), get_fname(f))
             path = os.path.splitext(path)[0]
-            PyPath.make_path(path)
+            make_path(path)
             self.unzip_file(f, path)
             # remove small image.
-            Image.remove_small_image(path)
+            remove_small_image(path)
             # move image.
             if os.path.exists('%s/index_files' % path):
                 for ff in os.listdir('%s/index_files' % path):
-                    if Image.image_file('%s/index_files/%s' % (path, ff)):
+                    if image_file('%s/index_files/%s' % (path, ff)):
                         shutil.copyfile('%s/index_files/%s' % (path, ff),
                                         '%s/%s' % (path, ff))
                 # remove invalid files and dirs.
@@ -102,7 +109,7 @@ class WizImage(object):
         # unzip all of wiz files.
         self.unzip_wiz()
         # remove blank dir.
-        PyPath.remove_blank_dir(self._dst)
+        remove_blank_dir(self._dst)
 
 if __name__ == '__main__':
     wiz = WizImage()

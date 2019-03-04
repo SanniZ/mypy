@@ -9,6 +9,10 @@ Created on 2018-12-26
 import os
 import re
 
+VERSION = '1.1.0'
+
+DEFAULT_DWN_PATH = '%s/Downloads' % os.getenv('HOME')
+
 
 ############################################################################
 #               functions
@@ -67,38 +71,38 @@ def recliam_path(path, start=False, end=True):
 
 class PyPath(object):
 
-    @classmethod
-    def path_is_file(cls, path):
+    @staticmethod
+    def path_is_file(path):
         return path_is_file(path)
 
-    @classmethod
-    def make_path(cls, path):
+    @staticmethod
+    def make_path(path):
         return make_path(path)
 
-    @classmethod
-    def get_mypy_path(cls):
+    @staticmethod
+    def get_mypy_path():
         return get_mypy_path()
 
-    @classmethod
-    def get_home_path(cls):
+    @staticmethod
+    def get_home_path():
         return get_home_path()
 
-    @classmethod
-    def get_download_path(cls):
+    @staticmethod
+    def get_download_path():
         return get_download_path()
 
-    @classmethod
-    def get_abs_path(cls, path):
+    @staticmethod
+    def get_abs_path(path):
         return get_abs_path(path)
 
-    @classmethod
-    def get_current_path(cls):
+    @staticmethod
+    def get_current_path():
         return get_current_path()
 
-    @classmethod
-    def remove_blank_dir(cls, path, level=4):
+    @staticmethod
+    def remove_blank_dir(path, level=4):
         return remove_blank_dir(path, level)
 
-    @classmethod
-    def recliam_path(cls, path, start=False, end=True):
+    @staticmethod
+    def recliam_path(path, start=False, end=True):
         return recliam_path(path, start, end)
