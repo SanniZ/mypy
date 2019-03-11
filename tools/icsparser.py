@@ -12,7 +12,7 @@ import subprocess
 
 from pybase.pysys import print_help, print_exit
 from pybase.pypath import get_abs_path
-from pybase.pyinput import get_user_input
+from pybase.pyinput import get_input_args
 from pybase.pyfile import get_filetype
 
 VERSION = '1.1.0'
@@ -179,40 +179,41 @@ class ICSCalendar(object):
         self._re = None
 
     def get_user_opt(self):
-        args = get_user_input('hcf:r:s:t:')
-        if r'-h' in args:
-            print_help(self.HELP_MENU)
-        if r'-c' in args:
-            self._combine_files = True
-        if r'-f' in args:
-            fmt = args['-f'].lower()
-            if fmt == TYPE_TXT or fmt == TYPE_CSV:
-                self._fmt = fmt
-            else:
-                print_exit("Error, unsupport format!")
-        if r'-r' in args:
-            if args['-r'] == r'True':
-                self._sort_reverse = True
-            else:
-                self._sort_reverse = False
-        if r'-s' in args:
-            # set _src to list
-            if self._src is None:
-                self._src = list()
-            # get src files
-            fs = self.get_src_files(get_abs_path(args['-s']))
-            if fs:
-                # add fs to _src
-                for f in fs:
-                    self._src.append(f)
-        if r'-t' in args:
-            ftype = get_filetype(get_abs_path(args['-t']))
-            if ftype in [TYPE_TXT, TYPE_CSV]:
-                self._tgt = get_abs_path(args['-t'])
+        args = get_input_args('hcf:r:s:t:')
+        for k in args.keys():
+            if k == r'-h':
+                print_help(self.HELP_MENU)
+            elif k == r'-c':
                 self._combine_files = True
-                self._fmt = ftype
-            else:
-                self._tgt = get_abs_path(args['-t'])
+            elif k == r'-f':
+                fmt = args['-f'].lower()
+                if fmt == TYPE_TXT or fmt == TYPE_CSV:
+                    self._fmt = fmt
+                else:
+                    print_exit("Error, unsupport format!")
+            elif k == r'-r':
+                if args['-r'] == r'True':
+                    self._sort_reverse = True
+                else:
+                    self._sort_reverse = False
+            elif k == r'-s':
+                # set _src to list
+                if self._src is None:
+                    self._src = list()
+                # get src files
+                fs = self.get_src_files(get_abs_path(args['-s']))
+                if fs:
+                    # add fs to _src
+                    for f in fs:
+                        self._src.append(f)
+            elif k == r'-t':
+                ftype = get_filetype(get_abs_path(args['-t']))
+                if ftype in [TYPE_TXT, TYPE_CSV]:
+                    self._tgt = get_abs_path(args['-t'])
+                    self._combine_files = True
+                    self._fmt = ftype
+                else:
+                    self._tgt = get_abs_path(args['-t'])
 
     # check input args
     def check_opt_args(self):

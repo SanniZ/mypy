@@ -13,7 +13,7 @@ import hashlib
 import base64
 
 from pybase.pysys import print_help, print_exit
-from pybase.pyinput import get_user_input
+from pybase.pyinput import get_input_args
 from pybase.pypath import get_abs_path
 
 VERSION = '0.1.0'
@@ -38,13 +38,14 @@ HELP_MENU = (
 def get_face_image():
     fid = None
     sid = None
-    args = get_user_input('hf:s:')
-    if '-h' in args:
-        print_help(HELP_MENU)
-    if '-f' in args:
-        fid = get_abs_path(args['-f'])
-    if '-s' in args:
-        sid = get_abs_path(args['-s'])
+    args = get_input_args('hf:s:')
+    for k in args.keys():
+        if k == '-f':
+            fid = get_abs_path(args['-f'])
+        elif k == '-s':
+            sid = get_abs_path(args['-s'])
+        elif k == '-h':
+            print_help(HELP_MENU)
     return fid, sid
 
 

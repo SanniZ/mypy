@@ -15,6 +15,26 @@ class Parser(object):
         d.dbg('Parser init done.')
 
     def parser_cmd_args(self, cmds):
+        if not cmds:
+            cmds = ['help:help']
+
+        output = {}
+        for cmd in cmds:
+            data = cmd.split(':')
+            if len(data) >= 2:
+                k = data[0]
+                w = data[1]
+            else:
+                k = None
+                w = data
+            if isinstance(w, str):
+                if k in output:
+                    output[k] += w.split(',')
+                else:
+                    output[k] = w.split(',')
+        return output
+
+    def parser_cmd_args2(self, cmds):
         re_dict = re.compile(r'^([\w]+):([\w,\.\/\*\|#-]+)$')
         re_args = re.compile(r'[\w\.\/\*\|#-]+')
         re_argv = re.compile('^([\w]+)#([\w,\.\/\*\|-]+)$')

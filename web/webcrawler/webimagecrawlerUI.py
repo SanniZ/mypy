@@ -565,8 +565,8 @@ class WebImageCrawlerUI(WindowUI):
                 args = {'-u': fpath}
                 if self._output:
                     args['-p'] = self._output
-            # else:
-            #    args = eval(fpath)
+            else:
+                args = eval(fpath)
             #    if self._output:
             #        args['-p'] = self._output
             #    elif '-p' in args:
@@ -727,16 +727,19 @@ class WebImageCrawlerUI(WindowUI):
             self.update_list_info(url, STAT_DOWNLOADING)
             output = hdr.main(args)
             if output:
-                if 'search_urls' in output[url]:
-                    self._search_urls += output[url]['search_urls']
-                    output[url] = ''
+                try:
+                    if 'search_urls' in output[url]:
+                        self._search_urls += output[url]['search_urls']
+                        output[url] = ''
+                except TypeError:
+                    pass
             # update state to DONE.
             if output:
                 self.update_list_info(url, STAT_DONE, output[url])
             else:
                 self.update_list_info(url, STAT_FAIL)
         else:
-            self._pr.pr_err('Error, no found handler!')
+            self._pr.err('Error, no found handler!')
             self.update_list_info(url, STAT_FAIL)
 
         # release thread.

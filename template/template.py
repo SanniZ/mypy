@@ -27,19 +27,21 @@ HELP_MENU = [
 
 pr = PyPrint('Template')
 
-OPTS = 'hx:'
+OPTS = 'hx:w:q:e:'
 
 
 def xxx_func(values):
-    pr.pr_info('xxx_func: values=%s' % values)
+    pr.info('xxx_func: values=%s' % values)
 
 
-@get_input_args
+@get_input_args()
 def process_input(opts, args=None):
-    if '-h' in args:
-        print_help(HELP_MENU)
-    if '-x' in args:
-        xxx_func(args['-x'])
+    if args:
+        for k in args.keys():
+            if k == '-x':
+                xxx_func(args['-x'])
+            elif k == '-h':
+                print_help(HELP_MENU)
     return args
 
 

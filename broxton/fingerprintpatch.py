@@ -66,7 +66,7 @@ class FingerprintPatch(object):
             print(help)
 
     # get user input.
-    def get_user_input(self):
+    def process_input(self):
         try:
             opts, args = getopt.getopt(sys.argv[1:], "hs:p:o:")
         except getopt.GetoptError:
@@ -195,7 +195,7 @@ class FingerprintPatch(object):
     # enterance of app
     def main(self):
         # get user input
-        self.get_user_input()
+        self.process_input()
 
         if any((not self._source, not self._patch, not self._opt)):
             stop_and_exit('Error, invalid input, run -h to get help!')

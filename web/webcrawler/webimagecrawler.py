@@ -15,7 +15,8 @@ import threading
 from pybase.pysys import print_help, print_exit
 from pybase.pypath import get_abs_path
 from pybase.pyprint import PyPrint, PR_LVL_DBG
-from pybase.pyinput import get_user_input
+from pybase.pyinput import get_input_args
+from pybase.pydecorator import get_input_args as get_input_args_decorator
 from web.weburl import get_url_base_and_num
 from web.webimage.webimage import OPTS
 
@@ -25,11 +26,10 @@ else:
     import queue
 
 
-VERSION = '1.1.1'
+VERSION = '1.1.2'
 AUTHOR = 'Byng.Zeng'
-ABOUT = 'Web Image Crawler %s\n\nAuther@%s\n\nCopyright(c)%s\n' % (VERSION,
-                                                                   AUTHOR,
-                                                                   AUTHOR)
+ABOUT = 'Web Image Crawler %s\n\nAuther@%s\n\nCopyright(c)%s\n' % (
+                                                    VERSION, AUTHOR, AUTHOR)
 
 
 ############################################################################
@@ -190,23 +190,24 @@ class WebImageCrawler(object):
         self._byname = None
         self._search_urls = list()
 
-    def process_input_args(self, args):
-        if not args:
-            args = get_user_input(OPTS + 'y:')
-        if '-h' in args:
-            print_help(self.HELP_MENU)
-        if '-u' in args:
-            if os.path.isfile(args['-u']):
-                self._url_file = get_abs_path(args['-u'])
-            else:
-                self._url = re.sub('/$', '', args['-u'])
-        if '-x' in args:
-            self._xval = args['-x']
-        if '-d' in args:
-            self._pr.add_pr_level(PR_LVL_DBG)
-            self._pr.set_funcname(True)
-        if '-y' in args:
-            self._byname = args['-y']
+    @get_input_args_decorator()
+    def process_input_args(self, opts, args=None):
+        if args:
+            for k in args.keys():
+                if k == '-u':
+                    if os.path.isfile(args['-u']):
+                        self._url_file = get_abs_path(args['-u'])
+                    else:
+                        self._url = re.sub('/$', '', args['-u'])
+                elif k == '-x':
+                    self._xval = args['-x']
+                elif k == '-d':
+                    self._pr.add_level(PR_LVL_DBG)
+                    self._pr.set_funcname(True)
+                elif k == '-y':
+                    self._byname = args['-y']
+                elif k == '-h':
+                    print_help(self.HELP_MENU)
         # get url_base from xval
         if self._xval:
             self._url_base, self._class = \
@@ -249,14 +250,14 @@ class WebImageCrawler(object):
             if all((self._byname, output)):
                 self.upload_to_baiduyun(output, hdr._path, self._byname)
         else:
-            self._pr.pr_err('[WebImageCrawler] Error, no found handler!')
+            self._pr.err('[WebImageCrawler] Error, no found handler!')
         # release queue
         if self._thread_queue:
             self._thread_queue.get()
         if info:
             index = info[0]
             total = info[1]
-            self._pr.pr_info('[%d/%d] %s done' % (index, total, url))
+            self._pr.info('[%d/%d] %s done' % (index, total, url))
 
     def process_list_input(self, urls, args=None):
         if urls:
@@ -292,7 +293,7 @@ class WebImageCrawler(object):
                 t.join()
 
     def main(self, args=None):
-        args = self.process_input_args(args)
+        args = self.process_input_args(OPTS + 'y:', args=args)
         if self._url_file:
             with open(self._url_file, 'r') as fd:
                 urls = set(fd.readlines())
@@ -306,7 +307,7 @@ class WebImageCrawler(object):
             self._search_urls = list()
 
 if __name__ == '__main__':
-    args = get_user_input('Uy:' + OPTS)
+    args = get_input_args('Uy:' + OPTS)
     if '-U' in args:
         from webimagecrawlerUI import WebImageCrawlerUI
         del args['-U']  # delete -U value.

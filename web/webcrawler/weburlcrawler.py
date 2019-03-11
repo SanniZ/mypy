@@ -14,7 +14,7 @@ from pybase.pydecorator import get_input_args
 from pybase.pyprint import PyPrint
 from web.webcontent import DEFAULT_WEB_URL_FILE
 
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 AUTHOR = 'Byng.Zeng'
 
 
@@ -55,14 +55,16 @@ class WebURLCrawler(object):
             for url in urls:
                 fd.write('%s\n' % url)
 
-    @get_input_args
+    @get_input_args()
     def process_input(self, opts, args=None):
-        if '-h' in args:
-            print_help(self.HELP_MENU)
-        if '-s' in args:
-            self._src = re.sub('/$', '', args['-s'])
-        if '-t' in args:
-            self._tgt = get_abs_path(args['-t'])
+        if args:
+            for k in args.keys():
+                if k == '-s':
+                    self._src = re.sub('/$', '', args['-s'])
+                elif k == '-t':
+                    self._tgt = get_abs_path(args['-t'])
+                elif k == '-h':
+                    print_help(self.HELP_MENU)
         return args
 
     def main(self):

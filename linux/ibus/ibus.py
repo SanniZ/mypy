@@ -9,7 +9,7 @@ Created on 2018-12-05
 import os
 
 from pybase.pysys import print_help
-from pybase.pyinput import get_user_input
+from pybase.pyinput import get_input_args
 from pybase.pydecorator import execute_shell
 
 
@@ -128,34 +128,34 @@ class IBus(object):
         process_shell_cmd(cmd)
 
     def main(self):
-        args = get_user_input('harLPpgSBbu')
-        if '-h' in args:
-            print_help(self.HELP_MENU)
-        if '-a' in args:
-            self.ibus_add_to_wubi_love98_db()
-        if '-u' in args:
-            self.ibus_update_wubi_love98_db()
-        if '-r' in args:
-            self.ibus_restart()
-        if '-L' in args:
-            rescode, data = self.ibus_list_engine()
-            if rescode < 0:
-                print('error, failed to get engine list.')
-            else:
-                print(str(data, 'utf-8').strip('\n'))
-        if '-P' in args:
-            self.ibus_set('sunpinyin')
-        if '-p' in args:
-            self.ibus_set('pinyin')
-        if '-g' in args:
-            self.ibus_set('googlepinyin')
-        if '-S' in args:
-            self.ibus_set('wubi98')
-        if '-B' in args:
-            self.ibus_set('wubi-haifeng86')
-        if '-b' in args:
-            self.ibus_set('wubi-jingdian86')
-
+        args = get_input_args('harLPpgSBbu', True)
+        for k in args.keys():
+            if k == '-a':
+                self.ibus_add_to_wubi_love98_db()
+            elif k == '-u':
+                self.ibus_update_wubi_love98_db()
+            elif k == '-r':
+                self.ibus_restart()
+            elif k == '-L':
+                rescode, data = self.ibus_list_engine()
+                if rescode < 0:
+                    print('error, failed to get engine list.')
+                else:
+                    print(str(data, 'utf-8').strip('\n'))
+            elif k == '-P':
+                self.ibus_set('sunpinyin')
+            elif k == '-p':
+                self.ibus_set('pinyin')
+            elif k == '-g':
+                self.ibus_set('googlepinyin')
+            elif k == '-S':
+                self.ibus_set('wubi98')
+            elif k == '-B':
+                self.ibus_set('wubi-haifeng86')
+            elif k == '-b':
+                self.ibus_set('wubi-jingdian86')
+            elif k == '-h':
+                print_help(self.HELP_MENU)
 
 ############################################################################
 #              run IBus instance

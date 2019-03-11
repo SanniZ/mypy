@@ -47,7 +47,7 @@ class MyUbuntu(object):
             print msg
         exit()
 
-    def get_user_input(self, opts):
+    def get_input_args(self, opts):
         result = dict()
         try:
             opts, args = getopt.getopt(sys.argv[1:], opts)
@@ -202,19 +202,20 @@ class MyUbuntu(object):
                 f.write(self.__bashrc)
 
     def main(self):
-        args = self.get_user_input('hcPa:A:vV')
-        if '-h' in args:
-            self.print_help(self.HELP_MENU)
-        if '-c' in args:
-            self.create_mypath()
-        if '-P' in args:
-            self.add_mypys()
-        if '-a' in args:
-            self.add_to_mypath(args['-a'])
-        if '-A' in args:
-            self.add_to_mypys(args['-A'])
-        if '-v' in args:
-            self.print_path2()
+        args = self.get_input_args('hcPa:A:vV', True)
+        for k in args.keys():
+            if k == '-c':
+                self.create_mypath()
+            elif k == '-P':
+                self.add_mypys()
+            elif k == '-a':
+                self.add_to_mypath(args['-a'])
+            elif k == '-A':
+                self.add_to_mypys(args['-A'])
+            elif k == '-v':
+                self.print_path2()
+            elif k == '-h':
+                self.print_help(self.HELP_MENU)
 
 if __name__ == '__main__':
     ubuntu = MyUbuntu()

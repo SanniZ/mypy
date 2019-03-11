@@ -10,6 +10,8 @@ import sys
 import getopt
 import subprocess
 
+from collections import OrderedDict
+
 
 ############################################################################
 #               Const Vars
@@ -57,16 +59,19 @@ def execute_shell(func):
 #
 # it will get args from sys.argv[1:] and return kwargs at args.
 # sample function:
-# @get_input_args
+# @get_input_args(True/False)
 # def process_input([self,] opts, args=None):
 #     print(args)
 #
-# [self.]process_input(opts='hx:', args=args)
+# [self.]process_input('hx:', args=args)
 # =========================================================
 
-def get_input_args(func):
-    def __get_user_input(opts):
-        kw = {}
+def get_input_args(ordered_args=False):
+    def __get_input_args(opts, ordered_args=False):
+        if ordered_args:
+            dt = OrderedDict()
+        else:
+            dt = {}
         try:
             opts, args = getopt.getopt(sys.argv[1:], opts)
         except getopt.GetoptError as e:
@@ -74,41 +79,44 @@ def get_input_args(func):
             return None
         if opts:
             for name, value in opts:
-                kw[name] = value
-        return kw
+                dt[name] = value
+        return dt
 
-    def get_input_wrapper(*args, **kwargs):
-        opts = None
-        if kwargs:
-            if 'args' in kwargs:
-                if isinstance(kwargs['args'], dict):
-                    return func(*args, **kwargs)
-            if 'opts' in kwargs:
-                opts = kwargs['opts']
-        if args:
-            n = len(args)
-            if all((args[0], isinstance(args[0], str))):
-                if n == 2:  # (opts, args)
-                    if isinstance(args[1], dict):  # args is done
+    def get_input_args_decorator(func):
+        def get_input_wrapper(*args, **kwargs):
+            opts = None
+            if kwargs:
+                if 'args' in kwargs:
+                    if isinstance(kwargs['args'], dict):
                         return func(*args, **kwargs)
-                    elif all((args[0], not opts)):  # set opts
-                        opts = args[0]
-                elif n == 1:  # (opts)
-                    if all((args[0], not opts)):  # set opts
-                        opts = args[0]
-            else:
-                if n >= 3:  # (self, opts, args)
-                    if isinstance(args[2], dict):  # args is done.
-                        return func(*args, **kwargs)
-                    elif all((args[1], isinstance(args[1], str), not opts)):
-                        opts = args[1]
-                elif n >= 2:  # (self, opts)
-                    if all((args[1], isinstance(args[1], str), not opts)):
-                        opts = args[1]
-        if opts:
-            kwargs['args'] = __get_user_input(opts)
-        return func(*args, **kwargs)
-    return get_input_wrapper
+                if 'opts' in kwargs:
+                    opts = kwargs['opts']
+            if args:
+                n = len(args)
+                if all((args[0], isinstance(args[0], str))):
+                    if n == 2:  # (opts, args)
+                        if isinstance(args[1], dict):  # args is done
+                            return func(*args, **kwargs)
+                        elif all((args[0], not opts)):  # set opts
+                            opts = args[0]
+                    elif n == 1:  # (opts)
+                        if all((args[0], not opts)):  # set opts
+                            opts = args[0]
+                else:
+                    if n >= 3:  # (self, opts, args)
+                        if isinstance(args[2], dict):  # args is done.
+                            return func(*args, **kwargs)
+                        elif all((args[1],
+                                  isinstance(args[1], str), not opts)):
+                            opts = args[1]
+                    elif n >= 2:  # (self, opts)
+                        if all((args[1], isinstance(args[1], str), not opts)):
+                            opts = args[1]
+            if opts:
+                kwargs['args'] = __get_input_args(opts, ordered_args)
+            return func(*args, **kwargs)
+        return get_input_wrapper
+    return get_input_args_decorator
 
 
 # =========================================================
@@ -121,8 +129,8 @@ def get_input_args(func):
 #     print(dt)
 # =========================================================
 
-def get_args_dict_values(symbol=[':']):
-    def get_args_dict_values_decorator(func):
+def get_args_dict(symbol=[':']):
+    def get_args_dict_decorator(func):
         def __get_args_dict(args):
             result = {}
             key = None
@@ -143,7 +151,7 @@ def get_args_dict_values(symbol=[':']):
                             result[key] = result[key] + ', ' + element
             return result
 
-        def get_args_dict_values_warpper(*args, **kwargs):
+        def get_args_dict_warpper(*args, **kwargs):
             args_ = None
             if kwargs:
                 if 'args' in kwargs:
@@ -153,7 +161,10 @@ def get_args_dict_values(symbol=[':']):
                     args_ = args[1]
                 else:
                     args_ = args[0]
-            kwargs['dt'] = __get_args_dict(args_)
-            return func(*args, **kwargs)
-        return get_args_dict_values_warpper
-    return get_args_dict_values_decorator
+            if args_:
+                kwargs['dt'] = __get_args_dict(args_)
+                return func(*args, **kwargs)
+            else:
+                return None
+        return get_args_dict_warpper
+    return get_args_dict_decorator

@@ -11,7 +11,7 @@ import re
 import subprocess
 
 from pybase.pysys import print_help
-from pybase.pyinput import get_user_input
+from pybase.pyinput import get_input_args
 from pybase.pypath import get_current_path
 from pybase.pyfile import get_name_ex
 
@@ -52,22 +52,19 @@ def clean_pyc(path=os.getenv('MYPY'), show=False):
                         os.remove(d)
 
 if __name__ == '__main__':
-    args = get_user_input('hp:vc')
-    # help
-    if '-h' in args:
-        print_help(HELP_MENU)
-    # check path.
-    if '-p' in args:
-        if re.match('\.', args['-p']):
-            path = re.sub('.', get_current_path(), args['-p'])
-        else:
-            path = args['-p']
-    else:
-        path = get_current_path()
-    # check show.
-    if '-v' in args:
-        show = True
-    else:
-        show = False
+    show = False
+    path = get_current_path()
+    args = get_input_args('hp:vc')
+    for k in args.keys():
+        if k == '-p':
+            if re.match('\.', args['-p']):
+                path = re.sub('.', get_current_path(), args['-p'])
+            else:
+                path = args['-p']
+        # check show.
+        elif k == '-v':
+            show = True
+        elif k == '-h':
+            print_help(HELP_MENU)
     # clean .pyc now.
     clean_pyc(path, show)

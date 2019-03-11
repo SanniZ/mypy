@@ -220,7 +220,7 @@ class PyFile(object):
 
 if __name__ == '__main__':
     from pybase.pysys import print_help, print_exit
-    from pybase.pyinput import get_user_input
+    from pybase.pyinput import get_input_args
     from pybase.pypath import get_abs_path
     from pybase.pyprint import PyPrint
 
@@ -253,62 +253,63 @@ if __name__ == '__main__':
     )
 
     pr = PyPrint('PyFile')
-    args = get_user_input('hr:f:s:c:m:')
-    if '-h' in args:
-        print_help(HELP_MENU)
-    if '-r' in args:
-        remove_small_file(args['-r'])
-    if '-f' in args:
-        values = args['-f'].split(',')
-        n = len(values)
-        if n < 2:
-            print_exit('input error, -h for help')
-        elif any((not values[0], not values[1])):
-            print_exit('input error, -h for help')
-        # get args.
-        path = get_abs_path(values[0])
-        wd = values[1]
-        if n == 2:
-            result = find(path, wd)
-        elif n > 2:
-            ftype = values[2]
-            result = find(path, wd, ftype)
-        # print result
-        for key, values in result.iteritems():
-            pr.pr_info(key)
-            for val in values:
-                pr.pr_info(val)
-    if '-s' in args:
-        values = args['-s'].split(',')
-        n = len(values)
-        if n < 3:
-            print_exit('input error, -h for help')
-        elif any((not values[0], not values[1])):
-            print_exit('input error, -h for help')
-        path = get_abs_path(values[0])
-        wd = values[1]
-        newd = values[2]
-        if n == 3:
-            sub(path, wd, newd)
-        elif n > 3:
-            ftype = values[3]
-            sub(path, wd, newd, ftype)
-    if '-c' in args:
-        values = args['-c'].split(',')
-        n = len(values)
-        src = dst = None
-        if n >= 2:
-            src = get_abs_path(values[0])
-            dst = get_abs_path(values[1])
-        if all((src, dst)):
-            copy(src, dst)
+    args = get_input_args('hr:f:s:c:m:', True)
+    for k in args.keys():
+        if k == '-r':
+            remove_small_file(args['-r'])
+        elif k == '-f':
+            values = args['-f'].split(',')
+            n = len(values)
+            if n < 2:
+                print_exit('input error, -h for help')
+            elif any((not values[0], not values[1])):
+                print_exit('input error, -h for help')
+            # get args.
+            path = get_abs_path(values[0])
+            wd = values[1]
+            if n == 2:
+                result = find(path, wd)
+            elif n > 2:
+                ftype = values[2]
+                result = find(path, wd, ftype)
+            # print result
+            for key, values in result.iteritems():
+                pr.info(key)
+                for val in values:
+                    pr.info(val)
+        elif k == '-s':
+            values = args['-s'].split(',')
+            n = len(values)
+            if n < 3:
+                print_exit('input error, -h for help')
+            elif any((not values[0], not values[1])):
+                print_exit('input error, -h for help')
+            path = get_abs_path(values[0])
+            wd = values[1]
+            newd = values[2]
+            if n == 3:
+                sub(path, wd, newd)
+            elif n > 3:
+                ftype = values[3]
+                sub(path, wd, newd, ftype)
+        elif k == '-c':
+            values = args['-c'].split(',')
+            n = len(values)
+            src = dst = None
+            if n >= 2:
+                src = get_abs_path(values[0])
+                dst = get_abs_path(values[1])
+            if all((src, dst)):
+                copy(src, dst)
 
-    if '-m' in args:
-        values = args['-m'].split(',')
-        n = len(values)
-        src = dst = None
-        if n >= 2:
-            src = get_abs_path(values[0])
-            dst = get_abs_path(values[1])
-        if all((src, dst)):
-            move(src, dst)
+        elif k == '-m':
+            values = args['-m'].split(',')
+            n = len(values)
+            src = dst = None
+            if n >= 2:
+                src = get_abs_path(values[0])
+                dst = get_abs_path(values[1])
+            if all((src, dst)):
+                move(src, dst)
+        elif k == '-h':
+            print_help(HELP_MENU)

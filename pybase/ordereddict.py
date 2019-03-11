@@ -6,12 +6,12 @@ Created on 2019-03-01
 @author: Byng.Zeng
 """
 
-VERSION = '1.2.0'
+VERSION = '1.2.2'
 AUTHOR = 'Byng.Zeng'
 
 
 ############################################################################
-#               OrderDict class
+#               OrderedDict class
 ############################################################################
 
 class OrderedDict(object):
@@ -22,8 +22,11 @@ class OrderedDict(object):
         self._keys = []
         self._dt = {}
         self._index = 0
-        if dt:
+        if all((dt, isinstance(dt, dict))):
             self.append(dt)
+
+    def __call__(self):
+        return self
 
     def __iter__(self):
         return self
@@ -32,67 +35,56 @@ class OrderedDict(object):
         if self._index < len(self._keys):
             key = self._keys[self._index]
             self._index += 1
-            return key, self._dt[key]
+            return key
         else:
             self._index = 0
             raise StopIteration
 
-    def __getitem__(self, item):
-        if item in self._dt:
-            return self._dt[item]
-        elif isinstance(item, int):
-            if item < len(self._keys):
-                return self._dt[self._keys[item]]
-            else:
-                raise IndexError('IndexError: invalid index %s' % item)
+    def __getitem__(self, key):
+        if key in self._dt:
+            return self._dt[key]
         else:
-            raise KeyError('KeyError: no found key %s' % item)
+            raise KeyError('no found key %s' % key)
 
     def __setitem__(self, item, value):
         if item in self._dt:
             self._dt[item] = value
-        elif isinstance(item, int):
-            if item < len(self._keys):
-                self._dt[self._keys[item]] = value
-            else:
-                raise IndexError('IndexError: invalid index %s' % item)
         else:
-            self.append({item: value})
+            self.__add__({item: value})
 
     def __len__(self):
         return len(self._keys)
 
     def __add__(self, dt):
-        for k, w in dt.items():
-            self._dt[k] = w
-            self._keys.append(k)
-        return self._dt
+        if isinstance(dt, dict):
+            for k, w in dt.items():
+                if k not in self._keys:
+                    self._keys.append(k)
+                self._dt[k] = w
+        else:
+            raise TypeError('%s in not dict type' % dt)
 
-    def __call__(self):
-        return self._dt
+    def __delitem__(self, key):
+        if key in self._keys:
+            del self._dt[key]
+            del self._keys[self._keys.index(key)]
+        else:
+            raise KeyError('no found key %s' % key)
+
+    @property
+    def kw(self):
+        lt = []
+        for k in self._keys:
+            lt.append((k, self._dt[k]))
+        return lt
 
     # append a dict
     def append(self, dt):
-        return self.__add__(dt)
+        self.__add__(dt)
 
     # delete from key or index
-    def delete(self, key=None, index=None):
-        if key:
-            if key in self._dt:  # from key
-                del self._dt[key]
-                for index, k in enumerate(self._keys):
-                    if key == k:
-                        del self._keys[index]
-                        break
-            else:
-                raise KeyError('KeyError: no found key %s' % key)
-        elif index:  # from index
-            if index < len(self._keys):
-                key = self._keys[index]
-                del self._keys[index]
-                del self._dt[key]
-            else:
-                raise IndexError('IndexError: invalid index %s' % index)
+    def delete(self, key):
+        self.__delitem__(key)
 
     # insert a dt to index position
     def insert(self, index, dt):
@@ -102,16 +94,36 @@ class OrderedDict(object):
                 self._keys.insert(index, k)
                 index += 1
         else:
-            raise IndexError('IndexError: invalid index %s' % index)
+            raise IndexError('overflow index %s' % index)
+
+    def items(self):
+        for key in self._keys:
+            yield key, self._dt[key]
 
     def clear(self):
-        return self.__init__()
+        self.__init__()
 
     def values(self):
-        return self._dt
+        values = []
+        for k in self._keys:
+            values.append(self._dt[k])
+        return values
 
     def keys(self):
         return self._keys
 
+    def index(self, key):
+        if key in self._keys:
+            return self._keys.index(key)
+        else:
+            raise KeyError('no found key %s' % key)
+
     def count(self):
         return self.__len__()
+
+    def get_index(self, index):
+        if index >= len(self._keys):
+            return IndexError('overflow index %s' % index)
+        else:
+            key = self._keys[index]
+            return key, self._dt[key]

@@ -24,7 +24,7 @@ class CmdProcessing(object):
     # run input commands
     def run(self, cmds):
         d.dbg('CmdProcessing.run(): %s' % cmds)
-        for key in cmds.keys():
+        for key in cmds:
             # check help.
             if key == 'help':
                 for sub_cmd in cmds[key]:

@@ -298,7 +298,7 @@ class PyImage (object):
 
 if __name__ == '__main__':
     from pybase.pysys import print_help
-    from pybase.pyinput import get_user_input
+    from pybase.pyinput import get_input_args
     from pybase.pypath import get_abs_path
 
     HELP_MENU = (
@@ -327,58 +327,59 @@ if __name__ == '__main__':
 
     Img = PyImage()
     xval = None
-    args = get_user_input('hc:r:R:x:o:i:')
-    if '-h' in args:
-        print_help(HELP_MENU)
-    if '-c' in args:
-        result = Img.image_file(get_abs_path(args['-c']))
-        print(result)
-    if '-r' in args:
-        data = args['-r'].split(',')
-        path = data[0]
-        if len(data) >= 3:
-            w = data[1]
-            h = data[2]
-            Img.remove_small_image(path, int(w), int(h))
-        else:
-            Img.remove_small_image(path)
-    if '-R' in args:
-        path = args['-R']
-        if Img.image_file(path):
-            Img.reclaim_image(path)
-        else:
-            Img.reclaim_path_images(path)
-    if '-o' in args:
-        val = args['-o'].split(',')
-        n = len(val)
+    args = get_input_args('hc:r:R:x:o:i:')
+    for k in args.keys():
+        if k == '-c':
+            result = Img.image_file(get_abs_path(args['-c']))
+            print(result)
+        elif k == '-r':
+            data = args['-r'].split(',')
+            path = data[0]
+            if len(data) >= 3:
+                w = data[1]
+                h = data[2]
+                Img.remove_small_image(path, int(w), int(h))
+            else:
+                Img.remove_small_image(path)
+        elif k == '-R':
+            path = args['-R']
+            if Img.image_file(path):
+                Img.reclaim_image(path)
+            else:
+                Img.reclaim_path_images(path)
+        elif k == '-o':
+            val = args['-o'].split(',')
+            n = len(val)
 
-        if n >= 3:
-            Img.set_order_images(get_abs_path(val[0]), val[1], val[2])
-        elif n == 2:
-            Img.set_order_images(get_abs_path(val[0]), val[1])
-        elif n == 1:
-            Img.set_order_images(get_abs_path(val[0]))
-        else:
-            print('Error, -h for help!')
-    if '-i' in args:
-        f = args['-i']
-        dt = dict()
-        if os.path.isfile(f):
-            fmt, size, mode = Img.get_image_detail(f)
-            if all((fmt, size, mode)):
-                dt[f] = (fmt, size, mode)
-        elif os.path.isdir(f):
-            for rt, dr, fs in os.walk(f):
-                if fs:
-                    for f in fs:
-                        f = os.path.join(rt, f)
-                        fmt, size, mode = Img.get_image_detail(f)
-                        if all((fmt, size, mode)):
-                            dt[f] = (fmt, size, mode)
-        # print result.
-        for img, detail in dt.items():
-            print('file  :', os.path.basename(img))
-            print('format:', detail[0])
-            print('size  :', detail[1])
-            print('mode  :', detail[2])
-            print('------------------')
+            if n >= 3:
+                Img.set_order_images(get_abs_path(val[0]), val[1], val[2])
+            elif n == 2:
+                Img.set_order_images(get_abs_path(val[0]), val[1])
+            elif n == 1:
+                Img.set_order_images(get_abs_path(val[0]))
+            else:
+                print('Error, -h for help!')
+        elif k == '-i':
+            f = args['-i']
+            dt = dict()
+            if os.path.isfile(f):
+                fmt, size, mode = Img.get_image_detail(f)
+                if all((fmt, size, mode)):
+                    dt[f] = (fmt, size, mode)
+            elif os.path.isdir(f):
+                for rt, dr, fs in os.walk(f):
+                    if fs:
+                        for f in fs:
+                            f = os.path.join(rt, f)
+                            fmt, size, mode = Img.get_image_detail(f)
+                            if all((fmt, size, mode)):
+                                dt[f] = (fmt, size, mode)
+            # print result.
+            for img, detail in dt.items():
+                print('file  :', os.path.basename(img))
+                print('format:', detail[0])
+                print('size  :', detail[1])
+                print('mode  :', detail[2])
+                print('------------------')
+        elif k == '-h':
+            print_help(HELP_MENU)

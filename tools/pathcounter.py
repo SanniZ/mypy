@@ -65,7 +65,7 @@ class PathCounter(object):
         else:
             print('Error, invalid vars!')
 
-    def get_user_input(self):
+    def get_input_args(self):
         try:
             opts, args = getopt.getopt(sys.argv[1:], 'hp:n:o:')
         except getopt.GetoptError:
@@ -94,7 +94,7 @@ class PathCounter(object):
             return True
 
     def main(self):
-        if not self.get_user_input():
+        if not self.get_input_args():
             print('Error, -h for help!')
         else:
             count = self.get_count()

@@ -14,7 +14,7 @@ import time
 from pybase.pysys import print_help, print_exit
 from baiduyun import BaiduYun
 
-VERSION = '1.2.1'
+VERSION = '1.2.2'
 AUTHOR = 'Byng.Zeng'
 
 
@@ -43,7 +43,7 @@ def create_tar(path):
 
 
 if __name__ == '__main__':
-    from pybase.pyinput import get_user_input
+    from pybase.pyinput import get_input_args
 
     HELP_MENU = (
         '============================================',
@@ -59,28 +59,29 @@ if __name__ == '__main__':
 
     )
 
-    args = get_user_input('hafz')
+    args = get_input_args('hafz', True)
     if args:
         date_ = time.strftime('%Y%m%d', time.localtime())
         time_ = time.strftime('%H%M', time.localtime())
         clean_cache(MYPYPATH)  # clear all of cache files.
         by = BaiduYun('BackupMypy')
-        if '-h' in args:
-            print_help(HELP_MENU)
-        if '-a' in args:
-            args = {'-c': 'upload', '-l': MYPYPATH,
-                    '-y': 'Mypy/%s/mypy_%s-%s_all' % (date_, date_, time_)}
-            by.main(args)
-        if '-f' in args:
-            args = {'-c': 'upload', '-f': ('.py', '.txt'), '-l': MYPYPATH,
-                    '-y': 'Mypy/%s/mypy_%s-%s' % (date_, date_, time_)}
-            by.main(args)
-        if '-z' in args:
-            tar = create_tar(MYPYPATH)
-            args = {'-c': 'upload', '-l': tar, '-y': 'Mypy/%s' % date_}
-            try:
+        for k in args.keys():
+            if k == '-a':
+                args = {'-c': 'upload', '-l': MYPYPATH,
+                        '-y': 'Mypy/%s/mypy_%s-%s_all' % (date_, date_, time_)}
                 by.main(args)
-            finally:
-                os.remove(tar)
+            elif k == '-f':
+                args = {'-c': 'upload', '-f': ('.py', '.txt'), '-l': MYPYPATH,
+                        '-y': 'Mypy/%s/mypy_%s-%s' % (date_, date_, time_)}
+                by.main(args)
+            elif k == '-z':
+                tar = create_tar(MYPYPATH)
+                args = {'-c': 'upload', '-l': tar, '-y': 'Mypy/%s' % date_}
+                try:
+                    by.main(args)
+                finally:
+                    os.remove(tar)
+            elif k == '-h':
+                print_help(HELP_MENU)
     else:
         print_exit('no input, -h for help')

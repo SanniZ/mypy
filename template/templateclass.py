@@ -22,7 +22,7 @@ pr = PyPrint('TemplateClass')
 
 
 def xxx_func(values):
-    pr.pr_info('xxx_func: values=%s' % values)
+    pr.info('xxx_func: values=%s' % values)
 
 
 ############################################################################
@@ -48,12 +48,14 @@ class TemplateClass(object):
         self._name = name if name else self.__class__.__name__
         self._xxx = None
 
-    @get_input_args
+    @get_input_args()
     def process_input(self, opts, args=None):
-        if '-h' in args:
-            print_help(self.HELP_MENU)
-        if '-x' in args:
-            self._xxx = args['-x']
+        if args:
+            for k in args.keys():
+                if k == '-x':
+                    xxx_func(args['-x'])
+                elif k == '-h':
+                    print_help(self.HELP_MENU)
         return args
 
     def main(self, args=None):

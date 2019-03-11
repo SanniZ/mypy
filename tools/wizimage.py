@@ -11,7 +11,7 @@ import zipfile
 import shutil
 
 from pybase.pysys import print_help
-from pybase.pyinput import get_user_input
+from pybase.pyinput import get_input_args
 from pybase.pypath import get_abs_path, get_current_path, \
                         make_path, remove_blank_dir
 from pybase.pyfile import get_name_ex, get_fname
@@ -42,20 +42,20 @@ class WizImage(object):
         self._fs = list()
         self._show = False
 
-    def get_user_input(self):
-        args = get_user_input('hs:t:v')
-        # help
-        if '-h' in args:
-            print_help(self.HELP_MENU)
-        # src path
-        if '-s' in args:
-            self._src = get_abs_path(args['-s'])
-        # dst path
-        if '-t' in args:
-            self._dst = get_abs_path(args['-t'])
-        # show
-        if '-v' in args:
-            self._show = True
+    def get_input(self):
+        args = get_input_args('hs:t:v')
+        for k in args.keys():
+            # src path
+            if k == '-s':
+                self._src = get_abs_path(args['-s'])
+            # dst path
+            elif k == '-t':
+                self._dst = get_abs_path(args['-t'])
+            # show
+            elif k == '-v':
+                self._show = True
+            elif k == '-h':
+                print_help(self.HELP_MENU)
         # start to check args.
         # start id is must be set, otherwise return..
         if not self._src:
@@ -103,7 +103,7 @@ class WizImage(object):
                 os.remove('%s/index.html' % path)
 
     def main(self):
-        self.get_user_input()
+        self.get_input()
         # get all of .wiz
         self.get_all_of_wiz()
         # unzip all of wiz files.

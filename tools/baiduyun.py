@@ -89,31 +89,32 @@ class BaiduYun(object):
         self._pr = PyPrint('BaiduYun',
                            lvl=PR_LVL_ALL if view else PR_LVL_DEFAULT)
 
-    @get_input_args
+    @get_input_args()
     def process_input(self, opts, args=None):
         if args:
-            if '-h' in args:
-                print_help(self.HELP_MENU, True)
-            if '-v' in args:
-                self._pr.add_pr_level(PR_LVL_ALL)
-            if '-o' in args:
-                self._order = True
-            if '-r' in args:
-                self._recursion_path = True
-            if '-l' in args:
-                self._local_path = get_abs_path(args['-l'])
-            if '-y' in args:
-                self._remote_path = args['-y']
-            if '-m' in args:
-                mode = args['-m'].lower()
-                if mode in self.UPLOAD_MODES:
-                    self._upload_mode = self.UPLOAD_MODES[mode]
-            if '-c' in args:
-                self._cmd = args['-c'].lower()
-            if '-f' in args:
-                self._ftype = args['-f']
-            if '-x' in args:
-                self._xftype = args['-x']
+            for k in args.keys():
+                if k == '-v':
+                    self._pr.add_level(PR_LVL_ALL)
+                elif k == '-o':
+                    self._order = True
+                elif k == '-r':
+                    self._recursion_path = True
+                elif k == '-l':
+                    self._local_path = get_abs_path(args['-l'])
+                elif k == '-y':
+                    self._remote_path = args['-y']
+                elif k == '-m':
+                    mode = args['-m'].lower()
+                    if mode in self.UPLOAD_MODES:
+                        self._upload_mode = self.UPLOAD_MODES[mode]
+                elif k == '-c':
+                    self._cmd = args['-c'].lower()
+                elif k == '-f':
+                    self._ftype = args['-f']
+                elif k == '-x':
+                    self._xftype = args['-x']
+                elif k == '-h':
+                    print_help(self.HELP_MENU)
         return args
 
     def join_path(self, rt, dr):
@@ -142,14 +143,14 @@ class BaiduYun(object):
                 else:
                     dst = self.join_path(self._remote_path, dr)
                 if not dst:
-                    self._pr.pr_warn(
+                    self._pr.warn(
                         'Warnning: failed to get remote path of %s' % dr)
                     continue
             bypy.mkdir(dst)
             # upload files
             for f in fs:
                 index += 1
-                self._pr.pr_info(
+                self._pr.info(
                     '[%s/%s] uploading: %s ===> %s' % (
                         index, self._count,
                         re.sub('%s/' % self._local_path, '', f), dst))
@@ -203,7 +204,7 @@ class BaiduYun(object):
         try:
             res = subprocess.check_output(cmd, shell=True).decode()
         except subprocess.CalledProcessError:
-            self._pr.pr_warn('warnning: access %s failed!', path)
+            self._pr.warn('warnning: access %s failed!', path)
         else:
             ls = res.split('\n')
             for f in ls:
@@ -257,16 +258,16 @@ class BaiduYun(object):
             if fs:
                 for dr, lfs in fs.items():
                     if dr in LISTROOT:
-                        self._pr.pr_info('%s:' % (REMOTEROOT))
+                        self._pr.info('%s:' % (REMOTEROOT))
                     else:
-                        self._pr.pr_info('%s/%s:' % (REMOTEROOT, dr))
+                        self._pr.info('%s/%s:' % (REMOTEROOT, dr))
                     if self._order:
                         if lfs:
                             for f in lfs:
-                                self._pr.pr_info(f)
+                                self._pr.info(f)
                     else:
-                        self._pr.pr_info(lfs)
-                    self._pr.pr_info('')
+                        self._pr.info(lfs)
+                    self._pr.info('')
         elif self._cmd in ('upload', 'u', 'U'):
             fs = self.get_upload_files(self._local_path)
             if fs:

@@ -9,8 +9,11 @@ import re
 
 from pybase.pysys import print_help
 from pybase.pypath import DEFAULT_DWN_PATH
-from pybase.pyinput import get_user_input
+from pybase.pyinput import get_input_args
 from web.webimage.webimage import WebImage, OPTS
+
+VERSION = '1.0.1'
+AUTHOR = 'Byng.Zeng'
 
 
 class Meitulu(WebImage):
@@ -26,13 +29,14 @@ class Meitulu(WebImage):
         self._url_base = 'https://www.meitulu.com/item/URLID.html'
         self._sub_url_base = '_'
 
-    def get_user_input(self, args=None):
-        args = super(Meitulu, self).get_user_input(args)
+    @get_input_args()
+    def process_input(self, opts, args=None):
+        args = super(Meitulu, self).get_input_args(args)
         cls = None
         if self._xval in self.URL_BASE_MAP:
             self._url_base = self.URL_BASE_MAP[self._xval][0]
             cls = self.URL_BASE_MAP[self._xval][1]
-            self._pr.pr_dbg(
+            self._pr.dbg(
                 'get url_base: %s from -x %s' % (self._url_base, self._xval))
         if self._url_base:
             if all((not self._path, cls)):
@@ -65,18 +69,19 @@ class Meitulu(WebImage):
 
 if __name__ == '__main__':
     mt = Meitulu('Meitulu')
-    args = get_user_input(OPTS + 'S:')
-    if '-h' in args:
-        mt.HELP_MENU.append('  -S url:')
-        mt.HELP_MENU.append('    url of web of search')
-        print_help(mt.HELP_MENU)
-    elif '-S' in args:
-            urls = mt.get_url_from_search_links(args['-S'])
-            del args['-S']
-            n = len(urls)
-            for index, url in enumerate(urls):
-                print('[%d/%d] downloading: %s' % (index, n, url))
-                args['-u'] = url
-                mt.main(args)
-    else:
-        mt.main(args)
+    args = get_input_args(OPTS + 'S:')
+    for k in args.keys():
+        if k == '-S':
+                urls = mt.get_url_from_search_links(args['-S'])
+                del args['-S']
+                n = len(urls)
+                for index, url in enumerate(urls):
+                    print('[%d/%d] downloading: %s' % (index, n, url))
+                    args['-u'] = url
+                    mt.main(args)
+        elif k == '-h':
+            mt.HELP_MENU.append('  -S url:')
+            mt.HELP_MENU.append('    url of web of search')
+            print_help(mt.HELP_MENU)
+        else:
+            mt.main(args)

@@ -39,11 +39,11 @@ class PyPrint(object):
         return self._tag
 
     @property
-    def pr_level(self):
+    def level(self):
         return self._lvl
 
-    @pr_level.setter
-    def pr_level(self, lvl):
+    @level.setter
+    def level(self, lvl):
         self._lvl = lvl
         return self._lvl
 
@@ -70,34 +70,34 @@ class PyPrint(object):
         return fmt_pr_warpper
 
     @__pr_msg
-    def pr_dbg(self, *msg):
+    def dbg(self, *msg):
         return self._lvl & PR_LVL_DBG
 
     @__pr_msg
-    def pr_info(self, *msg):
+    def info(self, *msg):
         return self._lvl & PR_LVL_INFO
 
     @__pr_msg
-    def pr_warn(self, *msg):
+    def warn(self, *msg):
         return self._lvl & PR_LVL_WARN
 
     @__pr_msg
-    def pr_err(self, *msg):
+    def err(self, *msg):
         return self._lvl & PR_LVL_ERR
 
-    def get_pr_config(self):
+    def get_config(self):
         return self._tag, self._lvl, self._funcname
 
-    def set_pr_level(self, lvl):
+    def set_level(self, lvl):
         self._lvl = lvl
 
-    def get_pr_level(self):
+    def get_level(self):
         return self._lvl
 
-    def add_pr_level(self, lvl):
+    def add_level(self, lvl):
         self._lvl = self._lvl | lvl
 
-    def clear_pr_level(self, lvl):
+    def clear_level(self, lvl):
         self._lvl = self._lvl & ~lvl
 
     def set_funcname(self, funcname=True):

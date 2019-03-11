@@ -26,7 +26,7 @@ else:
     from queue import Queue
 
 
-VERSION = '1.1.0'
+VERSION = '1.1.1'
 AUTHOR = 'Byng.Zeng'
 
 
@@ -67,7 +67,7 @@ class WebImage(object):
     __slots__ = ('_name', '_com', '_url', '_url_base', '_sub_url_base',
                  '_sub_url_num', '_num', '_path', '_re_image_url',
                  '_ex_re_image_url', '_title', '_remove_small_image', '_view',
-                 '_dl_image', '_redundant_title', '__dbg', '_pr',
+                 '_xval', '_dl_image', '_redundant_title', '__dbg', '_pr',
                  '_thread_max', '_thread_queue')
 
     def __init__(self, name=None):
@@ -112,7 +112,7 @@ class WebImage(object):
             else:
                 imgs = pattern.findall(str(html))
         except TypeError as e:
-            self._pr.pr_err('%s: failed to findall image url' % str(e))
+            self._pr.err('%s: failed to findall image url' % str(e))
         return imgs
 
     def get_image_url_of_pages(self, pages, header_content=None):
@@ -124,7 +124,7 @@ class WebImage(object):
             else:
                 url_content = self.get_url_content(url_pages[index])
             if not url_content:
-                self._pr.pr_err(
+                self._pr.err(
                     'failed to download %s sub web' % url_pages[index])
                 continue
             imgs = self.get_image_url(url_content)
@@ -254,7 +254,7 @@ class WebImage(object):
                 # update re_image_url
                 self._re_image_url = relist
             except IOError as e:
-                self._pr.pr_err(
+                self._pr.err(
                     '%s, failed to open %s' % (str(e), self._ex_re_image_url))
 
     def search_urls_from_keyword(self, url):
@@ -270,26 +270,26 @@ class WebImage(object):
         if not header_content:
             if self._thread_queue:
                 self._thread_queue.get()
-            self._pr.pr_err('failed to download %s header web.' % url)
+            self._pr.err('failed to download %s header web.' % url)
             return
         # get url title.
         title = self.get_title(header_content, self._title)
         if not title:
             title = self.convert_url_to_title(url)
-        self._pr.pr_dbg('title: %s' % title)
+        self._pr.dbg('title: %s' % title)
         # create path of title to store data.
         subpath = os.path.join(self._path, title)
-        self._pr.pr_dbg('subpath: %s' % subpath)
+        self._pr.dbg('subpath: %s' % subpath)
         # get count of pages
         pages = self.get_pages(header_content)
-        self._pr.pr_dbg('get pages: %s' % pages)
+        self._pr.dbg('get pages: %s' % pages)
         if not pages:
             limg = self.get_image_url(header_content)
         else:
             limg = self.get_image_url_of_pages(pages, header_content)
         # filter images
         limg = set(limg)
-        # self._pr.pr_dbg('image url list: %s' % limg)
+        # self._pr.dbg('image url list: %s' % limg)
         # download images
         if limg:
             # download all of images.
@@ -302,9 +302,9 @@ class WebImage(object):
             # show output info.
             if self._view:
                 if self.output_image_exists(subpath):
-                    self._pr.pr_info('output: %s' % (subpath))
+                    self._pr.info('output: %s' % (subpath))
                 else:
-                    self._pr.pr_info('output no images: %s' % (subpath))
+                    self._pr.info('output no images: %s' % (subpath))
             # save url of images if it is full debug.
             if self.__dbg >= 0x02:
                 self.store_url_of_images(subpath, limg)
@@ -312,56 +312,58 @@ class WebImage(object):
         if self._thread_queue:
             self._thread_queue.get()
         if data:
-            self._pr.pr_info(
+            self._pr.info(
                 '%d/%d: process %s done!' % (data[0], data[1], url))
         return subpath
 
-    @get_input_args
+    @get_input_args()
     def process_input(self, opts, args=None):
-        if '-h' in args:
-            print_help(self.HELP_MENU)
-        if '-u' in args:
-            self._url = re.sub('/$', '', args['-u'])
-        if '-n' in args:
-            self._num = int(args['-n'])
-        if '-p' in args:
-            self._path = get_abs_path(args['-p'])
-        if '-R' in args:
-            self._ex_re_image_url = get_abs_path(args['-R'])
-        if '-t' in args:
-            try:
-                n = int(args['-t'])
-            except ValueError as e:
-                print_exit('%s, -h for help!' % str(e))
-            if n:
-                self._thread_max = n
-        if '-v' in args:
-            self._view = True
-        if '-x' in args:
-            self._xval = args['-x']
-        if '-m' in args:
-            dl_image_funcs = {
-                'wget': self.wget_url_image,
-                'rtrv': self.retrieve_url_image,
-                'rget': self.requests_get_url_image,
-                'uget': self.urlopen_get_url_image,
-            }
-            if args['-m'] in dl_image_funcs.keys():
-                self._dl_image = dl_image_funcs[args['-m']]
-        if '-d' in args:
-            try:
-                self.__dbg = int(args['-d'])
-            except ValueError as e:
-                self._pr.pr_err(str(e))
-            else:
-                self._pr.add_pr_level(PR_LVL_DBG)
-                self._pr.set_funcname(True)
-            if self.__dbg >= 0x02:
-                WebContent.pr.add_pr_level(PR_LVL_DBG)
-                WebContent.pr.set_funcname(True)
-            else:
-                WebContent.pr.clear_pr_level(PR_LVL_DBG)
-                WebContent.pr.set_funcname(False)
+        if args:
+            for k in args.keys():
+                if k == '-u':
+                    self._url = re.sub('/$', '', args['-u'])
+                elif k == '-n':
+                    self._num = int(args['-n'])
+                elif k == '-p':
+                    self._path = get_abs_path(args['-p'])
+                elif k == '-R':
+                    self._ex_re_image_url = get_abs_path(args['-R'])
+                elif k == '-t':
+                    try:
+                        n = int(args['-t'])
+                    except ValueError as e:
+                        print_exit('%s, -h for help!' % str(e))
+                    if n:
+                        self._thread_max = n
+                elif k == '-v':
+                    self._view = True
+                elif k == '-x':
+                    self._xval = args['-x']
+                elif k == '-m':
+                    dl_image_funcs = {
+                        'wget': self.wget_url_image,
+                        'rtrv': self.retrieve_url_image,
+                        'rget': self.requests_get_url_image,
+                        'uget': self.urlopen_get_url_image,
+                    }
+                    if args['-m'] in dl_image_funcs.keys():
+                        self._dl_image = dl_image_funcs[args['-m']]
+                elif k == '-d':
+                    try:
+                        self.__dbg = int(args['-d'])
+                    except ValueError as e:
+                        self._pr.err(str(e))
+                    else:
+                        self._pr.add_level(PR_LVL_DBG)
+                        self._pr.set_funcname(True)
+                    if self.__dbg >= 0x02:
+                        WebContent.pr.add_level(PR_LVL_DBG)
+                        WebContent.pr.set_funcname(True)
+                    else:
+                        WebContent.pr.clear_level(PR_LVL_DBG)
+                        WebContent.pr.set_funcname(False)
+                elif k == '-h':
+                    print_help(self.HELP_MENU)
         # check url
         if self._url:
             base, num = get_url_base_and_num(self._url)
@@ -369,7 +371,7 @@ class WebImage(object):
                 self._url_base = base
             if num:
                 self._url = num
-            self._pr.pr_dbg('get base: %s, url: %s' % (base, self._url))
+            self._pr.dbg('get base: %s, url: %s' % (base, self._url))
         else:
             print_exit('[WebImage] Error, no set url, -h for help!')
         if self._url_base:

@@ -8,16 +8,21 @@ Created on 2018-12-26
 import sys
 import getopt
 
+from collections import OrderedDict
 
-VERSION = '1.0.1'
+
+VERSION = '1.1.0'
 
 
 ############################################################################
 #               functions
 ############################################################################
 
-def get_user_input(opts, err_exit=True):
-    result = dict()
+def get_input_args(opts, ordered_args=False, err_exit=True):
+    if ordered_args:
+        dt = OrderedDict()
+    else:
+        dt = {}
     try:
         opts, args = getopt.getopt(sys.argv[1:], opts)
     except getopt.GetoptError as e:
@@ -25,13 +30,13 @@ def get_user_input(opts, err_exit=True):
         sys.exit()
     else:
         if opts:
-            for name, value in opts:
-                result[name] = value
-    return result
+            for key, value in opts:
+                dt[key] = value
+    return dt
 
 
 def get_args_dict(args, symbol=[':']):
-    result = dict()
+    dt = {}
     key = None
     if type(args) == dict:
         return args
@@ -43,12 +48,12 @@ def get_args_dict(args, symbol=[':']):
                     data = element.split(sym)
                     n = len(data)
                     if n == 2:
-                        result[data[0]] = data[1]
+                        dt[data[0]] = data[1]
                         key = data[0]
                         break
                 if n == 1:
-                    result[key] = result[key] + ', ' + element
-    return result
+                    dt[key] = dt[key] + ', ' + element
+    return dt
 
 
 ############################################################################
@@ -58,8 +63,8 @@ def get_args_dict(args, symbol=[':']):
 class PyInput (object):
 
     @staticmethod
-    def get_user_input(opts):
-        return get_user_input(opts)
+    def get_input_args(opts, ordered_args=False):
+        return get_input_args(opts, ordered_args)
 
     @staticmethod
     def get_args_dict(args, symbol=[':']):
