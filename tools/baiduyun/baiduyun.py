@@ -143,14 +143,14 @@ class BaiduYun(object):
                 else:
                     dst = self.join_path(self._remote_path, dr)
                 if not dst:
-                    self._pr.warn(
+                    self._pr.pr_warn(
                         'Warnning: failed to get remote path of %s' % dr)
                     continue
             bypy.mkdir(dst)
             # upload files
             for f in fs:
                 index += 1
-                self._pr.info(
+                self._pr.pr_info(
                     '[%s/%s] uploading: %s ===> %s' % (
                         index, self._count,
                         re.sub('%s/' % self._local_path, '', f), dst))
@@ -204,7 +204,7 @@ class BaiduYun(object):
         try:
             res = subprocess.check_output(cmd, shell=True).decode()
         except subprocess.CalledProcessError:
-            self._pr.warn('warnning: access %s failed!', path)
+            self._pr.pr_warn('warnning: access %s failed!', path)
         else:
             ls = res.split('\n')
             for f in ls:
@@ -258,16 +258,16 @@ class BaiduYun(object):
             if fs:
                 for dr, lfs in fs.items():
                     if dr in LISTROOT:
-                        self._pr.info('%s:' % (REMOTEROOT))
+                        self._pr.pr_info('%s:' % (REMOTEROOT))
                     else:
-                        self._pr.info('%s/%s:' % (REMOTEROOT, dr))
+                        self._pr.pr_info('%s/%s:' % (REMOTEROOT, dr))
                     if self._order:
                         if lfs:
                             for f in lfs:
-                                self._pr.info(f)
+                                self._pr.pr_info(f)
                     else:
-                        self._pr.info(lfs)
-                    self._pr.info('')
+                        self._pr.pr_info(lfs)
+                    self._pr.pr_info('')
         elif self._cmd in ('upload', 'u', 'U'):
             fs = self.get_upload_files(self._local_path)
             if fs:

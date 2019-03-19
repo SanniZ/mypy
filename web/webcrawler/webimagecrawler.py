@@ -250,14 +250,14 @@ class WebImageCrawler(object):
             if all((self._byname, output)):
                 self.upload_to_baiduyun(output, hdr._path, self._byname)
         else:
-            self._pr.err('[WebImageCrawler] Error, no found handler!')
+            self._pr.pr_err('[WebImageCrawler] Error, no found handler!')
         # release queue
         if self._thread_queue:
             self._thread_queue.get()
         if info:
             index = info[0]
             total = info[1]
-            self._pr.info('[%d/%d] %s done' % (index, total, url))
+            self._pr.pr_info('[%d/%d] %s done' % (index, total, url))
 
     def process_list_input(self, urls, args=None):
         if urls:

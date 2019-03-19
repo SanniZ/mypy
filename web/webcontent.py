@@ -100,7 +100,7 @@ def get_url_charset(html=None, content_type=None):
 
 def get_html(url, context=None, retry_times=3, view=False, pr=pr):
     if view:
-        pr.info('Downloading: %s' % url)
+        pr.pr_info('Downloading: %s' % url)
     html_content = None
     while all((retry_times, not html_content)):
         retry_times -= 1
@@ -109,13 +109,13 @@ def get_html(url, context=None, retry_times=3, view=False, pr=pr):
         try:
             html = urlopen(req, context=context)
         except URLError as e:
-            pr.warn(str(e))
+            pr.pr_warn(str(e))
             html_content = None
         else:
             try:
                 content_type = html.getheader('Content-Type')
             except AttributeError as e:
-                pr.warn(str(e))
+                pr.pr_warn(str(e))
             else:
                 if content_type:
                     url_charset = \
@@ -124,7 +124,7 @@ def get_html(url, context=None, retry_times=3, view=False, pr=pr):
             try:
                 encoding = html.getheader('Content-Encoding')
             except AttributeError as e:
-                pr.warn(str(e))
+                pr.pr_warn(str(e))
             else:
                 if encoding == 'gzip':
                     data = gzip.GzipFile(fileobj=io.StringIO(data)).read()
@@ -145,7 +145,7 @@ def get_html(url, context=None, retry_times=3, view=False, pr=pr):
                             elif charset == url_charset:
                                 break
             else:
-                # cls.pr.err('Error: fail to get data from html')
+                # cls.pr.pr_err('Error: fail to get data from html')
                 html_content = None
     return html_content
 
@@ -172,23 +172,23 @@ def urlretrieve_callback(blocknum, blocksize, totalsize, pr=pr):
     percent = 100.0 * blocknum * blocksize / totalsize
     if percent > 100:
         percent = 100
-    pr.dbg("%.2f%%" % percent)
+    pr.pr_dbg("%.2f%%" % percent)
 
 
 def retrieve_url_file(url, path, view=False, pr=pr):
     fname = os.path.join(path, url.split('/')[len(url.split('/')) - 1])
     if not os.path.exists(fname):
         if view:
-            pr.info('retrieve: %s' % fname)
+            pr.pr_info('retrieve: %s' % fname)
             try:
                 urllib.urlretrieve(url, fname, urlretrieve_callback)
             except socket.error or ZeroDivisionError as e:
-                pr.info('urlretrieve error: %s' % e.errno)
+                pr.pr_info('urlretrieve error: %s' % e.errno)
         else:
             try:
                 urllib.urlretrieve(url, fname)
             except socket.error as e:
-                pr.warn('%s, retrieve %s failed.' % (str(e), url))
+                pr.pr_warn('%s, retrieve %s failed.' % (str(e), url))
 
 
 def urlopen_get_url_file(url, path,
@@ -206,16 +206,16 @@ def urlopen_get_url_file(url, path,
         try:
             r = urlopen(req, context=context)
         except (URLError, HTTPError) as e:
-            pr.warn('%s, uget %s failed.' % (str(e), url))
+            pr.pr_warn('%s, uget %s failed.' % (str(e), url))
         else:
             try:
                 data = r.read()
             except socket.ConnectionResetError as e:
-                pr.err(str(e))
+                pr.pr_err(str(e))
             else:
                 with open(fname, 'wb') as f:
                     if view:
-                        pr.info('uget: %s' % fname)
+                        pr.pr_info('uget: %s' % fname)
                     f.write(data)
 
 
@@ -225,7 +225,7 @@ def requests_get_url_file(url, path, view=False, pr=pr):
         r = requests.get(url)
         with open(fname, 'wb') as f:
             if view:
-                pr.info('requests get: %s' % fname)
+                pr.pr_info('requests get: %s' % fname)
             f.write(r.content)
 
 
@@ -237,7 +237,7 @@ def wget_url_file(
     else:
         cmd = 'wget %s -P %s %s -q' % (config, path, url)
     try:
-        pr.dbg('wget cmd: %s' % cmd)
+        pr.pr_dbg('wget cmd: %s' % cmd)
         return subprocess.check_output(cmd, shell=True)
     except subprocess.CalledProcessError:
         return None

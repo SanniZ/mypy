@@ -36,7 +36,7 @@ class Meitulu(WebImage):
         if self._xval in self.URL_BASE_MAP:
             self._url_base = self.URL_BASE_MAP[self._xval][0]
             cls = self.URL_BASE_MAP[self._xval][1]
-            self._pr.dbg(
+            self._pr.pr_dbg(
                 'get url_base: %s from -x %s' % (self._url_base, self._xval))
         if self._url_base:
             if all((not self._path, cls)):

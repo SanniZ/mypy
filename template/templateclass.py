@@ -22,7 +22,7 @@ pr = PyPrint('TemplateClass')
 
 
 def xxx_func(values):
-    pr.info('xxx_func: values=%s' % values)
+    pr.pr_info('xxx_func: values=%s' % values)
 
 
 ############################################################################

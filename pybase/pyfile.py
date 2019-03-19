@@ -274,9 +274,9 @@ if __name__ == '__main__':
                 result = find(path, wd, ftype)
             # print result
             for key, values in result.iteritems():
-                pr.info(key)
+                pr.pr_info(key)
                 for val in values:
-                    pr.info(val)
+                    pr.pr_info(val)
         elif k == '-s':
             values = args['-s'].split(',')
             n = len(values)

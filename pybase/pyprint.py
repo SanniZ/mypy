@@ -70,19 +70,19 @@ class PyPrint(object):
         return fmt_pr_warpper
 
     @__pr_msg
-    def dbg(self, *msg):
+    def pr_dbg(self, *msg):
         return self._lvl & PR_LVL_DBG
 
     @__pr_msg
-    def info(self, *msg):
+    def pr_info(self, *msg):
         return self._lvl & PR_LVL_INFO
 
     @__pr_msg
-    def warn(self, *msg):
+    def pr_warn(self, *msg):
         return self._lvl & PR_LVL_WARN
 
     @__pr_msg
-    def err(self, *msg):
+    def pr_err(self, *msg):
         return self._lvl & PR_LVL_ERR
 
     def get_config(self):

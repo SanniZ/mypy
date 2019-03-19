@@ -739,7 +739,7 @@ class WebImageCrawlerUI(WindowUI):
             else:
                 self.update_list_info(url, STAT_FAIL)
         else:
-            self._pr.err('Error, no found handler!')
+            self._pr.pr_err('Error, no found handler!')
             self.update_list_info(url, STAT_FAIL)
 
         # release thread.

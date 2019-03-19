@@ -40,7 +40,7 @@ class Girlsky(WebImage):
         args = super(Girlsky, self).process_input(opts, args=args)
         if self._xval in self.URL_BASE_MAP:
             self._url_base = list(self.URL_BASE_MAP[self._xval])[0]
-            self._pr.dbg(
+            self._pr.pr_dbg(
                 'get url_base: %s from -x %s' % (self._url_base, self._xval))
         if self._url_base:
             for dict_url_base in self.URL_BASE_MAP.values():
