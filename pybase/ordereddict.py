@@ -6,7 +6,7 @@ Created on 2019-03-01
 @author: Byng.Zeng
 """
 
-VERSION = '1.2.2'
+VERSION = '1.2.3'
 AUTHOR = 'Byng.Zeng'
 
 
@@ -26,7 +26,10 @@ class OrderedDict(object):
             self.append(dt)
 
     def __call__(self):
-        return self
+        lt = []
+        for k in self._keys:
+            lt.append((k, self._dt[k]))
+        return lt
 
     def __iter__(self):
         return self
@@ -70,13 +73,6 @@ class OrderedDict(object):
             del self._keys[self._keys.index(key)]
         else:
             raise KeyError('no found key %s' % key)
-
-    @property
-    def kw(self):
-        lt = []
-        for k in self._keys:
-            lt.append((k, self._dt[k]))
-        return lt
 
     # append a dict
     def append(self, dt):
