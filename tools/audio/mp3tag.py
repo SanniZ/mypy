@@ -66,26 +66,32 @@ def reclaim_mp3_tag(path):
         mp3 = eyed3.load(f)
         if mp3:
             pr.pr_dbg('reclaim tag %s' % f)
-            if not mp3.tag:
-                mp3.initTag()
-            mp3.tag.artist = artist
-            mp3.tag.title = title
-            try:
-                mp3.tag.save()
-            except (UnicodeEncodeError, NotImplementedError, TypeError,
-                    eyed3.id3.tag.TagException) as e:
-                pr.pr_err(str(e), f)
+            retry_times = 2
+            while retry_times:
+                if not mp3.tag:
+                    mp3.initTag()
+                mp3.tag.artist = artist
+                mp3.tag.title = title
+                try:
+                    mp3.tag.save()
+                except (UnicodeEncodeError, NotImplementedError, TypeError,
+                        eyed3.id3.tag.TagException):
+                    mp3.initTag()  # recreate tag for execpt
+                    retry_times -= 1
+                else:
+                    retry_times = 0
 
 
 def reclaim_mp3_filename(path):
     fs = scan_mp3_files(path)
     for f in fs:
-        artist, title = get_artist_title_from_filename(f, '_')
-        if artist != 'unknown':
-            pr.pr_dbg('reclaim name %s' % f)
-            newf = os.path.join(
-                    os.path.dirname(f), '%s - %s.mp3' % (artist, title))
-            os.rename(f, newf)
+        for tag in ['_', '-']:
+            artist, title = get_artist_title_from_filename(f, tag)
+            if artist != 'unknown':
+                pr.pr_dbg('reclaim name %s' % f)
+                newf = os.path.join(
+                        os.path.dirname(f), '%s - %s.mp3' % (artist, title))
+                os.rename(f, newf)
 
 
 @get_input_args()
