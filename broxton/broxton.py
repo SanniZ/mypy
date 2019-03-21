@@ -9,9 +9,9 @@ import subprocess
 
 from develop.debug import Debug as d
 from cmdprocess.cmdprocessing import CmdProcessing
-from develop.code import Code
+from develop.repo.repohelper import RepoHelper
 from linux.linux import HwInfo
-from develop.android import Android
+from develop.android.android import Android
 
 
 class AvbImage(object):
@@ -237,8 +237,8 @@ class Broxton(object):
 
     def __register_cmd_handlers(self):
         self._cmdHdrs = CmdProcessing()
-        self._code = Code(self._url)
-        self._cmdHdrs.register_cmd_handler(self._code.get_cmd_handlers())
+        self._repo = RepoHelper(self._url)
+        self._cmdHdrs.register_cmd_handler(self._repo.get_cmd_handlers())
         self._cmdHdrs.register_cmd_handler(self.get_cmd_handlers())
 
     def run_sys_input(self):

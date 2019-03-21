@@ -8,12 +8,12 @@ Created on Thu Jul  5 15:18:47 2018
 
 import subprocess
 
-from develop.code import Code
+from develop.repo.repohelper import RepoHelper
 from develop.debug import Debug as d
 from cmdprocess.cmdprocessing import CmdProcessing
 
 
-class Cwp(Code):
+class Cwp(RepoHelper):
 
     URL = \
         r'ssh://android.intel.com/h/hypervisor/manifests -b hypervisor/master'

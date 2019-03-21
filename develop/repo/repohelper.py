@@ -11,10 +11,10 @@ from linux.linux import HwInfo
 from develop.debug import Debug as d
 
 
-class Code(object):
+class RepoHelper(object):
     def __init__(self, url):
         self._url = url
-        d.dbg('Code init set url={}'.format(url))
+        d.dbg('RepoHelper init set url={}'.format(url))
 
     def help(self, cmds):
         for cmd in cmds:
@@ -71,10 +71,10 @@ class Code(object):
 
 if __name__ == '__main__':
     # d.set_debug_level('dbg,info,err')
-    code = Code(
+    helper = RepoHelper(
         r'ssh://android.intel.com/h/hypervisor/manifests -b hypervisor/master')
 
     from cmdprocess.cmdprocessing import CmdProcessing
     cmdHdr = CmdProcessing()
-    cmdHdr.register_cmd_handler(code.get_cmd_handlers())
+    cmdHdr.register_cmd_handler(helper.get_cmd_handlers())
     cmdHdr.run_sys_input()

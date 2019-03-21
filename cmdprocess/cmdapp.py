@@ -8,7 +8,7 @@ Created on Mon Aug 13 09:51:42 2018
 
 
 from cmdprocess.cmdprocessing import CmdProcessing
-from develop.android import Android
+from develop.android.android import Android
 from linux.linux import HwInfo, FileOps
 
 

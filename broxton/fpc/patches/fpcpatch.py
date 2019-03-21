@@ -10,7 +10,7 @@ import os
 
 from pybase.pydecorator import get_input_args
 from pybase.pysys import print_help
-import develop.gitpatch as gp
+from develop.git import gitpatch as gp
 
 VERSION = '1.0.0'
 AUTHOR = 'Byng.Zeng'
