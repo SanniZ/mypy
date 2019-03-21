@@ -9,10 +9,10 @@ import re
 
 from pybase.pysys import print_help
 from pybase.pypath import DEFAULT_DWN_PATH
-from pybase.pyinput import get_input_args
+from pybase.pydecorator import get_input_args
 from web.webimage.webimage import WebImage, OPTS
 
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 AUTHOR = 'Byng.Zeng'
 
 
@@ -31,7 +31,7 @@ class Meitulu(WebImage):
 
     @get_input_args()
     def process_input(self, opts, args=None):
-        args = super(Meitulu, self).get_input_args(args)
+        args = super(Meitulu, self).process_input(opts, args=args)
         cls = None
         if self._xval in self.URL_BASE_MAP:
             self._url_base = self.URL_BASE_MAP[self._xval][0]
