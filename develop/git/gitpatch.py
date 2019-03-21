@@ -13,7 +13,7 @@ import subprocess
 VERSION = '1.1.0'
 AUTHOR = 'Byng.Zeng'
 
-subject_pattern = re.compile('^Subject: \[PATCH.*](.*)$')
+subject_pattern = re.compile('^Subject: \[PATCH.*\](.*)')
 date_pattern = re.compile('^Date:.*$')
 
 
