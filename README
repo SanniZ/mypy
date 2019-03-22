@@ -1,6 +1,6 @@
-add the path of mypy to .bashrc.
-for example:
+add the path of mypy to .bashrc
 
+example:
 export MYPY=$HOME/mypy
 export PYTHONPATH=$PYTHONPATH:$MYPY
 
