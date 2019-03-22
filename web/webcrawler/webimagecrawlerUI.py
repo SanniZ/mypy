@@ -656,7 +656,7 @@ class WebImageCrawlerUI(WindowUI):
             fs = list()
             for key, info in self._fs_list.items():
                 fs.append('%s%s%s' % (
-                    key.ljust(64), info[0].ljust(16), info[1].ljust(64)))
+                    key.ljust(64), info[0].ljust(16), info[1]))
             # update fs list
             fs.sort(key=lambda f: f)  # it will match crawler_download_url().
             self._lbfs_var.set(tuple(fs))
