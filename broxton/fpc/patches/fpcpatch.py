@@ -12,7 +12,7 @@ from pybase.pydecorator import get_input_args
 from pybase.pysys import print_help
 from develop.git import gitpatch as gp
 
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 AUTHOR = 'Byng.Zeng'
 
 
@@ -56,11 +56,11 @@ class FpcRevertPatch(object):
         'vendor/intel/hardware/fingerprint/Android.mk']
 
 
-class FpcPatch(FpcRevertPatch):
+class FpcPatch(object):
 
     HELP_MENU = (
         '==================================',
-        '    WebContentApp - %s' % VERSION,
+        '    FpcPatch - %s' % VERSION,
         '',
         '    @Author: %s' % AUTHOR,
         '    Copyright (c) %s studio' % AUTHOR,
@@ -69,9 +69,12 @@ class FpcPatch(FpcRevertPatch):
         '    path: path of patches.',
         '  -r path: revert patches.',
         '    path: path of patches.',
+        '  -R path: revert patches of xfeng8 version.',
+        '    path: path of patches.',
     )
 
     def __init__(self, root=None, patches=None):
+        self._opts = 'ha:r:R:p:'
         self._root = root
         self._patches = patches
         self._src = None
@@ -80,6 +83,7 @@ class FpcPatch(FpcRevertPatch):
 
     @get_input_args()
     def process_input_args(self, opts, args=None):
+        print(opts, args)
         if '-p' in args:
             self._patches = os.path.abspath(args['-p'])
             self.update_path_config()
@@ -98,24 +102,37 @@ class FpcPatch(FpcRevertPatch):
             self._diff = os.path.join(self._patches, 'diff')
             self._src = os.path.join(self._patches, 'src')
 
+    def main(self, args=None):
+        args = self.process_input_args(self._opts, args=args)
+        if all((args, isinstance(args, dict))):
+            for key in args.keys():
+                if key == '-a':
+                    root = os.path.abspath(args['-a'])
+                    self.update_path_config(root=root)
+                    print('apply patches')
+                    gp.apply_patch_files(root, gp.get_patch_files(self._diff))
+                    gp.copy_src_files(root, gp.get_src_dirs(self._src))
+                    print('apply patches done')
+                elif key == '-R':
+                    root = os.path.abspath(args['-R'])
+                    self.update_path_config(root=root)
+                    print('revert patches')
+                    gp.revert_gits(root, FpcRevertPatch.GITS)
+                    gp.remove_src_files(root, FpcRevertPatch.SRCS)
+                    print('revert patches done')
+                elif key == '-r':
+                    root = os.path.abspath(args['-r'])
+                    self.update_path_config(root=root)
+                    print('revert patches')
+                    gp.revert_patch_files(root, self._diff)
+                    gp.remove_src_files(root, FpcRevertPatch.SRCS)
+                    print('revert patches done')
+                elif key == '-h':
+                    print_help(self.HELP_MENU)
+
 # ===============================================================
 # main entrance
 # ===============================================================
 if __name__ == '__main__':
     fpc = FpcPatch()
-    args = fpc.process_input_args('ha:r:p:')
-    if args:
-        if '-h' in args:
-            print_help(fpc.HELP_MENU)
-        if '-a' in args:
-            root = os.path.abspath(args['-a'])
-            fpc.update_path_config(root=root)
-            ds = gp.get_git_patches(fpc._diff)
-            gp.apply_patches(root, ds)
-            ds = gp.get_src_dirs(fpc._src)
-            gp.copy_src_files(root, ds)
-        if '-r' in args:
-            root = os.path.abspath(args['-r'])
-            fpc.update_path_config(root=root)
-            gp.revert_patches(root, FpcRevertPatch.GITS)
-            gp.remove_src_files(root, FpcRevertPatch.SRCS)
+    fpc.main()
