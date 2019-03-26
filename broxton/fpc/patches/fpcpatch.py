@@ -12,7 +12,7 @@ from pybase.pydecorator import get_input_args
 from pybase.pysys import print_help
 from develop.git import gitpatch as gp
 
-VERSION = '1.1.0'
+VERSION = '1.1.1'
 AUTHOR = 'Byng.Zeng'
 
 
@@ -83,7 +83,6 @@ class FpcPatch(object):
 
     @get_input_args()
     def process_input_args(self, opts, args=None):
-        print(opts, args)
         if '-p' in args:
             self._patches = os.path.abspath(args['-p'])
             self.update_path_config()

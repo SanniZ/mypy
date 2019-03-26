@@ -42,7 +42,7 @@ else:
 #               Const Vars
 ############################################################################
 
-VERSION = '1.3.2'
+VERSION = '1.4.0'
 AUTHOR = 'Byng.Zeng'
 
 STAT_WAITTING = 'Waitting'
@@ -57,7 +57,7 @@ LANG_MAP = (
          'Web Image Crawler %s\n\nAuther@%s\n\nCopyright(c)%s\n' % (VERSION,
                                                                     AUTHOR,
                                                                     AUTHOR),
-     'Config': 'Config', 'Cancel': 'Cancel', 'Copy': 'Copy',
+     'Config': 'Config', 'Cancel': 'Cancel', 'Copy': 'Copy', 'Clear': 'Clear',
      'Debug': 'Debug', 'Delete': 'Delete',
      'End': 'End', 'Error': 'Error', 'Exit': 'Exit', 'File': 'File',
      'Help': 'Help', 'InvalidType': 'Type/Start is invalid',
@@ -73,8 +73,8 @@ LANG_MAP = (
      'AboutVersion':
          '网页图片爬虫 %s\n\n作者@%s\n\n版权所有(c)%s\n' % (
                                                  VERSION, AUTHOR, AUTHOR),
-     'Config': '配置', 'Cancel': '取消', 'Copy': '复制', 'Debug': '调试',
-     'Delete': '删除', 'End': '结束', 'Exit': '退出',
+     'Config': '配置', 'Cancel': '取消', 'Copy': '复制', 'Clear': '清除',
+     'Debug': '调试', 'Delete': '删除', 'End': '结束', 'Exit': '退出',
      'Error': '错误', 'File': '文件', 'Help': '帮助',
      'InvalidType': '分类/开始值无效',
      'InvalidURL': '地址值无效', 'Lang': '语言', 'Notice': '提示',
@@ -131,6 +131,9 @@ class WindowUI(object):
         root.mainloop()
 
     def menu_file_open(self):
+        pass
+
+    def menu_file_clear(self):
         pass
 
     def menu_file_exit(self):
@@ -193,7 +196,10 @@ class WindowUI(object):
         menu_open = menu_file.add_command(
                         command=self.menu_file_open,
                         label='%s' % LANG_MAP[self._lang]['Open'].center(10))
-        # menu_file.add_separator()
+        menu_clear = menu_file.add_command(
+                        command=self.menu_file_clear,
+                        label='%s' % LANG_MAP[self._lang]['Clear'].center(10))
+        menu_file.add_separator()
         menu_exit = menu_file.add_command(
                         command=self.menu_file_exit,
                         label='%s' % LANG_MAP[self._lang]['Exit'].center(10))
@@ -272,6 +278,7 @@ class WindowUI(object):
         self._wm['mbar_output'] = mbar_output
         self._wm['mbar_debug'] = mbar_debug
         self._wm['menu_open'] = menu_open
+        self._wm['menu_clear'] = menu_clear
         self._wm['menu_exit'] = menu_exit
         self._wm['menu_output'] = menu_output
         self._wm['menu_about'] = menu_about
@@ -501,6 +508,11 @@ class WebImageCrawlerUI(WindowUI):
             self.update_url_list()
             self.update_list_info()
 
+    def menu_file_clear(self):
+        self._fs_list = {}
+        self.update_list_info()
+        self._path_var.set('')
+
     def menu_help_about(self):
         showinfo(LANG_MAP[self._lang]['About'],
                  LANG_MAP[self._lang]['AboutVersion'])
@@ -618,9 +630,13 @@ class WebImageCrawlerUI(WindowUI):
         if int(state):
             menu_file.entryconfigure(
                 '%s' % LANG_MAP[self._lang]['Open'].center(10), state=NORMAL)
+            menu_file.entryconfigure(
+                '%s' % LANG_MAP[self._lang]['Clear'].center(10), state=NORMAL)
         else:
             menu_file.entryconfigure(
               '%s' % LANG_MAP[self._lang]['Open'].center(10), state=DISABLED)
+            menu_file.entryconfigure(
+              '%s' % LANG_MAP[self._lang]['Clear'].center(10), state=DISABLED)
 
     def update_widget_state(self, state):
         # update state of menu
