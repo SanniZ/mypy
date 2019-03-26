@@ -11,14 +11,14 @@ import getopt
 from collections import OrderedDict
 
 
-VERSION = '1.1.0'
+VERSION = '1.1.1'
 
 
 ############################################################################
 #               functions
 ############################################################################
 
-def get_input_args(opts, ordered_args=False, err_exit=True):
+def get_input_args(opts, ordered_args=True, err_exit=True):
     if ordered_args:
         dt = OrderedDict()
     else:

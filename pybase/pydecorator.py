@@ -19,7 +19,7 @@ from collections import OrderedDict
 #               Const Vars
 ############################################################################
 
-VERSION = '1.2.3'
+VERSION = '1.2.4'
 
 
 ############################################################################
@@ -68,8 +68,8 @@ def execute_shell(func):
 # [self.]process_input('hx:', args=args)
 # =========================================================
 
-def get_input_args(ordered_args=False):
-    def __get_input_args(opts, ordered_args=False):
+def get_input_args(ordered_args=True):
+    def __get_input_args(opts, ordered_args=True):
         if ordered_args:
             dt = OrderedDict()
         else:
