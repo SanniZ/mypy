@@ -9,6 +9,7 @@ import re
 import sys
 from develop.debug import Debug as d
 
+from collections import OrderedDict
 
 class Parser(object):
     def __init__(self):
@@ -18,7 +19,7 @@ class Parser(object):
         if not cmds:
             cmds = ['help:help']
 
-        output = {}
+        output = OrderedDict()
         for cmd in cmds:
             data = cmd.split(':')
             if len(data) >= 2:
