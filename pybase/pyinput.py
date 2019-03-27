@@ -35,8 +35,11 @@ def get_input_args(opts, ordered_args=True, err_exit=True):
     return dt
 
 
-def get_args_dict(args, symbol=[':']):
-    dt = {}
+def get_args_dict(args, symbol=[':'], ordered_args=True):
+    if ordered_args:
+        dt = OrderedDict()
+    else:
+        dt = {}
     key = None
     if type(args) == dict:
         return args

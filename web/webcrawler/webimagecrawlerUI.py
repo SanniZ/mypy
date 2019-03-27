@@ -12,6 +12,8 @@ import sys
 import subprocess
 import threading
 
+from collections import OrderedDict
+
 from web.weburl import \
     get_url_base_and_num, set_url_base_and_num, reclaim_url_address
 from web.webcrawler.webimagecrawler import XBaseClass
@@ -492,7 +494,7 @@ class WebImageCrawlerUI(WindowUI):
         super(WebImageCrawlerUI, self).__init__()
         self._name = name
 
-        self._fs_list = {}
+        self._fs_list = OrderedDict()
         self._fs_list_lock = threading.Lock()
 
         self._class = None
@@ -509,7 +511,7 @@ class WebImageCrawlerUI(WindowUI):
             self.update_list_info()
 
     def menu_file_clear(self):
-        self._fs_list = {}
+        self._fs_list = OrderedDict()
         self.update_list_info()
         self._path_var.set('')
 
@@ -674,12 +676,12 @@ class WebImageCrawlerUI(WindowUI):
                 fs.append('%s%s%s' % (
                     key.ljust(64), info[0].ljust(16), info[1]))
             # update fs list
-            fs.sort(key=lambda f: f)  # it will match crawler_download_url().
+            # fs.sort(key=lambda f: f)  # it will match crawler_download_url().
             self._lbfs_var.set(tuple(fs))
 
     def update_url_list(self, urls=None):
         # clear file list
-        self._fs_list = {}
+        self._fs_list = OrderedDict()
         # get file
         if not urls:
             f = self._wm['enPath'].get()
@@ -726,7 +728,7 @@ class WebImageCrawlerUI(WindowUI):
             else:
                 urls = [f]
         # add file info to list.
-        for url in set(urls):
+        for url in sorted(set(urls)):
             url = reclaim_url_address(url)
             if url:
                 self.add_url_info_to_list(url)
@@ -765,7 +767,7 @@ class WebImageCrawlerUI(WindowUI):
         if len(self._fs_list):
             self._download_threads = list()
             # create thread to download url.
-            for url in sorted(self._fs_list.keys()):
+            for url in self._fs_list.keys():  # sorted(self._fs_list.keys()):
                 self._class = None
                 # set url and start thread to download url.
                 args = {'-u': url}
