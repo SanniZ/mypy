@@ -5,6 +5,8 @@ Created on Thu Jul  5 12:39:24 2018
 
 @author: Byng.Zeng
 """
+
+import os
 import subprocess
 
 from develop.debug import Debug as d
@@ -122,9 +124,10 @@ class Broxton(object):
             f.write("device/intel/mixins/mixin-update\n")
             f.write(". build/envsetup.sh\n")
             f.write("lunch {pdt}-{opt}\n".format(pdt=self._pdt, opt=self._opt))
-            f.write("make {tgt} -j{n}\n".format(
-                        tgt=self.make_map[image], n=HwInfo().get_cups()))
-
+            if os.path.exists('build.log'):
+                os.rename('build.log', 'build.log.old')
+            f.write("make {tgt} -j{n} 2>&1 | tee build.log\n".format(
+                    tgt=self.make_map[image], n=HwInfo().get_cups()))
         return make_sh
 
     def create_mmm_sh(self, target):
