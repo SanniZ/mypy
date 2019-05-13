@@ -213,13 +213,14 @@ class Broxton(object):
             ad.run_cmd_handler(['fastreboot'])
 
     def flash_firmware(self, fw):
-        cmd = \
-            r'sudo /opt/intel/platformflashtool/bin/ias-spi-programmer --write %s'.format(fw)
+        tool = '/opt/intel/platformflashtool/bin/ias-spi-programmer'
+        cmd = r'sudo {} --write {}'.format(tool, fw)
         d.info(cmd)
         subprocess.call(cmd, shell=True)
 
     def flash_ioc(self, ioc):
-        cmd = r'sudo /opt/intel/platformflashtool/bin/ioc_flash_server_app -s /dev/ttyUSB2 -grfabc -t {}'.format(ioc)
+        tool = '/opt/intel/platformflashtool/bin/ioc_flash_server_app'
+        cmd = r'sudo {} -s /dev/ttyUSB2 -grfabc -t {}'.format(tool, ioc)
         d.info(cmd)
         subprocess.call(cmd, shell=True)
 
