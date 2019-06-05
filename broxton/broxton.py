@@ -5,7 +5,6 @@ Created on Thu Jul  5 12:39:24 2018
 
 @author: Byng.Zeng
 """
-
 import os
 import subprocess
 
@@ -14,6 +13,8 @@ from cmdprocess.cmdprocessing import CmdProcessing
 from develop.repo.repohelper import RepoHelper
 from linux.linux import HwInfo
 from develop.android.android import Android
+
+VERSION = '1.0.1'
 
 
 class AvbImage(object):
@@ -58,11 +59,12 @@ class Broxton(object):
         'all': 'flashfiles',
     }
 
-    rmdir_map = {
-        'bootimage': 'out/target/product/gordon_peak/obj/kernel',
-        'tosimage': 'out/target/product/gordon_peak/obj/trusty',
-        'vendorimage': 'out/target/product/gordon_peak/vendor',
-        'systemimage': 'out/target/product/gordon_peak/system',
+    rm_map = {
+        'bootimage': ['obj/kernel', 'boot.img'],
+        'tosimage': ['obj/trusty', 'tos.img'],
+        'vendorimage': ['vendor', 'vendor.img'],
+        'systemimage': ['obj/JAVA_LIBRARIES', 'system', 'system.img'],
+        'flashfiles': ['obj/kernel', 'obj/trusty', '*.img'],
     }
 
     def __init__(self,
@@ -73,7 +75,7 @@ class Broxton(object):
         self._opt = opt
         self._user = user
         self._fw = r'ifwi_gr_mrb_b1.bin'
-        self._ioc = r'ioc_firmware_gp_mrb_fab_e_slcan.ias_ioc'
+        self._ioc = r'ioc_firmware_gp_mrb_fab_e.ias_ioc'
         if all((self._pdt, self._opt, self._user)):
             self._out = r'out/target/product/{pdt}'.format(pdt=self._pdt)
             self._flashfiles = r'{out}/{pdt}-flashfiles-eng.{user}'.format(
@@ -116,17 +118,23 @@ class Broxton(object):
     def create_make_sh(self, image):
         make_sh = r'.make.sh'
         img = self.make_map[image]
-        with open(make_sh, 'w') as f:
-            f.write("#!/bin/bash\n")
-            if img in self.rmdir_map.keys():
-                f.write('rm -rf %s\n' % self.rmdir_map[img])
-            f.write("rm -rf out/.lock\n")
-            f.write("device/intel/mixins/mixin-update\n")
-            f.write(". build/envsetup.sh\n")
-            f.write("lunch {pdt}-{opt}\n".format(pdt=self._pdt, opt=self._opt))
+        with open(make_sh, 'w') as fd:
+            fd.write("#!/bin/bash\n")
+            if img in self.rm_map.keys():
+                if img == 'flashfiles':
+                    self.rm_map['flashfiles'].append(
+                        '{pdt}-flashfiles-eng.{user}'.format(pdt=self._pdt,
+                                                             user=self._user))
+                for f in self.rm_map[img]:  # remove old files.
+                    fd.write('rm -rf {out}/{f}\n'.format(out=self._out, f=f))
+            fd.write("rm -rf out/.lock\n")
+            fd.write("device/intel/mixins/mixin-update\n")
+            fd.write(". build/envsetup.sh\n")
+            fd.write("lunch {pdt}-{opt}\n".format(pdt=self._pdt,
+                                                  opt=self._opt))
             if os.path.exists('build.log'):
                 os.rename('build.log', 'build.log.old')
-            f.write("make {tgt} -j{n} 2>&1 | tee build.log\n".format(
+            fd.write("make {tgt} -j{n} 2>&1 | tee build.log\n".format(
                     tgt=self.make_map[image], n=HwInfo().get_cups()))
         return make_sh
 
@@ -146,7 +154,6 @@ class Broxton(object):
             f.write(". build/envsetup.sh\n")
             f.write("lunch {pdt}-{opt}\n".format(pdt=self._pdt, opt=self._opt))
             f.write("mmm {tgt}\n".format(tgt=tgt))
-
         return make_sh
 
     def make_image(self, images):
@@ -252,6 +259,6 @@ if __name__ == '__main__':
     bxt = Broxton(r'ssh://android.intel.com/manifests -b android/master -m r0',
                   r'gordon_peak',
                   r'userdebug',
-                  r'yingbin')
+                  os.getenv('USER'))
 
     bxt.run_sys_input()

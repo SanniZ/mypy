@@ -5,17 +5,20 @@ Created on Thu Jul  5 14:33:36 2018
 
 @author: Byng.Zeng
 """
+import os
 
 from broxton import Broxton
 from develop.debug import Debug as d
 import subprocess
+
+VERSION = '1.0.1'
 
 
 class Fpc(Broxton):
     URL = 'ssh://android.intel.com/manifests -b android/o/mr1/maint/bxtp_ivi -m bxtp_ivi'
     PDT = 'gordon_peak'
     OPT = 'userdebug'
-    USR = 'yingbin'
+    USR = os.getenv('USER')
 
     def __init__(self, url=URL, pdt=PDT, opt=OPT, user=USR):
         super(Fpc, self).__init__(url=url, pdt=pdt, opt=opt, user=user)
@@ -42,7 +45,8 @@ class Fpc(Broxton):
                 image.append(d)
                 self.make_image(image)
             elif cmd == 'push':
-                sh = r'adb push out/target/product/gordon_peak/vendor/bin/fpc_tee_test /data/ftest'
+                sh = r'adb push {out}/vendor/bin/fpc_tee_test /data/ftest'\
+                    .format(out=self._out)
                 subprocess.call(sh, shell=True)
                 sh = r'adb shell chmod a+x /data/ftest'
                 subprocess.call(sh, shell=True)
