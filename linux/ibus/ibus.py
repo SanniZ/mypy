@@ -115,8 +115,9 @@ class IBus(object):
             (WUBI_LOVE98_TXT, WUBI_LOVE98_DB)
         process_shell_cmd(cmd)
         # backup ibus love98.db
-        cmd = 'sudo mv %s %s' % (IBUS_LOVE98_DB, '%s.bak' % IBUS_LOVE98_DB)
-        process_shell_cmd(cmd)
+        if os.path.exists(IBUS_LOVE98_DB):
+            cmd = 'sudo mv %s %s' % (IBUS_LOVE98_DB, '%s.bak' % IBUS_LOVE98_DB)
+            process_shell_cmd(cmd)
         # copy love98.db to ibus.
         cmd = 'sudo mv %s %s' % (WUBI_LOVE98_DB, IBUS_LOVE98_DB)
         process_shell_cmd(cmd)

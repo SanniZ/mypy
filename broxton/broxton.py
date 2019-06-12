@@ -11,10 +11,10 @@ import subprocess
 from develop.debug import Debug as d
 from cmdprocess.cmdprocessing import CmdProcessing
 from develop.repo.repohelper import RepoHelper
-from linux.linux import HwInfo
 from develop.android.android import Android
+from broxton.makesh import MakeSH, execute_make_sh
 
-VERSION = '1.0.1'
+VERSION = '1.1.0'
 
 
 class AvbImage(object):
@@ -45,27 +45,6 @@ class AvbImage(object):
 
 
 class Broxton(object):
-    make_map = {
-        'clean': 'clean',
-        'boot': 'bootimage',
-        'system': 'systemimage',
-        'tos': 'tosimage',
-        'vendor': 'vendorimage',
-        'bootimage': 'bootimage',
-        'systemimage': 'systemimage',
-        'tosimage': 'tosimage',
-        'vendorimage': 'vendorimage',
-        'flashfiles': 'flashfiles',
-        'all': 'flashfiles',
-    }
-
-    rm_map = {
-        'bootimage': ['obj/kernel', 'boot.img'],
-        'tosimage': ['obj/trusty', 'tos.img'],
-        'vendorimage': ['vendor', 'vendor.img'],
-        'systemimage': ['obj/JAVA_LIBRARIES', 'system', 'system.img'],
-        'flashfiles': ['obj/kernel', 'obj/trusty', '*.img'],
-    }
 
     def __init__(self,
                  url=None, pdt=None, opt=None, user=None):
@@ -115,47 +94,6 @@ class Broxton(object):
                 d.info('fw: {}'.format(self._fw))
                 d.info('ioc: {}'.format(self._ioc))
 
-    def create_make_sh(self, image):
-        make_sh = r'.make.sh'
-        img = self.make_map[image]
-        with open(make_sh, 'w') as fd:
-            fd.write("#!/bin/bash\n")
-            if img in self.rm_map.keys():
-                if img == 'flashfiles':
-                    self.rm_map['flashfiles'].append(
-                        '{pdt}-flashfiles-eng.{user}'.format(pdt=self._pdt,
-                                                             user=self._user))
-                for f in self.rm_map[img]:  # remove old files.
-                    fd.write('rm -rf {out}/{f}\n'.format(out=self._out, f=f))
-            fd.write("rm -rf out/.lock\n")
-            fd.write("device/intel/mixins/mixin-update\n")
-            fd.write(". build/envsetup.sh\n")
-            fd.write("lunch {pdt}-{opt}\n".format(pdt=self._pdt,
-                                                  opt=self._opt))
-            if os.path.exists('build.log'):
-                os.rename('build.log', 'build.log.old')
-            fd.write("make {tgt} -j{n} 2>&1 | tee build.log\n".format(
-                    tgt=self.make_map[image], n=HwInfo().get_cups()))
-        return make_sh
-
-    def create_mmm_sh(self, target):
-        # convert to string
-        t = type(target)
-        if t == list:
-            tgt = str(target[0])  # only support first arg.
-        else:
-            tgt = target
-
-        make_sh = r'.make.sh'
-        with open(make_sh, 'w') as f:
-            f.write("#!/bin/bash\n")
-            f.write("rm -rf out/.lock\n")
-            f.write("device/intel/mixins/mixin-update\n")
-            f.write(". build/envsetup.sh\n")
-            f.write("lunch {pdt}-{opt}\n".format(pdt=self._pdt, opt=self._opt))
-            f.write("mmm {tgt}\n".format(tgt=tgt))
-        return make_sh
-
     def make_image(self, images):
         d.dbg('Broxton.make_image: {}'.format(images))
         make_sh = None
@@ -163,24 +101,18 @@ class Broxton(object):
             d.dbg('create makesh for {}'.format(image))
             if type(image) is dict:
                 if 'mmm' in image:
-                    make_sh = self.create_mmm_sh(image['mmm'])
+                    make_sh = MakeSH(
+                        pdt=self._pdt, opt=self._opt,
+                        user=self._user).create_mmm_sh(image['mmm'])
                 else:
                     d.err('Not support: %s' % str(image))
                     exit()
             else:
-                make_sh = self.create_make_sh(image)
-
-            # set run right
-            cmd = r'chmod a+x {}'.format(make_sh)
-            subprocess.call(cmd, shell=True)
-            # run make sh
-            cmd = r'./{}'.format(make_sh)
-            d.dbg(cmd)
-            subprocess.call(cmd, shell=True)
-            # delete make sh
-            cmd = r'rm -rf {}'.format(make_sh)
-            d.dbg(cmd)
-            subprocess.call(cmd, shell=True)
+                make_sh = MakeSH(
+                        pdt=self._pdt, opt=self._opt,
+                        user=self._user).create_make_sh(image)
+            # run makesh to build images.
+            execute_make_sh(make_sh)
 
     def flash_images(self, images):
         fimgs = list()
