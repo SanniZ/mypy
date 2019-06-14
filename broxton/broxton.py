@@ -12,9 +12,9 @@ from develop.debug import Debug as d
 from cmdprocess.cmdprocessing import CmdProcessing
 from develop.repo.repohelper import RepoHelper
 from develop.android.android import Android
-from broxton.makesh import MakeSH, execute_make_sh
+from makesh import MakeSH
 
-VERSION = '1.1.0'
+VERSION = '1.1.1'
 
 
 class AvbImage(object):
@@ -109,10 +109,10 @@ class Broxton(object):
                     exit()
             else:
                 make_sh = MakeSH(
-                        pdt=self._pdt, opt=self._opt,
-                        user=self._user).create_make_sh(image)
+                            pdt=self._pdt, opt=self._opt,
+                            user=self._user).create_make_sh(image)
             # run makesh to build images.
-            execute_make_sh(make_sh)
+            MakeSH.execute_make_sh(make_sh)
 
     def flash_images(self, images):
         fimgs = list()

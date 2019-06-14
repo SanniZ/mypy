@@ -13,7 +13,7 @@ import subprocess
 from linux.linux import HwInfo
 
 
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 
 
 IMAGE_MAP = {
@@ -22,20 +22,22 @@ IMAGE_MAP = {
     'system': 'systemimage',
     'tos': 'tosimage',
     'vendor': 'vendorimage',
+    'all': 'flashfiles',
     'bootimage': 'bootimage',
     'systemimage': 'systemimage',
     'tosimage': 'tosimage',
     'vendorimage': 'vendorimage',
     'flashfiles': 'flashfiles',
-    'all': 'flashfiles',
 }
 
 
-def create_make_sh(image, pdt, opt, image_files=None):
+def create_make_sh(image,
+                   pdt='gordon_peak', opt='userdebug', image_files=None):
     if image not in IMAGE_MAP:
+        print('error, found unknown image: %s' % image)
         return None
-    else:
-        img = IMAGE_MAP[image]
+
+    img = IMAGE_MAP[image]
     make_sh = r'.make.sh'
     with open(make_sh, 'w') as fd:
         fd.write("#!/bin/bash\n")
@@ -54,7 +56,7 @@ def create_make_sh(image, pdt, opt, image_files=None):
     return make_sh
 
 
-def create_mmm_sh(target, pdt, opt):
+def create_mmm_sh(target, pdt='gordon_peak', opt='userdebug'):
     # convert to string
     t = type(target)
     if t == list:
@@ -70,6 +72,14 @@ def create_mmm_sh(target, pdt, opt):
         f.write(". build/envsetup.sh\n")
         f.write("lunch {pdt}-{opt}\n".format(pdt=pdt, opt=opt))
         f.write("mmm {tgt}\n".format(tgt=tgt))
+    return make_sh
+
+
+def create_clean_sh():
+    make_sh = r'.make.sh'
+    with open(make_sh, 'w') as f:
+        f.write("#!/bin/bash\n")
+        f.write("rm -rf out\n")
     return make_sh
 
 
@@ -98,6 +108,12 @@ class MakeSH(object):
         return create_make_sh(image, self._pdt, self._opt,
                               self.image_pre_delete_files(image))
 
+    def execute_make_sh(self, make_sh):
+        execute_make_sh(make_sh)
+
+    def execute_make_image(self, image):
+        execute_make_sh(self.create_make_sh(image))
+
     def create_mmm_sh(self, target):
         return create_mmm_sh(target, self._pdt, self._opt)
 
@@ -111,19 +127,21 @@ class MakeSH(object):
                            '{pdt}-flashfiles-eng.{user}*'.format(
                                pdt=self._pdt, user=self._user)],
         }
-        res = None
+        fs = []
         if image in IMAGE_MAP:
             img = IMAGE_MAP[image]
             if img in image_files:
-                fs = []
                 for f in image_files[img]:
                     fs.append('{out}/{f}'.format(out=self._out, f=f))
                 return fs
-        return res
+        return fs
 
 
 if __name__ == '__main__':
     makesh = MakeSH(pdt='gordon_peak', opt='userdebug')
     for image in sys.argv[1:]:
-        sh = makesh.create_make_sh(image)
+        if image in ['clean', 'clear', 'clr']:
+            sh = create_clean_sh()
+        else:
+            sh = makesh.create_make_sh(image)
         execute_make_sh(sh)
