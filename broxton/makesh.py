@@ -38,21 +38,24 @@ def create_make_sh(image,
         return None
 
     img = IMAGE_MAP[image]
-    make_sh = r'.make.sh'
-    with open(make_sh, 'w') as fd:
-        fd.write("#!/bin/bash\n")
-        if image_files:
-            for f in image_files:
-                fd.write("rm -rf {f}\n".format(f=f))
-        fd.write("rm -rf out/.lock\n")
-        fd.write("device/intel/mixins/mixin-update\n")
-        fd.write(". build/envsetup.sh\n")
-        fd.write("lunch {pdt}-{opt}\n".format(pdt=pdt, opt=opt))
-        if os.path.exists('build.log'):
-            os.rename('build.log', 'build.log.old')
-        ncpu = HwInfo().get_cups()
-        fd.write("make {tgt} -j{n} 2>&1 | tee build.log\n".format(
-            tgt=img, n=(ncpu if ncpu < 8 else ncpu - 4)))
+    if img in ['clean']:
+        make_sh = create_clean_sh()
+    else:
+        make_sh = r'.make.sh'
+        with open(make_sh, 'w') as fd:
+            fd.write("#!/bin/bash\n")
+            if image_files:
+                for f in image_files:
+                    fd.write("rm -rf {f}\n".format(f=f))
+            fd.write("rm -rf out/.lock\n")
+            fd.write("device/intel/mixins/mixin-update\n")
+            fd.write(". build/envsetup.sh\n")
+            fd.write("lunch {pdt}-{opt}\n".format(pdt=pdt, opt=opt))
+            if os.path.exists('build.log'):
+                os.rename('build.log', 'build.log.old')
+            ncpu = HwInfo().get_cups()
+            fd.write("make {tgt} -j{n} 2>&1 | tee build.log\n".format(
+                tgt=img, n=(ncpu if ncpu < 8 else ncpu - 4)))
     return make_sh
 
 

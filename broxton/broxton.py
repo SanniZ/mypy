@@ -96,23 +96,22 @@ class Broxton(object):
 
     def make_image(self, images):
         d.dbg('Broxton.make_image: {}'.format(images))
-        make_sh = None
+        make_sh = MakeSH(pdt=self._pdt, opt=self._opt, user=self._user)
+        sh = None
         for image in images:
             d.dbg('create makesh for {}'.format(image))
             if type(image) is dict:
                 if 'mmm' in image:
-                    make_sh = MakeSH(
+                    sh = MakeSH(
                         pdt=self._pdt, opt=self._opt,
                         user=self._user).create_mmm_sh(image['mmm'])
                 else:
                     d.err('Not support: %s' % str(image))
                     exit()
             else:
-                make_sh = MakeSH(
-                            pdt=self._pdt, opt=self._opt,
-                            user=self._user).create_make_sh(image)
+                sh = make_sh.create_make_sh(image)
             # run makesh to build images.
-            MakeSH.execute_make_sh(make_sh)
+            make_sh.execute_make_sh(sh)
 
     def flash_images(self, images):
         fimgs = list()
