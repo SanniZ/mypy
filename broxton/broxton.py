@@ -14,7 +14,7 @@ from develop.repo.repohelper import RepoHelper
 from develop.android.android import Android
 from makesh import MakeSH
 
-VERSION = '1.1.1'
+VERSION = '1.1.2'
 
 
 class AvbImage(object):
@@ -98,7 +98,16 @@ class Broxton(object):
         d.dbg('Broxton.make_image: {}'.format(images))
         make_sh = MakeSH(pdt=self._pdt, opt=self._opt, user=self._user)
         sh = None
+        pre_delete = False
         for image in images:
+            # pre delete.
+            if image in ['clear', 'clr', 'delete', 'del']:
+                pre_delete = True
+                continue
+            elif image in ['noclear', 'noclr', 'nodelete', 'nodel']:
+                pre_delete = False
+                continue
+            # create and excute make shell
             d.dbg('create makesh for {}'.format(image))
             if type(image) is dict:
                 if 'mmm' in image:
@@ -109,7 +118,7 @@ class Broxton(object):
                     d.err('Not support: %s' % str(image))
                     exit()
             else:
-                sh = make_sh.create_make_sh(image)
+                sh = make_sh.create_make_sh(image, pre_delete)
             # run makesh to build images.
             make_sh.execute_make_sh(sh)
 
