@@ -11,7 +11,7 @@ import getopt
 import subprocess
 import time
 
-VERSION = '2.0.0'
+VERSION = '2.0.1'
 AUTHOR = 'Byng.Zeng'
 
 
@@ -93,19 +93,19 @@ class UnlockDeviceTest(object):
                     print('\ndefault set: -k %s,%s -s %s' % (
                         self._key_pos[0], self._key_pos[1], self._power_on))
                     sys.exit()
-                if name == '-t':
+                elif name == '-t':
                     self._unlock_times = int(value)
-                if name == '-k':
+                elif name == '-k':
                     pos = value.split(',')
                     self._key_pos = tuple(pos)
-                if name == '-s':
+                elif name == '-s':
                     self._power_on = int(value)
-                if name == '-u':
+                elif name == '-u':
                     if value.upper() in ['1', 'TRUE']:
                         self._auto_unlock = True
                     else:
                         self._auto_unlock = False
-                if name == '-w':
+                elif name == '-w':
                     data = value.split(',')
                     if len(data) >= 3:
                         self._power_up_time = int(data[0])
