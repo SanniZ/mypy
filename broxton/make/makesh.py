@@ -96,7 +96,6 @@ def create_clean_sh():
 
 
 def execute_make_sh(make_sh):
-    return
     cmd = r'chmod a+x {}'.format(make_sh)
     subprocess.call(cmd, shell=True)
     # run make sh
