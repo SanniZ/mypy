@@ -9,10 +9,13 @@ import os
 import subprocess
 
 from develop.debug import Debug as d
-from cmdprocess.cmdprocessing import CmdProcessing
+from pybase.pyprocess.pyprocess import PyCmdProcess
 from develop.repo.repohelper import RepoHelper
 from develop.android.android import Android
-from broxton.make.makesh import MakeSH
+try:
+    from broxton.make.makesh import MakeSH
+except ImportError as e:
+    from make.makesh import MakeSH
 
 VERSION = '1.1.2'
 
@@ -187,13 +190,13 @@ class Broxton(object):
                 return None
 
     def __register_cmd_handlers(self):
-        self._cmdHdrs = CmdProcessing()
+        self._cmdproc = PyCmdProcess()
         self._repo = RepoHelper(self._url)
-        self._cmdHdrs.register_cmd_handler(self._repo.get_cmd_handlers())
-        self._cmdHdrs.register_cmd_handler(self.get_cmd_handlers())
+        self._cmdproc.register_cmd_handler(self._repo.get_cmd_handlers())
+        self._cmdproc.register_cmd_handler(self.get_cmd_handlers())
 
     def run_sys_input(self):
-        self._cmdHdrs.run_sys_input()
+        self._cmdproc.run_sys_input()
 
 if __name__ == '__main__':
     bxt = Broxton(r'ssh://android.intel.com/manifests -b android/master -m r0',

@@ -22,7 +22,7 @@ class Fpc(Broxton):
 
     def __init__(self, url=URL, pdt=PDT, opt=OPT, user=USR):
         super(Fpc, self).__init__(url=url, pdt=pdt, opt=opt, user=user)
-        self._cmdHdrs.register_cmd_handler(self.__get_cmd_handlers())
+        self._cmdproc.register_cmd_handler(self.__get_cmd_handlers())
 
     def help(self, cmds):
         super(Fpc, self).help(cmds)

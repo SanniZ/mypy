@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+3# -*- coding: utf-8 -*-
 """
 Created on Thu Jul  5 11:17:08 2018
 
@@ -6,10 +6,10 @@ Created on Thu Jul  5 11:17:08 2018
 """
 
 from develop.debug import Debug as d
-from cmdprocess.input import Input
+from pybase.pyprocess.pyinput import PyCmdInput
 
 
-class CmdProcessing(object):
+class PyCmdProcess(object):
     def __init__(self):
         self._cmd_dict = dict()
 
@@ -23,7 +23,7 @@ class CmdProcessing(object):
 
     # run input commands
     def run(self, cmds):
-        d.dbg('CmdProcessing.run(): %s' % cmds)
+        d.dbg('PyCmdProcess.run(): %s' % cmds)
         for key in cmds:
             # check help.
             if key == 'help':
@@ -53,4 +53,4 @@ class CmdProcessing(object):
 
     # run sys input commands
     def run_sys_input(self):
-        self.run(Input().get_input())
+        self.run(PyCmdInput().get_input())

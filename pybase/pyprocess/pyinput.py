@@ -76,7 +76,7 @@ class Parser(object):
         return output
 
 
-class Input(Parser):
+class PyCmdInput(Parser):
     def __init__(self):
         d.dbg('Input init done.')
         pass
