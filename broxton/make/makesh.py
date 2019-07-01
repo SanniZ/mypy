@@ -96,6 +96,7 @@ def create_clean_sh():
 
 
 def execute_make_sh(make_sh):
+    return
     cmd = r'chmod a+x {}'.format(make_sh)
     subprocess.call(cmd, shell=True)
     # run make sh
@@ -166,4 +167,4 @@ if __name__ == '__main__':
             sh = create_clean_sh()
         else:
             sh = makesh.create_make_sh(image, pre_delete)
-        #execute_make_sh(sh)
+        execute_make_sh(sh)

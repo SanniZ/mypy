@@ -12,7 +12,7 @@ from develop.debug import Debug as d
 from cmdprocess.cmdprocessing import CmdProcessing
 from develop.repo.repohelper import RepoHelper
 from develop.android.android import Android
-from makesh import MakeSH
+from broxton.make.makesh import MakeSH
 
 VERSION = '1.1.2'
 
