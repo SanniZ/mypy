@@ -17,7 +17,8 @@ try:
 except ImportError as e:
     from make.makesh import MakeSH
 
-VERSION = '1.1.2'
+
+VERSION = '1.1.3'
 
 
 class AvbImage(object):
@@ -26,7 +27,6 @@ class AvbImage(object):
         cmd = r'cp {out}/{src}.img {flashfiles}/{tar}.img'.format(
                 out=broxton._out, src=image, flashfiles=broxton._flashfiles,
                 tar=image)
-        d.dbg(cmd)
         subprocess.call(cmd, shell=True)
 
         d.dbg('avb make image now.')
@@ -43,15 +43,16 @@ class AvbImage(object):
             broxton._flashfiles,
             broxton._flashfiles,
             broxton._flashfiles)
-        d.dbg(cmd)
         subprocess.call(cmd, shell=True)
 
 
 class Broxton(object):
+    URL = 'ssh://xfeng8-ubuntu2.sh.intel.com:29418/manifests -b master'
+    PDT = 'gordon_peak'
+    OPT = 'userdebug'
+    USR = os.getenv('USER')
 
-    def __init__(self,
-                 url=None, pdt=None, opt=None, user=None):
-        super(Broxton, self).__init__()
+    def __init__(self, url=URL, pdt=PDT, opt=OPT, user=USR):
         self._url = url
         self._pdt = pdt
         self._opt = opt
@@ -65,9 +66,8 @@ class Broxton(object):
         else:
             self._out = None
             self._flashfiles = None
-
+        # register cmd handlers.
         self.__register_cmd_handlers()
-        d.dbg('Broxton init done!')
 
     def help(self, cmds):
         for cmd in cmds:
