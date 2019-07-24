@@ -21,8 +21,8 @@ VERSION = '1.1.1'
 AUTHOR = 'Byng.Zeng'
 
 
-WUBI_LOVE98_TXT = '%s/wubi-love98/wubi-love98.txt' % os.getenv('IBus')
-WUBI_LOVE98_DB = '%s/wubi-love98/wubi-love98.db' % os.getenv('IBus')
+WUBI_LOVE98_TXT = '%s/wubi-love98/wubi-love98.txt' % os.getenv('IBUS')
+WUBI_LOVE98_DB = '%s/wubi-love98/wubi-love98.db' % os.getenv('IBUS')
 IBUS_LOVE98_DB = '/usr/share/ibus-table/tables/wubi-love98.db'
 
 
