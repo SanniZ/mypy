@@ -14,7 +14,7 @@ import shutil
 from collections import OrderedDict
 
 
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 
 
 # default home of zephyr
@@ -47,7 +47,61 @@ def usage_help():
 # build name of application.
 #
 # set default src to samples/ if src=None.
-def build(name=None, src=None, home=ZEPHYR_HOME):
+def build(args):
+    def build_help():
+        HELPS = (
+            '',
+            '  usage: zephyr build name [src] [board] [home]',
+            '',
+            'name or name=xxx:',
+            '  name of application to build',
+            'src or src=xxx',
+            '  path of src of application.',
+            'board or board=xxx',
+            '  board platform to build, default qemu_x86',
+            'home or home=xxx',
+            '  path of project',
+        )
+        for help in HELPS:
+            print(help)
+        sys.exit()
+
+    home = ZEPHYR_HOME
+    name = src = None
+    board = 'qemu_x86'
+
+    if not args:
+        print("Error, no found build args!")
+        return 0
+    # update home.
+    if 'home' in args:
+        home = args['home']
+    # build args.
+    if 'args' in args:
+        for val in args['args']:
+            cv = val.split('=')
+            if len(cv) > 1:
+                if cv[0] == 'name':
+                    name = cv[1]
+                elif cv[0] == 'src':
+                    src = cv[1]
+                elif cv[0] == 'board':
+                    board = cv[1]
+                elif cv[0] == 'help':
+                    build_help()
+                else:
+                    print('Error, unknown %s to build' % cv[0])
+                    sys.exit()
+            else:
+                if val in ['-h', 'help', '--help']:
+                    build_help()
+                if not name:
+                    name = val
+                elif not src:
+                    src = val
+                elif not board:
+                    board = val
+
     if name:
         if not src:  # set default src to samples.
             src = os.path.join('samples', name)
@@ -63,25 +117,71 @@ def build(name=None, src=None, home=ZEPHYR_HOME):
         cmake = os.path.join(os.getenv('CMAKE'), 'cmake')
         # run shell command to make target.
         cmd = "cd {home} && source zephyr-env.sh " \
-              "&& {cmake} -B {out} -DBOARD=qemu_x86 {src}".format(home=home,
-                                                                  cmake=cmake,
-                                                                  out=out,
-                                                                  src=src)
+              "&& {cmake} -B {out} -DBOARD={board} {src} 2>&1 " \
+              "| tee build.log".format(home=home,
+                                       cmake=cmake,
+                                       out=out,
+                                       board=board,
+                                       src=src)
         subprocess.call(cmd, shell=True, executable="/bin/bash")
     return 0
 
 
 # run name of application
 #
-def run(name=None, home=ZEPHYR_HOME):
-    if name:
-        src = os.path.join('out', name)
-        if not os.path.exists(os.path.join(home, src)):
-            print('No found application of %s' % name)
-            return -1
-        # run shell command to run target
-        cmd = "cd {home} && make run".format(home=os.path.join(home, src))
-        subprocess.call(cmd, shell=True, executable="/bin/bash")
+def run(args):
+    def run_help():
+        HELPS = (
+            '',
+            '  usage: zephyr run name [path]',
+            '',
+            'name or name=xxx:',
+            '  name of application to build',
+            'path or path=xxx',
+            '  build path of application.',
+        )
+        for help in HELPS:
+            print(help)
+        sys.exit()
+
+    home = ZEPHYR_HOME
+    name = path = None
+
+    if not args:
+        print("Error, no found build args!")
+        return 0
+    # update home.
+    if 'home' in args:
+        home = args['home']
+    # build args.
+    if 'args' in args:
+        for val in args['args']:
+            cv = val.split('=')
+            if len(cv) > 1:
+                if cv[0] == 'name':
+                    name = cv[1]
+                elif cv[0] == 'path':
+                    path = cv[1]
+                elif cv[0] == 'help':
+                    run_help()
+                else:
+                    print('Error, unknown %s to run' % cv[0])
+                    sys.exit()
+            else:
+                if val in ['-h', 'help', '--help']:
+                    run_help()
+                if not name:
+                    name = val
+
+    if (not path) and name:
+        path = os.path.join(home, 'out', name)
+
+    if not os.path.exists(path):
+        print('No found application of %s' % name)
+        return -1
+    # run shell command to run target
+    cmd = "cd {path} && make run".format(path=path)
+    subprocess.call(cmd, shell=True, executable="/bin/bash")
     return 0
 
 
@@ -120,6 +220,10 @@ def get_cmds(args):
 # run cmds
 #
 def run_cmds(cmds):
+    support_cmds = {'build': build,
+                    'run': run,
+                    }
+
     if not cmds:
         usage_help()
         return -1
@@ -135,18 +239,11 @@ def run_cmds(cmds):
         del cmds['home']  # remove home from cmds.
     # run cmds.
     for key, value in cmds.items():
-        if key == 'build':  # build
-            if len(value) >= 2:  # build(name, src)
-                build(name=value[0], src=value[1], home=home)
-            elif len(value) == 1:  # build(name)
-                build(name=value[0], home=home)
-        elif key == 'run':  # run
-            if len(value) > 0:  # run(name)
-                run(value[0], home)
-            elif 'build' in cmds:
-                run(cmds['build'][0], home)
-            else:
-                usage_help()
+        if key in support_cmds:
+            args = {}
+            args['home'] = home
+            args['args'] = value
+            support_cmds[key](args)
     return 0
 
 
@@ -154,8 +251,7 @@ def run_cmds(cmds):
 #
 def main(args=None):
     cmds = get_cmds(args)
-    if cmds:
-        run_cmds(cmds)
+    run_cmds(cmds)
     return 0
 
 
