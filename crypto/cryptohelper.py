@@ -5,8 +5,14 @@ Created on 2018-02-25
 
 @author: Byng.Zeng
 """
+import os
 
-from Crypto.Cipher import AES, DES
+try:
+    from Crypto.Cipher import AES, DES
+except ImportError:
+    print("run 'sudo pip3 install pycrypto' to install Crypto module.")
+    sys.exit()
+
 import base64
 
 import rsa

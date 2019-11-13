@@ -75,7 +75,7 @@ def unzip(data):
     return data
 
 
-def find(path, wd, ftype=None):
+def find(path, wd=None, ftype=None):
     result = dict()
     fs = None
     pattern = re.compile('%s' % wd, re.I)
@@ -99,14 +99,17 @@ def find(path, wd, ftype=None):
                         # check type of file.
                         if get_filetype(f) != ftype:
                             continue
-                    f = os.path.join(rt, f)
-                    lst = list()
-                    with open(f, 'r') as fd:
-                        data = fd.read()
-                    data = pattern.findall(data)
-                    lst = map(lambda x: x, data)
-                    if lst:
-                        result[f] = lst
+                    pf = os.path.join(rt, f)
+                    if wd:
+                        lst = list()
+                        with open(pf, 'r') as fd:
+                            data = fd.read()
+                        data = pattern.findall(data)
+                        lst = map(lambda x: x, data)
+                        if lst:
+                            result[pf] = lst
+                    else:
+                        result[f] = rt
     return result
 
 
