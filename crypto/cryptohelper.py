@@ -22,7 +22,7 @@ Note:
     run 'sudo pip3 install pycrypto' to install Crypto module.
 '''
 
-VERSION = '1.1.0'
+VERSION = '1.1.1'
 
 
 DES_ALIGN_LENGTH = 8
@@ -170,11 +170,11 @@ def DES_decrypt(key, text, iv=DES_IV, mode='ECB'):
 
 
 def AES_encrypt(key, text, iv=AES_IV, mode=AES.MODE_CBC):
-    text = encode_text(text)
-    if any((not key, not text, not iv, not mode)):
+    if any((not key, not text, not iv, not mode, len(key) not in [16, 24, 32])):
         print('AES_encrypt error, found None input.')
         return None
-    mode = get_cipher_mode('DES', mode)
+    text = encode_text(text)
+    mode = get_cipher_mode('AES', mode)
     if not mode:
         print('AES_encrypt error, found invalid mode.')
         return None
@@ -190,10 +190,10 @@ def AES_encrypt(key, text, iv=AES_IV, mode=AES.MODE_CBC):
 
 
 def AES_decrypt(key, text, iv=AES_IV, mode=AES.MODE_CBC):
-    if any((not key, not text, not iv, not mode)):
+    if any((not key, not text, not iv, not mode, len(key) not in [16, 24, 32])):
         print('AES_encrypt error, found None input.')
         return None
-    mode = get_cipher_mode('DES', mode)
+    mode = get_cipher_mode('AES', mode)
     if not mode:
         print('AES_decrypt error, found invalid mode.')
         return None
