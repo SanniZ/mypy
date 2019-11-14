@@ -27,7 +27,7 @@ def get_type_files(path, ftype):
 # src: path of source.
 # dst: path of output.
 #
-def encrypto_path_files(key, src, dst, ftype, cipher='AES', mode='CBC'):
+def encrypto_path_files(key, src, dst, ftype, xtype=None, cipher='AES', mode='CBC'):
     fs = get_type_files(src, ftype)
     if fs:
         enc=CryptoHelper(key, cipher=cipher, mode=mode)
@@ -41,6 +41,8 @@ def encrypto_path_files(key, src, dst, ftype, cipher='AES', mode='CBC'):
             dr = v.replace(src, '')
             if not os.path.exists(os.path.join(dst, dr)):
                 os.makedirs(os.path.join(dst, dr))
+            if xtype:
+                k = k.replace(ftype, xtype)
             with open(os.path.join(dst, dr, k), 'w') as fd:
                 fd.write(f.decode())
     return True
@@ -54,7 +56,7 @@ def encrypto_path_files(key, src, dst, ftype, cipher='AES', mode='CBC'):
 # src: path of source.
 # dst: path of output.
 #
-def decrypto_path_files(key, src, dst, ftype, cipher='AES', mode='CBC'):
+def decrypto_path_files(key, src, dst, ftype, xtype=None, cipher='AES', mode='CBC'):
     fs = get_type_files(src, ftype)
     if fs:
         dec=CryptoHelper(key=key, cipher=cipher, mode=mode)
@@ -68,21 +70,24 @@ def decrypto_path_files(key, src, dst, ftype, cipher='AES', mode='CBC'):
             dr = v.replace(src, '')
             if not os.path.exists(os.path.join(dst, dr)):
                 os.makedirs(os.path.join(dst, dr))
+            if xtype:
+                k = k.replace(ftype, xtype)
             with open(os.path.join(dst, dr, k), 'w') as fd:
                 fd.write(f)
     return True
 
 
 class CryptoFile(object):
-    def __init__(self, key, src, dst, ftype):
+    def __init__(self, key, src, dst, ftype, xtype=None):
         self._key = key
         self._src = os.path.abspath(src) + '/'
         self._dst = os.path.abspath(dst) + '/'
         self._ftype = ftype
+        self._xtype = xtype
 
 
     def encrypto_files(self):
-        encrypto_path_files(self._key, self._src, self._dst, self._ftype)
+        return encrypto_path_files(self._key, self._src, self._dst, self._ftype, self._xtype)
 
     def decrypto_files(self):
-        decrypto_path_files(self._key, self._src, self._dst, self._ftype)
+        return decrypto_path_files(self._key, self._src, self._dst, self._ftype, self._xtype)

@@ -51,11 +51,19 @@ def get_filetype(f, lower=True):
 
 
 def remove_small_file(path, size):
-    for rt, dirs, fs in os.walk(path):
-        if len(fs) != 0:
+    for rt, ds, fs in os.walk(path):
+        if fs:
             for f in fs:
                 f = os.path.join(rt, f)
                 if os.path.getsize(f) < size:
+                    os.remove(f)
+
+def remove_type_file(path, ftype):
+    for rt, ds, fs in os.walk(path):
+        if fs:
+            for f in fs:
+                f = os.path.join(rt, f)
+                if get_filetype(f) == ftype:
                     os.remove(f)
 
 

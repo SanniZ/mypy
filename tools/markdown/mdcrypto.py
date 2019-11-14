@@ -4,9 +4,11 @@ VERSION='1.1.0'
 
 import os
 import sys
+import subprocess
 
 from pybase.pyinput import get_input_args
-from pybase.pysys import print_help, print_exit, execute_shell
+from pybase.pysys import print_help, print_exit
+from pybase.pyfile import remove_type_file
 from crypto.cryptofile import CryptoFile
 
 import getpass
@@ -30,10 +32,13 @@ def markdown_help():
 
 
 def markdown_encrypto(key, src, dst):
-    CryptoFile(key, src, dst, 'md').encrypto_files()
+    if CryptoFile(key, src, dst, 'md', 'mdx').encrypto_files():
+        remove_type_file(src, 'md')
+
 
 def markdown_decrypto(key, src, dst):
-    CryptoFile(key, src, dst, 'md').decrypto_files()
+    if CryptoFile(key, src, dst, 'mdx', 'md').decrypto_files():
+        remove_type_file(dst, 'mdx')
 
 
 def markdown(args=None):
@@ -72,4 +77,6 @@ def markdown(args=None):
 
 
 if __name__ == "__main__":
+    # if getpass.getpass('input your key:') != 'xxx':
+    #     print_exit("error, invalid key!", True)
     markdown()
