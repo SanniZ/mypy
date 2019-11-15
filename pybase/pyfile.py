@@ -14,7 +14,7 @@ import io
 import shutil
 
 
-VERSION = '1.1.0'
+VERSION = '1.1.1'
 AUTHOR = 'Byng.Zeng'
 
 
@@ -202,6 +202,10 @@ class PyFile(object):
     @staticmethod
     def remove_small_file(path, size):
         return remove_small_file(path, size)
+
+    @staticmethod
+    def remove_type_file(path, ftype):
+        return remove_type_file(path, ftype)
 
     @staticmethod
     def reclaim_name(name, name_dict=None):
