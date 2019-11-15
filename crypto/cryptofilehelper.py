@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 AUTHOR='Byng Zeng'
-VERSION='1.0.0'
+VERSION='1.0.1'
 
 import os
 
@@ -35,14 +35,16 @@ def cryptofile_help():
         " -k: 16, 24, 32 Bytes key password",
         " -s: path of source",
         " -o: path of output",
-        " -d: decrypto files",
-        " -e: encrypto files",
+        " -d: decrypto and remove ftype files",
+        " -D: decrytpo ftype files",
+        " -e: encrypto and remove ftype files",
+        " -E: encrytpo ftype files",
         " -t: type name of file will be crypto",
         " -x: type name of file will be saved",
         " -c: set cipher: AES, DES, RSA",
         " -m: set mode of cipher: CBC, ECB",
         " -r: remove ftype files after encrypto/decrypto",
-        " -i: print information",
+        " -v: print information",
         "",
         "defualt:",
         "  key=%s, cipher=%s, mode=%s" % (key, cipher, mode),
@@ -57,10 +59,10 @@ def cryptofile_help():
 
 def main(args=None):
     if not args:
-        args = get_input_args('dek:s:o:c:m:t:rih')
+        args = get_input_args('dDeEk:s:o:c:m:t:rvh')
     if args:
         # set vars.
-        global key, src, dst, cipher, mode, ftype, xtype
+        global key, src, dst, cipher, mode, ftype, xtype, rtype
         pr = False
         opts = []
         for k, v in args.items():
@@ -78,12 +80,14 @@ def main(args=None):
                 ftype = v
             elif k == '-x':
                 xtype = v
-            elif k == '-i':
+            elif k == '-v':
                 pr = True
             elif k == '-r':
                 rtype = True
-            elif k in ['-d', '-e']:
+            elif k in ['-d', '-D', '-e', '-E']:
                 opts.append(k)
+                if k in ['-d', '-e']:  # remove ftype files.
+                    rtype = True
             elif k == '-h':
                 cryptofile_help()
         # set dst = src if src is None.
@@ -94,10 +98,10 @@ def main(args=None):
             cf.set_pr(pr)
             # run opts.
             for opt in opts:
-                if opt == '-d':
+                if opt in ['-d', '-D']:
                     if all((cf.decrypto_files(), rtype)):
                         remove_type_file(src, ftype)
-                elif opt == '-e':
+                elif opt in ['-e', '-E']:
                     if all((cf.encrypto_files(), rtype)):
                         remove_type_file(src, ftype)
                     
