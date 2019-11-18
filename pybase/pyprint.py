@@ -64,8 +64,9 @@ class PyPrint(object):
                         if msg else '%s()' % inspect.stack()[1][3]
                 msg += ': ' if msg else ''
                 for m in args[1:]:
-                    msg += \
-                        ''.join(str(m)) if isinstance(m, dict) else ''.join(m)
+                    if m:
+                        msg += \
+                            ''.join(str(m)) if isinstance(m, dict) else ''.join(m)
                 print(msg)
         return fmt_pr_warpper
 
