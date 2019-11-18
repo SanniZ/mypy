@@ -7,7 +7,7 @@ import os
 import subprocess
 
 from pybase.pyinput import get_input_args
-from pybase.pyprint import PyPrint 
+from pybase.pyprint import PyPrint
 from pybase.pysys import print_help, execute_shell
 
 

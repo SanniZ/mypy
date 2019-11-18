@@ -53,26 +53,35 @@ def mygit_push_origin_master():
 
 
 #
+# filter for exclunde files.
+#
+def is_exclude_file(f):
+    excludes = ['__pycache__', "pyc"] # Exclude files
+    for ex in excludes:
+        if ex in f:
+            return True
+    return False
+
+#
 # check status files of modified or new.
 #
 def mygit_status_check(opt):
-    tag = None
-    excludes = ['__pycache__'] # Exclude files
     gits = mygit_gits()
     for git in gits:
         if opt == '-m':
             opt = 'MOD'
-            tag = 'Modified'
         elif opt == '-n':
             opt = 'NEW'
-            tag = 'New'
         result = git_status(git, opt)
         if result: # print result
-            print("-------%s-------:" % git.replace("%s/" % MYGIT, ''))
+            fs = []
             for res in result:
-                for f in excludes:
-                    if  f not in res:
-                        print("[%s]: %s" % (tag, res))
+                if not is_exclude_file(res):
+                    fs.append(res)
+            if fs:
+                print("-------%s-------:" % git.replace("%s/" % MYGIT, ''))
+                for f in fs:
+                    print("%s" % (f))
 
 
 #
