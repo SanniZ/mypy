@@ -1,34 +1,16 @@
 #!/usr/bin/env python3
 
 AUTHON = 'Byng Zeng'
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 import os
 
-from pybase.pyinput import get_input_args
-from pybase.pysys import print_help, execute_shell
+from pybase.pysys import execute_shell
 from develop.git.git import git_status, git_push_origin_master
 
 
 # path of mygit.
 MYGIT = os.getenv('GIT')
-
-
-#
-# print help for mygit.
-#
-def mygit_help():
-    HELPS = (
-	"==============================================",
-	"     mygit - %s" % VERSION,
-	"==============================================",
-	"Usage:  mygit option",
-	"option:",
-	"  -p : push origin master.",
-	"  -m : check all of modified files.",
-	"  -n : check all of new files",
-    )
-    print_help(HELPS, True)
 
 
 #
@@ -51,27 +33,19 @@ def mygit_push_origin_master():
         git_push_origin_master(git)
 
 
-
-#
-# filter for exclunde files.
-#
-def is_exclude_file(f):
-    excludes = ['__pycache__', "pyc"] # Exclude files
-    for ex in excludes:
-        if ex in f:
-            return True
-    return False
-
 #
 # check status files of modified or new.
 #
-def mygit_status_check(opt):
+def mygit_status(opt):
+    def is_exclude_file(f):
+        excludes = ['__pycache__', "pyc"] # Exclude files
+        for ex in excludes:
+            if ex in f:
+                return True
+        return False
+
     gits = mygit_gits()
     for git in gits:
-        if opt == '-m':
-            opt = 'MOD'
-        elif opt == '-n':
-            opt = 'NEW'
         result = git_status(git, opt)
         if result: # print result
             fs = []
@@ -85,25 +59,33 @@ def mygit_status_check(opt):
 
 
 #
-# main to options.
-#
-def main(args=None):
-    if not args:
-        args = get_input_args('pmnh')
-    if args:
-        for k in args.keys():
-            if k == '-p': # sync to master
-                mygit_push_origin_master()
-            elif k in ['-m', '-n']: # check files.
-                mygit_status_check(k)
-            else:
-                mygit_help()
-    else:
-        mygit_help()
-
-
-#
 # entrance.
 #
 if __name__ == "__main__":
-    main()
+    from pybase.pyinput import get_input_args
+    from pybase.pysys import print_help
+
+    def mygit_help():
+        HELPS = (
+		"==============================================",
+		"     mygit - %s" % VERSION,
+		"==============================================",
+		"Usage:  mygit option",
+		"option:",
+		"  -p : push origin master.",
+		"  -m : check all of modified files.",
+		"  -n : check all of new files",
+        )
+        print_help(HELPS, True)
+
+
+    args = get_input_args('pmnh')
+    if not args:
+        mygit_help()
+    for k in args.keys():
+        if k == '-p': # sync to master
+            mygit_push_origin_master()
+        elif k in ['-m', '-n']: # check files.
+            mygit_status(k)
+        else:
+            mygit_help()
