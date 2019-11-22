@@ -18,7 +18,41 @@ VERSION = '1.1.1'
 #               functions
 ############################################################################
 
-def get_input_args(opts, ordered_args=True, err_exit=True):
+def get_input_args_blankspace(opts, ordered_args=True, err_exit=True):
+    def get_cmd(val):
+        if val.startswith('-'):
+            return val
+        return None
+
+    def cmd_with_values(cmd):
+        opts_length = len(opts)
+        for index, opt in enumerate(opts):
+            if cmd:
+                if cmd[1:] == opt:
+                    # check ':' for values.
+                    if (index + 1) != opts_length: # is it tail?
+                        if opts[index + 1] == ':':
+                            return True
+        return False
+
+    if ordered_args:
+        dt = OrderedDict()
+    else:
+        dt = {}
+    cmd = None
+    cmd_values = None
+    for val in  sys.argv[1:]:
+        start_cmd = get_cmd(val)
+        if start_cmd:
+            cmd = val
+            cmd_values = cmd_with_values(val)
+            dt[cmd] = []
+        else:
+            if cmd_values:
+                dt[cmd].append(val)
+    return dt
+
+def get_input_args_comma(opts, ordered_args=True, err_exit=True):
     if ordered_args:
         dt = OrderedDict()
     else:
@@ -34,6 +68,14 @@ def get_input_args(opts, ordered_args=True, err_exit=True):
                 dt[key] = value
     return dt
 
+
+def get_input_args(opts, ordered_args=True, err_exit=True, separator='\s'):
+    if separator == '\s':
+        return get_input_args_blankspace(opts, ordered_args,err_exit)
+    elif separator == ',':
+        return get_input_args_comma(opts, ordered_args, err_exit)
+    else:
+        return None
 
 def get_args_dict(args, symbol=[':'], ordered_args=True):
     if ordered_args:
