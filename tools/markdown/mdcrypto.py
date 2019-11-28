@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 AUTHOR  = 'Byng Zeng'
-VERSION = '1.2.0'
+VERSION = '1.2.1'
 
 import os
 import sys
 import subprocess
 import getpass
-from ctypes import *
+from ctypes import cdll, c_char_p, create_string_buffer
 
 from pybase.pyinput import get_input_args
 from pybase.pysys import print_help, print_exit
@@ -31,18 +31,29 @@ def markdown_help():
     print_help(help_menus, True)
 
 
-def markdown_get_key_from_so():
-    mdkey_so = os.getenv("MDKEY_SO")
-    if not os.path.exists(mdkey_so):
-        print('Error, no found mdkey.so, set export MDKEY_SO to .bashrc')
-        return None
-    lib = cdll.LoadLibrary(mdkey_so)
-    func_get_md_key = lib.get_md_key
-    func_get_md_key.argtype = (c_char_p)
-    func_get_md_key.restype = (c_char_p)
-    pwd = create_string_buffer(16)
-    pwd.raw = str(getpass.getpass("Input your pwd:")).encode()
-    return func_get_md_key(pwd)
+def markdown_get_key_from_libkey():
+    '''
+    Note:
+      pls put libmarkdown-key.so under mdcrypto.py folder, or 
+      set 'export LIBMD-KEY_SO=xxx/libmarkdown-key.so' to .bashrc
+    '''
+    libkey = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), 
+                'libmarkdown-key.so')
+    if not os.path.exists(libkey):  # no found .so under folder.
+        libkey = os.getenv("LIBMD-KEY_SO")  # get from env var.
+        if not libkey:
+            print("no get libkey from env!")
+            return None
+        if not os.path.exists(libkey):  # exist?
+            print("no found %s!" % libkey)
+            return None
+    lib = cdll.LoadLibrary(libkey)
+    lib.get_key.argtype = (c_char_p)
+    lib.get_key.restype = (c_char_p)
+    passwd = create_string_buffer(16)
+    passwd.raw = str(getpass.getpass("Input your passwd:")).encode()
+    return lib.get_key(passwd)
 
 
 def markdown_encrypto(key, src, dst):
@@ -79,10 +90,10 @@ def markdown(args=None):
             markdown_help()
     # get key.
     if not key:
-        key = markdown_get_key_from_so()
+        key = markdown_get_key_from_libkey()
         if not key:
             # key = getpass.getpass('input your key:')
-            print("Error, found invalid pwd!")
+            print("Error, it is failed to get key.")
             return None
     # run opts.
     for opt in opts:
