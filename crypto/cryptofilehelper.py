@@ -41,7 +41,7 @@ def cryptofile_help():
         " -E: encrytpo ftype files",
         " -t: type name of file will be crypto",
         " -x: type name of file will be saved",
-        " -c: set cipher: AES, DES, RSA",
+        " -c: set cipher and mode: AES/DES/RSA [,CBC/ECB]",
         " -m: set mode of cipher: CBC, ECB",
         " -r: remove ftype files after encrypto/decrypto",
         " -v: print information",
@@ -73,7 +73,11 @@ def main(args=None):
             elif k == '-o':
                 dst = os.path.abspath(v)
             elif k == '-c':
-                cipher = v
+                if len(v) < 2:
+                    cipher = v
+                else:
+                    cipher = v[0]
+                    mode = v[1]
             elif k == '-m':
                 mode = v
             elif k == '-t':
