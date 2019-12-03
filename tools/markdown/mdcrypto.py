@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 AUTHOR  = 'Byng Zeng'
-VERSION = '1.2.1'
+VERSION = '1.2.2'
 
 import os
 import sys
@@ -14,21 +14,66 @@ from pybase.pysys import print_help, print_exit
 from pybase.pyfile import remove_type_file
 from crypto.cryptofile import CryptoFile
 
+cur_dir = os.path.dirname(os.path.abspath(__file__))
 
 def markdown_help():
     help_menus = (
         "=====================================",
         "    markdown crypto - %s" % VERSION,
         "=====================================",
-        " options: [-k xxx] [-s xxx] [-o xxx] -d/-e",
-        " -h: print help",
-        " -k: 16 Bytes key password",
-        " -s: path of source",
-        " -o: path of output",
-        " -d: decrypto markdown",
-        " -e: encrypto markdown",
+        " usage: python3 mdcrypto.py option",
+        "",
+        " options:",
+        "  -h: print help",
+        "  -k: 16 Bytes key password",
+        "  -K: path of key file", 
+        "  -s: path of source",
+        "  -o: path of output",
+        "  -d: decrypto markdown",
+        "  -e: encrypto markdown",
     )
     print_help(help_menus, True)
+
+
+def narkdown_get_key_from_file(f_key=None):
+    '''
+      get markdown key from file.
+      file format:
+        passwd: xxxx
+        key: xxxx
+
+       return passwd, key.
+    '''
+    passwd = None
+    key = None
+
+    # get mdcrypto.key file.
+    if f_key:
+        if not os.path.exists(f_key):  # check f_key file.
+            return None, None
+    else:
+        # check current folder for mdcrypto.key.
+        if os.path.exists(os.path.join(cur_dir, 'mdcrypto.key')):
+            f_key = os.path.join(cur_dir, 'mdcrypto.key')
+        else:  # get file from system env vars.
+            f_key = os.getenv("MDCRYPTO-KEY")
+            if not f_key:
+                return None, None
+            if not os.path.exists(f_key):  # no found.
+                return None, None
+
+    # get passwd and key from file.
+    with open(f_key) as fd:
+        lines = fd.readlines()
+    for txt in lines:
+        lt = txt.strip().split(':')
+        if all((lt, len(lt) >= 2)):
+            if lt[0].strip() == 'passwd':
+                passwd = lt[1].strip()
+            elif lt[0].strip() == 'key':
+                key = lt[1].strip()
+    # return result.
+    return passwd, key
 
 
 def markdown_get_key_from_libkey():
@@ -37,13 +82,10 @@ def markdown_get_key_from_libkey():
       pls put libmarkdown-key.so under mdcrypto.py folder, or 
       set 'export LIBMD-KEY_SO=xxx/libmarkdown-key.so' to .bashrc
     '''
-    libkey = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), 
-                'libmarkdown-key.so')
+    libkey = os.path.join(cur_dir, 'libmarkdown-key.so')
     if not os.path.exists(libkey):  # no found .so under folder.
         libkey = os.getenv("LIBMD-KEY_SO")  # get from env var.
         if not libkey:
-            print("no get libkey from env!")
             return None
         if not os.path.exists(libkey):  # exist?
             print("no found %s!" % libkey)
@@ -68,38 +110,48 @@ def markdown_decrypto(key, src, dst):
 
 def markdown(args=None):
     key = None
+    f_key = None
     src = os.getcwd()
     dst = src
     opts = []
     if not args:
-        args = get_input_args('dek:s:o:h')
+        args = get_input_args('dek:K:s:o:h')
     # set vars.
     for k, v in args.items():
-        if k == '-k':
+        if k == '-k':  # key
             key = v[0]
-        elif k == '-s':
+        elif k == '-K':  # key file.
+            f_key = os.path.abspath(v[0])
+        elif k == '-s':  # path of source.
             src = os.path.abspath(v[0])
             dst = src
-        elif k == '-o':
+        elif k == '-o':  # path of output.
             dst = os.path.abspath(v[0])
-        elif k == '-d':
+        elif k == '-d':  # decrypto.
             opts.append(k)
-        elif k == '-e':
+        elif k == '-e':  # encrypto.
             opts.append(k)
         else:
             markdown_help()
     # get key.
     if not key:
-        key = markdown_get_key_from_libkey()
-        if not key:
-            # key = getpass.getpass('input your key:')
-            print("Error, it is failed to get key.")
+        # get passwd and key from key file.
+        passwd, key = narkdown_get_key_from_file(f_key)
+        if key:  # get key.
+            if passwd:  # check passwd.
+                if getpass.getpass('input your passwd:') != passwd:
+                    print("error, passwd invalid!")
+                    return None
+        else:  # try to get key from libkey.
+            key = markdown_get_key_from_libkey()
+        if not key:  # error, no found key.
+            print("error, no found key.")
             return None
     # run opts.
     for opt in opts:
-        if opt == '-d':
+        if opt == '-d':  # decrypto.
             markdown_decrypto(key, src, dst)
-        elif opt == '-e':
+        elif opt == '-e':  # encrypto.
             markdown_encrypto(key, src, dst)
 
 
