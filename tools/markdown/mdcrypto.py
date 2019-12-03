@@ -118,15 +118,17 @@ def markdown(args=None):
         args = get_input_args('dek:K:s:o:h')
     # set vars.
     for k, v in args.items():
+        if v:  # transfer v.
+            v = v if type(v) == str else v[0]
         if k == '-k':  # key
-            key = v[0]
+            key = v
         elif k == '-K':  # key file.
-            f_key = os.path.abspath(v[0])
+            f_key = os.path.abspath(v)
         elif k == '-s':  # path of source.
-            src = os.path.abspath(v[0])
+            src = os.path.abspath(v)
             dst = src
         elif k == '-o':  # path of output.
-            dst = os.path.abspath(v[0])
+            dst = os.path.abspath(v)
         elif k == '-d':  # decrypto.
             opts.append(k)
         elif k == '-e':  # encrypto.
