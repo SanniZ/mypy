@@ -31,7 +31,6 @@ def cryptofile_help():
         "    cryptofile - %s" % VERSION,
         "=====================================",
         " options: [-k xxx] [-s xxx] [-o xxx] -d/-e"
-        " -h: print help",
         " -k: 16, 24, 32 Bytes key password",
         " -s: path of source",
         " -o: path of output",

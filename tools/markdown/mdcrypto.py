@@ -24,7 +24,6 @@ def markdown_help():
         " usage: python3 mdcrypto.py option",
         "",
         " options:",
-        "  -h: print help",
         "  -k: 16 Bytes key password",
         "  -K: path of key file", 
         "  -s: path of source",

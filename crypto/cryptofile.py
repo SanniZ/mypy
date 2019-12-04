@@ -43,7 +43,12 @@ def get_type_files(path, ftype):
     if any((not path, not ftype)):
         return None
     else:
-        return find(path, ftype=ftype)
+        fs = dict()
+        if os.path.isfile(path):
+            fs[os.path.basename(path)] = os.path.dirname(path)
+        else:
+            fs = find(path, ftype=ftype)
+        return fs
 
 
 
@@ -133,8 +138,14 @@ def decrypto_path_files(key, src, dst, ftype, xtype=None, cipher='AES', mode='CB
 class CryptoFile(object):
     def __init__(self, key, src, dst, ftype, xtype=None, cipher='AES', mode='CBC'):
         self._key = key
-        self._src = os.path.abspath(src) + '/'
-        self._dst = os.path.abspath(dst) + '/'
+        if os.path.isfile(src):
+            self._src = src
+        else:
+            self._src = os.path.abspath(src) + '/'
+        if os.path.isfile(dst):
+            self._dst = os.path.dirname(dst) + '/'
+        else:
+            self._dst = os.path.abspath(dst) + '/'
         self._ftype = ftype
         self._xtype = xtype
         self._cipher = cipher
