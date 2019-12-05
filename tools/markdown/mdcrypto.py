@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 
 AUTHOR  = 'Byng Zeng'
-VERSION = '1.2.2'
+VERSION = '1.2.3'
 
 import os
 import sys
 import subprocess
 import getpass
+import hashlib
 from ctypes import cdll, c_char_p, create_string_buffer
 
 from pybase.pyinput import get_input_args
 from pybase.pysys import print_help, print_exit
 from pybase.pyfile import remove_type_file
 from crypto.cryptofile import CryptoFile
+from crypto.cryptohelper import CryptoHelper
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -34,7 +36,7 @@ def markdown_help():
     print_help(help_menus, True)
 
 
-def narkdown_get_key_from_file(f_key=None):
+def narkdown_get_md5_key(f_key=None):
     '''
       get markdown key from file.
       file format:
@@ -136,13 +138,16 @@ def markdown(args=None):
             markdown_help()
     # get key.
     if not key:
-        # get passwd and key from key file.
-        passwd, key = narkdown_get_key_from_file(f_key)
-        if key:  # get key.
-            if passwd:  # check passwd.
-                if getpass.getpass('input your passwd:') != passwd:
-                    print("error, passwd invalid!")
-                    return None
+        # get passwd and key from md5 key file.
+        passwd_md5, key_md5 = narkdown_get_md5_key(f_key)
+        if all((key_md5, passwd_md5)):  # get key.
+            passwd = getpass.getpass('input your passwd:')
+            md5 = hashlib.md5()
+            md5.update(passwd.encode())
+            if md5.hexdigest() != passwd_md5:
+                print("error, passwd invalid!")
+                return None
+            key = CryptoHelper(passwd_md5).decrypt(key_md5)
         else:  # try to get key from libkey.
             key = markdown_get_key_from_libkey()
         if not key:  # error, no found key.

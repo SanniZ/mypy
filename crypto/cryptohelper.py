@@ -6,11 +6,12 @@ Created on 2018-02-25
 @author: Byng.Zeng
 """
 import os
+import sys
 
 try:
     from Crypto.Cipher import AES, DES
 except ImportError:
-    print("run 'sudo pip3 install pycrypto' to install Crypto module.")
+    print("run 'pip3 install pycrypto' to install Crypto module.")
     sys.exit()
 
 import base64
@@ -19,10 +20,10 @@ import rsa
 
 '''
 Note:
-    run 'sudo pip3 install pycrypto' to install Crypto module.
+    run 'pip3 install pycrypto' to install Crypto module.
 '''
 
-VERSION = '1.1.1'
+VERSION = '1.1.2'
 
 
 DES_ALIGN_LENGTH = 8
@@ -170,8 +171,11 @@ def DES_decrypt(key, text, iv=DES_IV, mode='ECB'):
 
 
 def AES_encrypt(key, text, iv=AES_IV, mode=AES.MODE_CBC):
-    if any((not key, not text, not iv, not mode, len(key) not in [16, 24, 32])):
+    if any((not key, not text, not iv, not mode)):
         print('AES_encrypt error, found None input.')
+        return None
+    if len(key) not in[16, 24,32]:
+        print("key length %d is invalid!" % len(key))
         return None
     text = encode_text(text)
     mode = get_cipher_mode('AES', mode)
