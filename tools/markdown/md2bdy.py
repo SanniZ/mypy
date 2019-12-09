@@ -11,11 +11,15 @@ from tools.baiduyun.baiduyun import BaiduYun
 from tools.markdown.mdcrypto import markdown
 
 
-def crypto_markdown(path, encrypto=False):
+
+def crypto_markdown(path, key=None, encrypto=False):
     if not os.path.exists(path): # check path
         return False
-    args = {"-K": os.path.join(os.getenv('HBINPY'), "mdcrypto.key"),
-            "-s": path}
+    if key:
+        args = {'-k': key, '-s': path}
+    else:
+        args = {"-K": os.path.join(os.getenv('HBINPY'), "markdown.key"),
+                "-s": path}
     if encrypto:
         args['-e'] = None  # encrypto
     else:
@@ -26,10 +30,11 @@ def crypto_markdown(path, encrypto=False):
 
 def main(args=None):
     if not args:
-        args = get_input_args('l:y:e')
+        args = get_input_args('l:y:k:e')
     if args:
         src_path = None
         src_enc  = False
+        key = None
         bdy_args = {'-f': '.md', '-v': None, '-c': 'upload'}
         for k, v in args.items():
             if v:
@@ -39,6 +44,8 @@ def main(args=None):
                 bdy_args["-l"] = src_path
             elif k == '-y':  # yun path.
                 bdy_args['-y'] = v
+            elif k == '-k':
+                key = v
             elif k == '-e':  # encrypto
                 src_enc = True
         if any(('-l' not in bdy_args, '-y' not in bdy_args)):
@@ -46,9 +53,9 @@ def main(args=None):
             return False
         if bdy_args:
             if src_enc:  # decrypto, upload and encrypto
-                if crypto_markdown(src_path, False):  # decrypto files.
+                if crypto_markdown(src_path, key, False):  # decrypto files.
                     BaiduYun(view=True).main(bdy_args)  # upload to baiduyun.
-                    crypto_markdown(src_path, True)  # re-encrypto.
+                    crypto_markdown(src_path, key, True)  # re-encrypto.
                 else:  # error
                     print('error, decrypto failed!')
                     return False
