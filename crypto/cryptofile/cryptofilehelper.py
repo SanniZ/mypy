@@ -5,7 +5,7 @@ VERSION='1.0.1'
 
 import os
 
-from crypto.cryptofile import CryptoFile
+from crypto.cryptofile.cryptofile import CryptoFile
 from pybase.pyinput import get_input_args
 from pybase.pysys import print_help
 from pybase.pyfile import remove_type_file

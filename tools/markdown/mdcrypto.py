@@ -10,8 +10,8 @@ import subprocess
 from pybase.pyinput import get_input_args
 from pybase.pysys import print_help, print_exit
 from pybase.pyfile import remove_type_file
-from crypto.cryptofile import CryptoFile
-from crypto.md5key import get_key_form_file 
+from crypto.cryptofile.cryptofile import CryptoFile
+from crypto.cryptokey.key import get_key_form_file 
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 

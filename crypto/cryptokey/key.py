@@ -62,8 +62,8 @@ def read_passwd_key_from_file(path=None):
             return None, None
     else:
         # check current folder for mdcrypto.key.
-        if os.path.exists(os.path.join(cur_dir, KEY_FILE)):            
-            path = os.path.join(cur_dir, KEY_FILE)
+        if os.path.exists(os.path.join(os.getpwd(), KEY_FILE)):            
+            path = os.path.join(os.getpwd(), KEY_FILE)
         else:  # get file from system env vars.
             path = os.getenv("KEY_FILE")
             if not path:
