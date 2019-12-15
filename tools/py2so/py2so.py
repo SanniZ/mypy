@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 AUTHOR = 'Byng.Zeng'
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 import os
 import sys
@@ -9,6 +9,8 @@ import getopt
 import collections
 import subprocess
 import shutil
+
+
 
 
 
@@ -82,8 +84,7 @@ def create_setup_py(src, py):
     if os.path.basename(py) == '__init__.py':
         pr_dbg('found %s' % py)
         return 1
-    name = None
-    name = py.replace(src + '/', '').replace('.py', '').replace('/', '_')
+    name = os.path.splitext(os.path.basename(py))[0]
     if not name:
         pr_err('create_setup_py() name = %s, py=%s' % (name, py))
         return -1
@@ -91,68 +92,56 @@ def create_setup_py(src, py):
         fd.write('from distutils.core import setup\n')
         fd.write('from Cython.Build import cythonize\n')
         fd.write("setup(name='%s.so', ext_modules=cythonize('%s'))\n" % (name, py))
+        pr_dbg('create setup.py: name=%s.so, cythonize=%s' % (name, py))
     return 0
 
 
-def package_dist(src, tgt, py):
-    if any((not src, not tgt, not py)):
+def package_dist(src, tgt):
+    if any((not src, not tgt)):
         pr_err('src: %s and tgt: %s, package dist fail!' % (src, tgt))
         return None
-    pyso = None
-    pyname = os.path.splitext(os.path.basename(py))[0]
-    if pyname == '__init__':
-        if os.path.dirname(py) == src:
-            pyso = os.path.basename(py)
-        else:
-            pyso = os.path.join(os.path.relpath(os.path.dirname(py), src), os.path.basename(py))
-    else:
-        # check .so
-        all_path = [os.getcwd(), src]
-        path_so = None
-        for path in all_path:
-            if path_so:
-                break
-            pr_dbg('check .so under %s' % src)
-            for rt, ds, fs in os.walk(path):
+    # search all of .so and __init__.py
+    result = list()
+    for rt, ds, fs in os.walk(src):
+        if fs:
+            for f in fs:
+                srcso = os.path.join(rt,f)
+                if rt == src:
+                    distso = os.path.join(tgt, f)
+                else:
+                    distso = os.path.join(tgt, os.path.relpath(rt, src), f)
+                pr_dbg('rt=%s, src=%s, f=%s' % (rt, src, f))
+                pr_dbg('packaege_dist() srcso: %s, distso: %s' % (srcso, distso))
+                if os.path.basename(distso) == '__init__.py':
+                    if not os.path.exists(os.path.dirname(distso)):
+                        os.makedirs(os.path.dirname(distso))
+                    shutil.copyfile(srcso, distso)
+                    result.append(distso)
+                elif os.path.splitext(os.path.basename(distso))[1] == '.so':
+                    if not os.path.exists(os.path.dirname(distso)):
+                        os.makedirs(os.path.dirname(distso))
+                    shutil.move(srcso, distso)
+                    result.append(distso)
+    # check real path of .so of current path.
+    for f in os.listdir(os.getcwd()):
+        if os.path.splitext(f)[1] == '.so':  # .so
+            for rt, ds, fs in os.walk(src):  # check src for path dir.
                 if fs:
-                    for f in fs:
-                        if os.path.splitext(f)[1] == '.so':
-                            pr_dbg('package_dist() f=%s, pyname=%s' % (f, pyname))
-                            if not f.startswith(pyname):
-                                continue
-                            if rt == path:
-                                pyso = f
-                            else:
-                                pyso = os.path.join(rt.replace(path + '/', ''), f)
-                            path_so = path
-                            pr_dbg('update %s->%s' % (f, pyso))
-                            break
-    # check pyso
-    if not pyso:
-        pr_dbg('no found .so')
-        return None
-    src_pyso = os.path.join(path_so, pyso)
-    tgt_pyso = os.path.join(tgt, pyso)
-    pr_dbg('src_pyso: %s, tgt_pyso: %s' % (src_pyso, tgt_pyso))
-    if not os.path.exists(src_pyso):
-        pr_err('package_dist(): not found %s' % src_pyso) 
-        return None
-    try:
-        os.makedirs(os.path.dirname(tgt_pyso))
-    except FileExistsError:
-        pr_warn('dir %s exist!' % os.path.dirname(tgt_pyso))
-    try:
-        shutil.copyfile(src_pyso, tgt_pyso)
-    except shutil.SameFileError:
-        pr_warn('file %s exist!')
-    pr_dbg('package dist: %s' % tgt_pyso)
-    return tgt_pyso
+                    for f2 in fs:
+                        if f.startswith(os.path.splitext(f2)[0]):
+                            distso = os.path.join(tgt, os.path.relpath(rt, src), f)
+                            if not os.path.exists(os.path.dirname(distso)):
+                                os.makedirs(os.path.dirname(distso))
+                            shutil.move(os.path.join(os.getcwd(), f), distso)
+                            result.append(distso)
+    return result
+
 
 def clean_build_files(path):
     if not path:
-        pr_err('clean_temp_files() path=%s' % path)
+        pr_err('clean_build_files() path=%s' % path)
         return False
-    build_files = ['.c', '.so']
+    build_files = ['.c']
     # check temp files of path and cwd.
     for p in [path, os.getcwd()]:
         for rt, ds, fs in os.walk(p):
@@ -188,30 +177,45 @@ def build_py_so(src, tgt):
     result = list()
     for py in py_files:
         setup_py = create_setup_py(src, py)
-        if setup_py < 0:  # error, create setup.py 
-            pr_warn('failed to create setup.py for %s!' % py)
+        if setup_py != 0:  # error, create setup.py 
             continue
-        elif setup_py > 0:  # __init__.py
-            package_dist(src, tgt, py)
+        try:
+            ret = subprocess.check_output('python3 setup.py build_ext --inplace', shell=True)
+        except subprocess.CalledProcessError:
+            pr_warn('build setup.py for %s fail!' % py)
             continue
-        ret = subprocess.check_output('python3 setup.py build_ext --inplace', shell=True)
-        pr_info(ret)
-        # package .so to tgt
-        dist = package_dist(src, tgt, py)
-        if dist:
-            result.append(dist)
-        # clean temp files.
-        clean_build_files(src)
-    return result
+        pr_info(ret, False)
+    # clean temp files.
+    clean_build_files(src)
+    # package .so to tgt
+    dist = package_dist(src, tgt)
+    return dist
+
+
+def usage_help():
+    USAGES = (
+	"===========================================================  ", 
+	"    py2so - %s" % VERSION,
+	"===========================================================  ", 
+	"Build .py to share library .so",
+	"",
+	"Usage:   python3 pyso.py options",
+	"options:",
+	"  -s path : set path of .py",
+	"  -t path : set path of .so",
+	"  -o build/clean :  build .py / clean build files.",
+    )
+    for usage in USAGES:
+        print(usage)
 
 
 def main():
     args = get_input_args('ds:t:o:h')
     if not args:
-        pr_err('not found args!')
-        return None
-    src = tgt = opt = None
+        usage_help()
+        exit()
     # config vars
+    src = tgt = opt = None
     for k, v in args.items():
         if k == '-s':
             src = os.path.abspath(v)
@@ -221,12 +225,15 @@ def main():
             opt = v
         elif k == '-d':
             PR_LVL.append('dbg')
+        else:
+            usage_help()
+            exit()
     # set current path to src.
     if not src:
         src = os.getcwd()
     # set src path to tgt if no tgt.
     if not tgt:
-        tgt = src
+        tgt = os.path.join(os.getcwd(), 'dist')
     # run command options.
     if opt == 'clean':  # clean build.
         clean_build_files(src)
